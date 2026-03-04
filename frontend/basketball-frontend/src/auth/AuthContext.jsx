@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { authApi } from "../api/auth";
 import { AuthContext } from "./AuthContextValue";
 
@@ -33,7 +33,7 @@ export function AuthProvider({ children }) {
     try {
       await authApi.logout();
     } catch {
-      // ignore network/logout errors
+      return;
     }
     localStorage.removeItem("auth_token");
     setUser(null);

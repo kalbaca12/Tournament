@@ -50,7 +50,7 @@ Route::middleware(['auth:sanctum', 'role:manager'])->group(function () {
 Route::get('/teams/{team}', [TeamController::class, 'show']);
 Route::get('/teams/{team}/matches', [TeamController::class, 'matches']);
 
-Route::get('/players', [PlayerController::class, 'index']); // supports ?team_id=
+Route::get('/players', [PlayerController::class, 'index']);
 Route::get('/players/{player}', [PlayerController::class, 'show']);
 
 Route::get('/tournaments/{tournament}/teams', [TournamentTeamController::class, 'index']);
@@ -80,8 +80,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::delete('/tournaments/{tournament}/schedule', [ScheduleController::class, 'clearSchedule']);
 
     Route::post('/tournaments/{tournament}/matches', [MatchController::class, 'store']);
-    Route::put('/matches/{game}', [MatchController::class, 'update']); // time/venue/status
+    Route::put('/matches/{game}', [MatchController::class, 'update']);
     Route::delete('/matches/{game}', [MatchController::class, 'destroy']);
     Route::post('/matches/{game}/result', [MatchController::class, 'setResult']);
-    Route::post('/matches/{game}/stats', [MatchStatController::class, 'storeBulk']); // bulk submit
+    Route::post('/matches/{game}/stats', [MatchStatController::class, 'storeBulk']);
 });

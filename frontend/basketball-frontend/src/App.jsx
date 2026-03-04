@@ -23,13 +23,13 @@ export default function App() {
   const { loading, isAdmin, isManager } = useAuth();
 
   if (loading) {
-    return <div className="mx-auto max-w-6xl px-4 py-8 text-slate-500">Loading...</div>;
+    return <div className="mx-auto max-w-5xl px-4 py-6 text-slate-500">Loading...</div>;
   }
 
   return (
     <div className="min-h-screen text-slate-900">
       <Nav />
-      <main className="mx-auto max-w-6xl px-4 py-8">
+      <main className="mx-auto max-w-5xl px-4 py-6">
         <Routes>
           <Route path="/" element={<Navigate to="/tournaments" />} />
           <Route path="/login" element={<Login />} />
@@ -53,4 +53,6 @@ export default function App() {
     </div>
   );
 }
+
+
 

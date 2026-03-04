@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { matchesApi } from "../api/matches";
 import { useAuth } from "../auth/useAuth";
@@ -23,7 +23,7 @@ export default function MatchView() {
     return matchRow?.[camelRelation]?.name || matchRow?.[snakeRelation]?.name || teamId;
   };
 
-  const load = async () => {
+  const load = useCallback(async () => {
     const [mRes, sRes] = await Promise.all([matchesApi.get(id), matchesApi.stats(id)]);
     setMatch(mRes.data);
     setStats(sRes.data);
@@ -31,12 +31,14 @@ export default function MatchView() {
       scheduled_at: mRes.data?.scheduled_at ? mRes.data.scheduled_at.slice(0, 16) : "",
       status: mRes.data?.status || "scheduled",
     });
-  };
+  }, [id]);
 
   useEffect(() => {
-    load().catch((e) => setErr(e?.response?.data?.message || e.message));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+    const timer = setTimeout(() => {
+      load().catch(() => {});
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [load]);
 
   const saveMeta = async () => {
     if (!isAdmin) return;
@@ -172,4 +174,5 @@ export default function MatchView() {
     </div>
   );
 }
+
 

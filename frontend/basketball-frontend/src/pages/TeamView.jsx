@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { teamsApi } from "../api/teams";
 import { playersApi } from "../api/players";
@@ -55,7 +55,7 @@ export default function TeamView() {
     });
   }, [matches]);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     const [teamRes, playersRes, matchesRes] = await Promise.all([
       teamsApi.get(id),
       playersApi.list(id),
@@ -69,12 +69,11 @@ export default function TeamView() {
     });
     setPlayers(playersRes.data || []);
     setMatches(matchesRes.data || []);
-  };
+  }, [id]);
 
   useEffect(() => {
     load().catch((e) => setErr(e?.response?.data?.message || e.message));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [load]);
 
   const save = async () => {
     if (!canManageTeam) return;

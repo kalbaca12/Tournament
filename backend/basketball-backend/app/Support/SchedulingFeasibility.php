@@ -113,7 +113,6 @@ class SchedulingFeasibility
 
     private static function slotsPerDay(): int
     {
-        // Fixed 2-hour spacing inside the daily window: 12:00, 14:00, 16:00, 18:00.
         return 4;
     }
 }

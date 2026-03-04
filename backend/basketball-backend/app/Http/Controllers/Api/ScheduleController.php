@@ -263,9 +263,6 @@ class ScheduleController extends Controller
         return $teamCount >= 2 ? 2 : 0;
     }
 
-    /**
-     * @return array<int, Carbon>
-     */
     private function buildSlots(Tournament $tournament, ?string $startDateTime = null): array
     {
         if (!$tournament->start_date || !$tournament->end_date) {
