@@ -1,0 +1,3 @@
+backend Laravel php
+database MySQL
+frontend React.js

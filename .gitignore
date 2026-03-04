@@ -1,0 +1,22 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Backend (Laravel)
+backend/basketball-backend/vendor/
+backend/basketball-backend/node_modules/
+backend/basketball-backend/public/build/
+backend/basketball-backend/public/hot
+backend/basketball-backend/storage/*.key
+backend/basketball-backend/storage/logs/*.log
+backend/basketball-backend/.env
+
+# Frontend (Vite/React)
+frontend/basketball-frontend/node_modules/
+frontend/basketball-frontend/dist/
+.npm/
