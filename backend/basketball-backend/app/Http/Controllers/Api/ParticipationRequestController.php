@@ -153,4 +153,10 @@ class ParticipationRequestController extends Controller
 
         return response()->json($requestRow->fresh()->load(['team', 'manager', 'reviewer']), 200);
     }
+
+    public function destroy(TournamentParticipationRequest $requestRow)
+    {
+        $requestRow->delete();
+        return response()->json(['message' => 'Request removed'], 200);
+    }
 }

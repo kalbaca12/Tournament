@@ -4,9 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Game;
-use App\Models\TournamentTeam;
 use App\Models\Tournament;
+use App\Models\TournamentTeam;
+use App\Support\PdfExportBuilder;
+use App\Support\TournamentProgression;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class MatchController extends Controller
 {
@@ -24,6 +27,23 @@ class MatchController extends Controller
         return $game->load(['homeTeam','awayTeam','stats.player']);
     }
 
+    public function exportPdf(Request $request, Game $game)
+    {
+        $validated = $request->validate([
+            'sections' => ['nullable', 'array'],
+            'sections.*' => ['string', 'in:players,leaders,team_totals,box_score'],
+        ]);
+
+        $pdf = PdfExportBuilder::match($game, $validated['sections'] ?? []);
+        $filename = 'match-' . $game->id . '-report.pdf';
+
+        return response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Length' => (string) strlen($pdf),
+        ]);
+    }
+
     public function store(Request $request, Tournament $tournament)
     {
         $validated = $request->validate([
@@ -34,6 +54,7 @@ class MatchController extends Controller
             'round_number' => ['nullable', 'integer', 'min:1'],
             'scheduled_at' => ['nullable', 'date'],
             'venue_id' => ['nullable', 'integer'],
+            'venue_slot' => ['nullable', 'integer', 'min:1', 'max:100'],
             'status' => ['nullable', 'in:scheduled,live,finished,cancelled'],
         ]);
 
@@ -56,7 +77,8 @@ class MatchController extends Controller
             'group_code' => $validated['group_code'] ?? null,
             'round_number' => $validated['round_number'] ?? 1,
             'scheduled_at' => $validated['scheduled_at'] ?? null,
-            'venue_id' => $validated['venue_id'] ?? null,
+            'venue_id' => null,
+            'venue_slot' => $validated['venue_slot'] ?? null,
             'status' => $validated['status'] ?? 'scheduled',
         ]);
 
@@ -68,10 +90,16 @@ class MatchController extends Controller
         $validated = $request->validate([
             'scheduled_at' => ['nullable','date'],
             'venue_id' => ['nullable','integer'],
+            'venue_slot' => ['nullable','integer', 'min:1', 'max:100'],
             'status' => ['nullable','in:scheduled,live,finished,cancelled'],
         ]);
 
-        $game->update($validated);
+        $game->update([
+            'scheduled_at' => $validated['scheduled_at'] ?? null,
+            'venue_id' => null,
+            'venue_slot' => $validated['venue_slot'] ?? null,
+            'status' => $validated['status'] ?? $game->status,
+        ]);
 
         return $game;
     }
@@ -91,11 +119,15 @@ class MatchController extends Controller
             'status' => ['nullable','in:finished,live'],
         ]);
 
-        $game->home_score = $validated['home_score'];
-        $game->away_score = $validated['away_score'];
-        $game->status = $validated['status'] ?? 'finished';
-        $game->save();
+        DB::transaction(function () use ($game, $validated) {
+            $game->home_score = $validated['home_score'];
+            $game->away_score = $validated['away_score'];
+            $game->status = $validated['status'] ?? 'finished';
+            $game->save();
 
-        return $game;
+            TournamentProgression::sync($game->tournament()->firstOrFail());
+        });
+
+        return $game->fresh(['homeTeam', 'awayTeam']);
     }
 }

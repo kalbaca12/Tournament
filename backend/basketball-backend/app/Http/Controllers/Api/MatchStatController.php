@@ -25,6 +25,9 @@ class MatchStatController extends Controller
             'stats' => ['required','array','min:1'],
             'stats.*.player_id' => ['required','integer','exists:players,id'],
             'stats.*.team_id' => ['required','integer','exists:teams,id'],
+            'stats.*.minutes' => ['nullable','integer','min:0','max:60'],
+            'stats.*.dnp' => ['nullable','boolean'],
+            'stats.*.fouled_out' => ['nullable','boolean'],
             'stats.*.points' => ['nullable','integer','min:0'],
             'stats.*.rebounds' => ['nullable','integer','min:0'],
             'stats.*.assists' => ['nullable','integer','min:0'],
@@ -55,6 +58,16 @@ class MatchStatController extends Controller
                     abort(409, 'player_id does not belong to given team_id.');
                 }
 
+                foreach ([['fgm', 'fga'], ['tpm', 'tpa'], ['ftm', 'fta']] as [$madeKey, $attemptKey]) {
+                    if ((int)($row[$madeKey] ?? 0) > (int)($row[$attemptKey] ?? 0)) {
+                        abort(422, strtoupper($madeKey) . ' cannot be greater than ' . strtoupper($attemptKey) . '.');
+                    }
+                }
+
+                if ((int)($row['tpm'] ?? 0) > (int)($row['fgm'] ?? 0)) {
+                    abort(422, '3PM cannot be greater than FGM.');
+                }
+
                 MatchPlayerStat::updateOrCreate(
                     [
                         'match_id' => $game->id,
@@ -62,6 +75,9 @@ class MatchStatController extends Controller
                     ],
                     [
                         'team_id' => $teamId,
+                        'minutes' => (int)($row['minutes'] ?? 0),
+                        'dnp' => (bool)($row['dnp'] ?? false),
+                        'fouled_out' => (bool)($row['fouled_out'] ?? false),
                         'points' => (int)($row['points'] ?? 0),
                         'rebounds' => (int)($row['rebounds'] ?? 0),
                         'assists' => (int)($row['assists'] ?? 0),

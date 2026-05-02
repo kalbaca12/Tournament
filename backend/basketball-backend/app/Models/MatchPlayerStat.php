@@ -12,6 +12,9 @@ class MatchPlayerStat extends Model
         'match_id',
         'player_id',
         'team_id',
+        'minutes',
+        'dnp',
+        'fouled_out',
         'points',
         'rebounds',
         'assists',
@@ -24,6 +27,11 @@ class MatchPlayerStat extends Model
         'tpa',
         'ftm',
         'fta'
+    ];
+
+    protected $casts = [
+        'dnp' => 'boolean',
+        'fouled_out' => 'boolean',
     ];
 
     public function game()

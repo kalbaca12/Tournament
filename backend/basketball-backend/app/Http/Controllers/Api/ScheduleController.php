@@ -7,8 +7,9 @@ use App\Models\Game;
 use App\Models\Tournament;
 use App\Models\TournamentTeam;
 use App\Support\SchedulingFeasibility;
+use App\Support\TournamentProgression;
+use App\Support\TournamentSchedulePlanner;
 use Carbon\Carbon;
-use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -27,9 +28,15 @@ class ScheduleController extends Controller
         }
 
         $validated = $request->validate([
-            'start_datetime' => ['nullable','date'],
-            'minutes_between_games' => ['nullable','integer','min:10','max:10000'],
-            'venue_id' => ['nullable','integer'],
+            'end_date' => ['nullable', 'date'],
+            'time_slots' => ['nullable', 'array'],
+            'time_slots.*' => ['string', 'max:10'],
+            'venues_count' => ['nullable', 'integer', 'min:1', 'max:20'],
+            'venue_names' => ['nullable', 'array'],
+            'venue_names.*' => ['nullable', 'string', 'max:120'],
+            'playoff_round_gap_days' => ['nullable', 'integer', 'min:0', 'max:30'],
+            'groups_to_playoffs_gap_days' => ['nullable', 'integer', 'min:0', 'max:30'],
+            'group_games_per_day' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
 
         $teams = TournamentTeam::where('tournament_id', $tournament->id)
@@ -42,22 +49,20 @@ class ScheduleController extends Controller
             return response()->json(['message' => 'Need at least 2 teams registered.'], 409);
         }
 
+        $planningConfig = $this->buildPlanningConfig($tournament, $validated);
+        $tournament->fill($planningConfig);
+
         $feasibility = SchedulingFeasibility::evaluate($tournament, count($teams));
         if (!$feasibility['is_feasible']) {
             return response()->json([
-                'message' => 'Schedule is not feasible with current duration/slots.',
+                'message' => $feasibility['issues'][0] ?? 'Schedule planning setup is incomplete.',
                 'feasibility' => $feasibility,
             ], 409);
         }
 
-        $venueId = $validated['venue_id'] ?? null;
-        $slots = $this->buildSlots($tournament, $validated['start_datetime'] ?? null);
-
-        if (count($slots) === 0) {
-            return response()->json([
-                'message' => 'No valid date/time slots found. Set tournament date range first.',
-            ], 409);
-        }
+        $groupAssignments = $tournament->format === 'groups_playoffs'
+            ? $this->buildGroupAssignments($teams)
+            : [];
 
         $plannedMatches = match ($tournament->format) {
             'single_elimination' => $this->buildSingleEliminationMatches($teams),
@@ -65,40 +70,199 @@ class ScheduleController extends Controller
             default => $this->buildRoundRobinMatches($teams),
         };
 
-        if (count($plannedMatches) > count($slots)) {
+        $scheduledMatches = $this->assignMatchesToSlots($tournament, $plannedMatches, $feasibility);
+        if (count($scheduledMatches) !== count($plannedMatches)) {
             return response()->json([
-                'message' => 'Schedule is not feasible with current date range and fixed daily slots (12:00, 14:00, 16:00, 18:00).',
+                'message' => 'Could not assign all matches into the generated planning window.',
+                'feasibility' => $feasibility,
+                'assigned_matches' => count($scheduledMatches),
                 'required_matches' => count($plannedMatches),
-                'available_slots' => count($slots),
             ], 409);
         }
 
-        DB::transaction(function () use ($tournament, $plannedMatches, $slots, $venueId) {
-            Game::where('tournament_id', $tournament->id)->delete();
+        $earliestSlot = collect($scheduledMatches)
+            ->pluck('slot')
+            ->filter()
+            ->sortBy(fn (Carbon $slot) => $slot->getTimestamp())
+            ->first();
+        $latestSlot = collect($scheduledMatches)
+            ->pluck('slot')
+            ->filter()
+            ->sortByDesc(fn (Carbon $slot) => $slot->getTimestamp())
+            ->first();
 
-            foreach ($plannedMatches as $index => $row) {
-                $dt = $slots[$index];
+        DB::transaction(function () use ($tournament, $scheduledMatches, $groupAssignments, $planningConfig, $earliestSlot, $latestSlot) {
+            $tournament->fill($planningConfig);
+            if ($earliestSlot instanceof Carbon) {
+                $tournament->start_date = $earliestSlot->toDateString();
+            }
+            if ($latestSlot instanceof Carbon) {
+                $tournament->end_date = $latestSlot->toDateString();
+            }
+            if ($earliestSlot instanceof Carbon && $latestSlot instanceof Carbon) {
+                $days = $earliestSlot->copy()->startOfDay()->diffInDays($latestSlot->copy()->startOfDay()) + 1;
+                $tournament->duration_weeks = max(1, (int) ceil($days / 7));
+            }
+            $tournament->save();
+
+            Game::where('tournament_id', $tournament->id)->delete();
+            TournamentTeam::where('tournament_id', $tournament->id)->update(['group_code' => null]);
+
+            foreach ($groupAssignments as $teamId => $groupCode) {
+                TournamentTeam::where('tournament_id', $tournament->id)
+                    ->where('team_id', $teamId)
+                    ->update(['group_code' => $groupCode]);
+            }
+
+            foreach ($scheduledMatches as $scheduledMatch) {
+                $row = $scheduledMatch['row'];
+                $slot = $scheduledMatch['slot'];
+
                 Game::create([
                     'tournament_id' => $tournament->id,
                     'home_team_id' => $row['home_team_id'],
                     'away_team_id' => $row['away_team_id'],
-                    'venue_id' => $venueId,
+                    'venue_id' => null,
+                    'venue_slot' => $scheduledMatch['venue_slot'] ?? null,
                     'stage' => $row['stage'],
                     'group_code' => $row['group_code'],
                     'round_number' => $row['round_number'],
-                    'scheduled_at' => $dt->toDateTimeString(),
+                    'scheduled_at' => $slot->toDateTimeString(),
                     'home_score' => null,
                     'away_score' => null,
                     'status' => 'scheduled',
                 ]);
             }
+
+            TournamentProgression::sync($tournament);
         });
 
         return response()->json([
             'message' => 'Schedule generated',
             'format' => $tournament->format,
             'matches_created' => count($plannedMatches),
+            'schedule_window' => [
+                'start_date' => $earliestSlot?->toDateString(),
+                'final_date' => $latestSlot?->toDateString(),
+            ],
         ], 201);
+    }
+
+    private function buildPlanningConfig(Tournament $tournament, array $validated): array
+    {
+        $venuesCount = max(1, (int) ($validated['venues_count'] ?? $tournament->venues_count ?? 1));
+        $timeSlots = array_values(array_filter(
+            $validated['time_slots'] ?? $tournament->time_slots ?? ['12:00', '14:00', '16:00', '18:00'],
+            fn (mixed $slot) => is_string($slot) && trim($slot) !== '',
+        ));
+
+        return [
+            'end_date' => $validated['end_date'] ?? $tournament->end_date,
+            'venues_count' => $venuesCount,
+            'venue_names' => $this->normalizeVenueNames(
+                $validated['venue_names'] ?? $tournament->venue_names ?? [],
+                $venuesCount,
+            ),
+            'time_slots' => $timeSlots === [] ? ['12:00', '14:00', '16:00', '18:00'] : $timeSlots,
+            'playoff_round_gap_days' => $validated['playoff_round_gap_days'] ?? $tournament->playoff_round_gap_days ?? 1,
+            'groups_to_playoffs_gap_days' => $validated['groups_to_playoffs_gap_days'] ?? $tournament->groups_to_playoffs_gap_days ?? 1,
+            'group_games_per_day' => $validated['group_games_per_day'] ?? $tournament->group_games_per_day,
+        ];
+    }
+
+    private function assignMatchesToSlots(Tournament $tournament, array $plannedMatches, ?array $feasibility = null, array $legacySlots = []): array
+    {
+        $feasibility = $feasibility ?? SchedulingFeasibility::evaluate($tournament, count(array_unique(array_filter(array_merge(
+            array_column($plannedMatches, 'home_team_id'),
+            array_column($plannedMatches, 'away_team_id'),
+        )))));
+
+        $stageMatchesByRound = [];
+        $playoffMatchesByRound = [];
+
+        foreach ($plannedMatches as $row) {
+            $round = (int) ($row['round_number'] ?? 1);
+            if (($row['stage'] ?? null) === 'playoffs') {
+                $playoffMatchesByRound[$round][] = $row;
+            } else {
+                $stageMatchesByRound[$round][] = $row;
+            }
+        }
+
+        ksort($stageMatchesByRound);
+        ksort($playoffMatchesByRound);
+
+        $scheduled = [];
+
+        $stageDates = array_values($feasibility['stage_dates'] ?? []);
+        $stageMatchesPerDay = max(1, (int) ($feasibility['stage_matches_per_day'] ?? TournamentSchedulePlanner::stageMatchesPerDay($tournament)));
+        $stageDatePointer = 0;
+
+        foreach ($stageMatchesByRound as $matches) {
+            $daysNeeded = (int) ceil(count($matches) / $stageMatchesPerDay);
+            $roundDates = array_slice($stageDates, $stageDatePointer, $daysNeeded);
+            $stageDatePointer += $daysNeeded;
+            $slots = [];
+
+            foreach ($roundDates as $dateString) {
+                $slots = array_merge(
+                    $slots,
+                    TournamentSchedulePlanner::daySlots(
+                        $tournament,
+                        Carbon::parse($dateString)->startOfDay(),
+                        'asc',
+                        $stageMatchesPerDay,
+                    ),
+                );
+            }
+
+            foreach ($matches as $index => $row) {
+                if (!isset($slots[$index])) {
+                    continue;
+                }
+
+                $scheduled[] = [
+                    'row' => $row,
+                    'slot' => $slots[$index]['slot'],
+                    'venue_slot' => $slots[$index]['venue_slot'],
+                ];
+            }
+        }
+
+        foreach ($playoffMatchesByRound as $round => $matches) {
+            $roundDates = $feasibility['playoff_round_dates'][$round] ?? [];
+            $roundDates = array_values($roundDates);
+            $slots = [];
+
+            foreach ($roundDates as $dateString) {
+                $slots = array_merge(
+                    $slots,
+                    TournamentSchedulePlanner::daySlots(
+                        $tournament,
+                        Carbon::parse($dateString)->startOfDay(),
+                        $round === max(array_keys($playoffMatchesByRound)) ? 'desc' : 'asc',
+                    ),
+                );
+            }
+
+            foreach ($matches as $index => $row) {
+                if (!isset($slots[$index])) {
+                    continue;
+                }
+
+                $scheduled[] = [
+                    'row' => $row,
+                    'slot' => $slots[$index]['slot'],
+                    'venue_slot' => $slots[$index]['venue_slot'],
+                ];
+            }
+        }
+
+        usort($scheduled, function (array $left, array $right) {
+            return $left['slot']->getTimestamp() <=> $right['slot']->getTimestamp();
+        });
+
+        return $scheduled;
     }
 
     private function roundRobinPairings(array $teamIds): array
@@ -152,6 +316,13 @@ class ScheduleController extends Controller
                 ];
             }
         }
+
+        $qualified = $this->roundRobinPlayoffQualifiedCount(count($teamIds));
+        if ($qualified < 2) {
+            return $rows;
+        }
+
+        $rows = array_merge($rows, $this->buildPlayoffShellMatches($qualified, 'RR'));
 
         return $rows;
     }
@@ -232,23 +403,20 @@ class ScheduleController extends Controller
             return $rows;
         }
 
-        $matchCount = (int)($qualified / 2);
-        $round = 1;
-        while ($matchCount > 0) {
-            for ($i = 0; $i < $matchCount; $i++) {
-                $rows[] = [
-                    'home_team_id' => null,
-                    'away_team_id' => null,
-                    'stage' => 'playoffs',
-                    'group_code' => 'GP' . $round . '-' . ($i + 1),
-                    'round_number' => $round,
-                ];
+        return array_merge($rows, $this->buildPlayoffShellMatches($qualified, 'GP'));
+    }
+
+    private function buildGroupAssignments(array $teamIds): array
+    {
+        $assignments = [];
+        foreach (array_chunk(array_values($teamIds), 4) as $groupIndex => $groupTeamIds) {
+            $groupCode = chr(ord('A') + $groupIndex);
+            foreach ($groupTeamIds as $teamId) {
+                $assignments[$teamId] = $groupCode;
             }
-            $matchCount = (int)($matchCount / 2);
-            $round++;
         }
 
-        return $rows;
+        return $assignments;
     }
 
     private function playoffQualifiedCount(int $teamCount): int
@@ -263,39 +431,51 @@ class ScheduleController extends Controller
         return $teamCount >= 2 ? 2 : 0;
     }
 
-    private function buildSlots(Tournament $tournament, ?string $startDateTime = null): array
+    private function roundRobinPlayoffQualifiedCount(int $teamCount): int
     {
-        if (!$tournament->start_date || !$tournament->end_date) {
-            return [];
+        $qualified = intdiv($teamCount, 2);
+        $bracketSize = 1;
+
+        while (($bracketSize * 2) <= $qualified) {
+            $bracketSize *= 2;
         }
 
-        $startDate = Carbon::parse($tournament->start_date)->startOfDay();
-        $endDate = Carbon::parse($tournament->end_date)->endOfDay();
-        if ($endDate->lt($startDate)) {
-            return [];
-        }
+        return $bracketSize >= 2 ? $bracketSize : 0;
+    }
 
-        $allowedDays = $tournament->allowed_days ?: [1, 2, 3, 4, 5, 6, 7];
-        $allowedDays = array_map('intval', $allowedDays);
-        $fixedSlots = ['12:00', '14:00', '16:00', '18:00'];
+    private function buildPlayoffShellMatches(int $qualified, string $prefix): array
+    {
+        $rows = [];
+        $matchCount = (int)($qualified / 2);
+        $round = 1;
 
-        $notBefore = $startDateTime ? Carbon::parse($startDateTime) : null;
-        $result = [];
-        $cursor = $startDate->copy();
-
-        while ($cursor->lte($endDate)) {
-            if (in_array((int)$cursor->dayOfWeekIso, $allowedDays, true)) {
-                foreach ($fixedSlots as $time) {
-                    $dt = $cursor->copy()->setTimeFromTimeString($time);
-                    if ($notBefore instanceof CarbonInterface && $dt->lt($notBefore)) {
-                        continue;
-                    }
-                    $result[] = $dt;
-                }
+        while ($matchCount > 0) {
+            for ($i = 0; $i < $matchCount; $i++) {
+                $rows[] = [
+                    'home_team_id' => null,
+                    'away_team_id' => null,
+                    'stage' => 'playoffs',
+                    'group_code' => $prefix . $round . '-' . ($i + 1),
+                    'round_number' => $round,
+                ];
             }
-            $cursor->addDay();
+            $matchCount = (int)($matchCount / 2);
+            $round++;
         }
 
-        return $result;
+        return $rows;
+    }
+
+    private function normalizeVenueNames(array $venueNames, int $venuesCount): array
+    {
+        $venuesCount = max(1, min(20, $venuesCount));
+        $normalized = [];
+
+        for ($index = 0; $index < $venuesCount; $index++) {
+            $name = trim((string) ($venueNames[$index] ?? ''));
+            $normalized[] = $name !== '' ? $name : 'Court ' . ($index + 1);
+        }
+
+        return $normalized;
     }
 }

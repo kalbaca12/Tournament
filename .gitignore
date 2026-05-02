@@ -20,3 +20,21 @@ backend/basketball-backend/.env
 frontend/basketball-frontend/node_modules/
 frontend/basketball-frontend/dist/
 .npm/
+
+# Local thesis / diagram scratch files
+_inspect*/
+_inspect*.zip
+_magic*/
+_pa_docx_inspect/
+temp_*.py
+temp_*.php
+*.mdzip
+*.mdzip.*
+catia_project_zips/
+PA*.docx
+PA_*.docx
+selenium-basketball-ui.side
+panaudojimo_atveju_aprasymas.txt
+4.1_apibendrintas_sistemos_galimybiu_aprasymas.txt
+backend/basketball-backend/temp_*.php
+backend/basketball-backend/php_xdebug-*.dll

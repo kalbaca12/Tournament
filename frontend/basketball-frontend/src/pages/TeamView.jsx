@@ -3,6 +3,9 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { teamsApi } from "../api/teams";
 import { playersApi } from "../api/players";
 import { useAuth } from "../auth/useAuth";
+import EmptyState from "../components/EmptyState";
+import { useConfirm } from "../components/useConfirm";
+import { useToast } from "../components/useToast";
 
 function formatDateTime(value) {
   if (!value) return "No time";
@@ -27,6 +30,8 @@ export default function TeamView() {
   const { id } = useParams();
   const nav = useNavigate();
   const { isManager, user } = useAuth();
+  const { confirm } = useConfirm();
+  const { showToast } = useToast();
   const [team, setTeam] = useState(null);
   const [players, setPlayers] = useState([]);
   const [matches, setMatches] = useState([]);
@@ -82,8 +87,11 @@ export default function TeamView() {
     try {
       const res = await teamsApi.update(id, form);
       setTeam({ ...team, ...res.data });
+      showToast("Team details saved.");
     } catch (e) {
-      setErr(e?.response?.data?.message || JSON.stringify(e?.response?.data) || e.message);
+      const message = e?.response?.data?.message || JSON.stringify(e?.response?.data) || e.message;
+      setErr(message);
+      showToast(message, "error");
     } finally {
       setSaving(false);
     }
@@ -91,29 +99,46 @@ export default function TeamView() {
 
   const remove = async () => {
     if (!canManageTeam) return;
+    const ok = await confirm({
+      title: "Delete this team?",
+      message: "This removes the team and can affect tournament registration data.",
+      confirmLabel: "Delete team",
+    });
+    if (!ok) return;
     setErr("");
     try {
       await teamsApi.remove(id);
+      showToast("Team deleted.");
       nav("/teams");
     } catch (e) {
-      setErr(e?.response?.data?.message || JSON.stringify(e?.response?.data) || e.message);
+      const message = e?.response?.data?.message || JSON.stringify(e?.response?.data) || e.message;
+      setErr(message);
+      showToast(message, "error");
     }
   };
 
   const addPlayer = async () => {
     if (!canManageTeam) return;
     setErr("");
+    const livePlayer = {
+      first_name: document.querySelector('input[placeholder="First name"]')?.value ?? newPlayer.first_name,
+      last_name: document.querySelector('input[placeholder="Last name"]')?.value ?? newPlayer.last_name,
+      jersey_number: document.querySelector('input[placeholder="Jersey"]')?.value ?? newPlayer.jersey_number,
+    };
     try {
       await playersApi.create({
         team_id: Number(id),
-        first_name: newPlayer.first_name,
-        last_name: newPlayer.last_name,
-        jersey_number: newPlayer.jersey_number === "" ? null : Number(newPlayer.jersey_number),
+        first_name: livePlayer.first_name,
+        last_name: livePlayer.last_name,
+        jersey_number: livePlayer.jersey_number === "" ? null : Number(livePlayer.jersey_number),
       });
       setNewPlayer({ first_name: "", last_name: "", jersey_number: "" });
       await load();
+      showToast("Player added.");
     } catch (e) {
-      setErr(e?.response?.data?.message || JSON.stringify(e?.response?.data) || e.message);
+      const message = e?.response?.data?.message || JSON.stringify(e?.response?.data) || e.message;
+      setErr(message);
+      showToast(message, "error");
     }
   };
 
@@ -147,19 +172,31 @@ export default function TeamView() {
         return next;
       });
       await load();
+      showToast("Player saved.");
     } catch (e) {
-      setErr(e?.response?.data?.message || JSON.stringify(e?.response?.data) || e.message);
+      const message = e?.response?.data?.message || JSON.stringify(e?.response?.data) || e.message;
+      setErr(message);
+      showToast(message, "error");
     }
   };
 
   const deletePlayer = async (playerId) => {
     if (!canManageTeam) return;
+    const ok = await confirm({
+      title: "Delete this player?",
+      message: "This removes the player from the roster.",
+      confirmLabel: "Delete player",
+    });
+    if (!ok) return;
     setErr("");
     try {
       await playersApi.remove(playerId);
       await load();
+      showToast("Player deleted.");
     } catch (e) {
-      setErr(e?.response?.data?.message || JSON.stringify(e?.response?.data) || e.message);
+      const message = e?.response?.data?.message || JSON.stringify(e?.response?.data) || e.message;
+      setErr(message);
+      showToast(message, "error");
     }
   };
 
@@ -296,7 +333,12 @@ export default function TeamView() {
               </div>
             );
           })}
-          {players.length === 0 && <div className="text-sm text-slate-500">No players yet.</div>}
+          {players.length === 0 && (
+            <EmptyState
+              title="No players yet"
+              description={canManageTeam ? "Add the first player above to build this roster." : "This team has not published any roster players yet."}
+            />
+          )}
         </div>
       </div>
 
@@ -307,7 +349,10 @@ export default function TeamView() {
         </div>
 
         {groupedMatches.length === 0 ? (
-          <div className="text-sm text-slate-500">No matches yet.</div>
+          <EmptyState
+            title="No matches yet"
+            description="This team does not have any generated or manually created matches yet."
+          />
         ) : (
           <div className="space-y-2">
             {groupedMatches.map(([day, list]) => (
@@ -317,7 +362,7 @@ export default function TeamView() {
                   {list.map((m) => (
                     <Link key={m.id} to={`/matches/${m.id}`} className="rounded-md border border-slate-200 bg-white px-2.5 py-2 transition hover:border-sky-300">
                       <div className="flex flex-wrap items-center justify-between gap-1 text-xs text-slate-500">
-                        <span className="font-semibold text-slate-700">#{m.id} • R{m.round_number ?? "-"} • {m.status}</span>
+                        <span className="font-semibold text-slate-700">#{m.id} - R{m.round_number ?? "-"} - {m.status}</span>
                         <span>{formatDateTime(m.scheduled_at)}</span>
                       </div>
                       <div className="text-sm font-medium text-slate-900">

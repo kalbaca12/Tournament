@@ -18,6 +18,10 @@ class Tournament extends Model
         'allowed_days',
         'time_slots',
         'venues_count',
+        'venue_names',
+        'playoff_round_gap_days',
+        'groups_to_playoffs_gap_days',
+        'group_games_per_day',
         'registration_deadline',
         'participants_locked',
     ];
@@ -27,6 +31,7 @@ class Tournament extends Model
         return [
             'allowed_days' => 'array',
             'time_slots' => 'array',
+            'venue_names' => 'array',
             'participants_locked' => 'boolean',
         ];
     }

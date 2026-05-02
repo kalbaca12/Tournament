@@ -1,35 +1,87 @@
-﻿import { NavLink, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { tournamentsApi } from "../api/tournaments";
 import { useAuth } from "../auth/useAuth";
+import { useToast } from "./useToast";
 
 const linkClass = ({ isActive }) =>
-  [
-    "rounded px-3 py-2 text-sm font-medium transition",
-    isActive ? "bg-slate-900 !text-white" : "text-slate-700 hover:bg-slate-100",
-  ].join(" ");
+  ["app-nav__link", isActive ? "is-active" : ""].join(" ");
 
 export default function Nav() {
   const nav = useNavigate();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, isAdmin, isManager, logout } = useAuth();
+  const { showToast } = useToast();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(0);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const closeMenu = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    window.addEventListener("pointerdown", closeMenu);
+    return () => window.removeEventListener("pointerdown", closeMenu);
+  }, []);
+
+  useEffect(() => {
+    const loadNotifications = async () => {
+      if (!isAuthenticated || (!isAdmin && !isManager)) {
+        setNotificationCount(0);
+        return;
+      }
+
+      try {
+        const tournamentsRes = await tournamentsApi.list();
+        const tournaments = (tournamentsRes.data || []).slice(0, 8);
+        const results = await Promise.allSettled(
+          tournaments.map((tournament) => (
+            isAdmin
+              ? tournamentsApi.participationRequests(tournament.id)
+              : tournamentsApi.myParticipationRequests(tournament.id)
+          )),
+        );
+        const count = results.reduce((total, result) => {
+          if (result.status !== "fulfilled") return total;
+          return total + (result.value.data || []).filter((request) => request.status === "pending").length;
+        }, 0);
+        setNotificationCount(count);
+      } catch {
+        setNotificationCount(0);
+      }
+    };
+
+    loadNotifications();
+  }, [isAdmin, isAuthenticated, isManager]);
 
   const onLogout = async () => {
     await logout();
+    showToast("Signed out.");
+    setIsMenuOpen(false);
     nav("/tournaments");
   };
 
   return (
-    <header className="sticky top-0 z-20 border-b border-slate-300 bg-white">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-2.5">
-        <div className="flex items-center gap-3">
-          <div className="grid h-8 w-8 place-items-center rounded-md bg-orange-500 text-xs font-bold text-white">
-            BB
+    <header className="app-header">
+      <div className="app-header__inner">
+        <div className="app-brand">
+          <div className="app-brand__mark">
+            <span>BB</span>
           </div>
-          <div>
-            <div className="font-semibold leading-tight">Basketball System</div>
-            <div className="text-xs text-slate-500">Tournament Management</div>
+          <div className="app-brand__copy">
+            <div className="app-brand__title">Basketball System</div>
+            <div className="app-brand__subtitle">Tournament Management Desk</div>
           </div>
         </div>
 
-        <nav className="flex items-center gap-2">
+        <nav className="app-nav">
+          {isAuthenticated && (
+            <NavLink to="/dashboard" className={linkClass}>
+              Dashboard
+            </NavLink>
+          )}
           <NavLink to="/tournaments" className={linkClass}>
             Tournaments
           </NavLink>
@@ -41,19 +93,31 @@ export default function Nav() {
               Login
             </NavLink>
           ) : (
-            <>
-              <span className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold uppercase text-slate-600">
-                {user?.role}
-              </span>
-              <button onClick={onLogout} className="btn-secondary">
-                Logout
+            <div ref={menuRef} className="profile-menu">
+              <button type="button" className="profile-menu__trigger" onClick={() => setIsMenuOpen((current) => !current)}>
+                <span className="profile-menu__avatar">{(user?.name || user?.role || "U").slice(0, 1).toUpperCase()}</span>
+                <span className="profile-menu__copy">
+                  <span className="profile-menu__name">{user?.name || user?.role}</span>
+                  <span className="profile-menu__role">{user?.role}</span>
+                </span>
+                {notificationCount > 0 ? <span className="profile-menu__badge-dot">{notificationCount}</span> : null}
               </button>
-            </>
+              {isMenuOpen && (
+                <div className="profile-menu__panel">
+                  <div className="profile-menu__email">{user?.email}</div>
+                  <div className="profile-menu__badge">{notificationCount > 0 ? `${notificationCount} pending request${notificationCount === 1 ? "" : "s"}` : user?.role}</div>
+                  <NavLink to="/dashboard" className="profile-menu__item" onClick={() => setIsMenuOpen(false)}>
+                    Dashboard
+                  </NavLink>
+                  <button type="button" onClick={onLogout} className="profile-menu__item profile-menu__item--danger">
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
           )}
         </nav>
       </div>
     </header>
   );
 }
-
-

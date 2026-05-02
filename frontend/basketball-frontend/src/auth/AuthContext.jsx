@@ -33,10 +33,11 @@ export function AuthProvider({ children }) {
     try {
       await authApi.logout();
     } catch {
-      return;
+      // Still clear the local session if the token is already expired server-side.
+    } finally {
+      localStorage.removeItem("auth_token");
+      setUser(null);
     }
-    localStorage.removeItem("auth_token");
-    setUser(null);
   };
 
   const value = useMemo(

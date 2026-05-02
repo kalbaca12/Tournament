@@ -9,29 +9,44 @@ import TeamCreate from "./pages/TeamCreate";
 import TeamView from "./pages/TeamView";
 import MatchView from "./pages/MatchView";
 import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import "./App.css";
 
 function AccessDenied({ requiredRole }) {
   return (
-    <div className="panel mx-auto max-w-2xl p-5">
-      <h1 className="text-2xl font-semibold text-slate-900">Access denied</h1>
-      <p className="mt-1 text-slate-600">This action requires role: {requiredRole}.</p>
+    <div className="panel mx-auto max-w-2xl p-6">
+      <p className="page-kicker">Restricted</p>
+      <h1 className="page-title mt-2 text-2xl">Access denied</h1>
+      <p className="page-copy mt-2">This action requires role: {requiredRole}.</p>
     </div>
   );
 }
 
 export default function App() {
-  const { loading, isAdmin, isManager } = useAuth();
+  const { loading, isAdmin, isManager, isAuthenticated } = useAuth();
 
   if (loading) {
-    return <div className="mx-auto max-w-5xl px-4 py-6 text-slate-500">Loading...</div>;
+    return (
+      <div className="app-shell">
+        <div className="app-shell__backdrop" />
+        <div className="app-shell__grid" />
+        <div className="app-loading">
+          <div className="app-loading__label">Basketball Control Center</div>
+          <div className="app-loading__text">Loading workspace...</div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen text-slate-900">
+    <div className="app-shell">
+      <div className="app-shell__backdrop" />
+      <div className="app-shell__grid" />
       <Nav />
-      <main className="mx-auto max-w-5xl px-4 py-6">
+      <main className="app-main">
         <Routes>
-          <Route path="/" element={<Navigate to="/tournaments" />} />
+          <Route path="/" element={<Navigate to={isAuthenticated ? "/dashboard" : "/tournaments"} />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/login" element={<Login />} />
 
           <Route path="/tournaments" element={<TournamentsList />} />

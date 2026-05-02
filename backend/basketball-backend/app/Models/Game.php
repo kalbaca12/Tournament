@@ -13,6 +13,7 @@ class Game extends Model
         'home_team_id',
         'away_team_id',
         'venue_id',
+        'venue_slot',
         'stage',
         'group_code',
         'round_number',

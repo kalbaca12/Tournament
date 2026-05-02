@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Team;
 use App\Models\Tournament;
+use App\Models\TournamentParticipationRequest;
 use App\Models\TournamentTeam;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class TournamentTeamController extends Controller
 {
@@ -59,10 +61,16 @@ class TournamentTeamController extends Controller
             return response()->json(['message' => 'Participants are locked for this tournament.'], 409);
         }
 
-        TournamentTeam::where('tournament_id', $tournament->id)
-            ->where('team_id', $team->id)
-            ->delete();
+        DB::transaction(function () use ($tournament, $team): void {
+            TournamentTeam::where('tournament_id', $tournament->id)
+                ->where('team_id', $team->id)
+                ->delete();
 
-        return response()->json(['message' => 'Unregistered'], 200);
+            TournamentParticipationRequest::where('tournament_id', $tournament->id)
+                ->where('team_id', $team->id)
+                ->delete();
+        });
+
+        return response()->json(['message' => 'Unregistered and related requests removed'], 200);
     }
 }

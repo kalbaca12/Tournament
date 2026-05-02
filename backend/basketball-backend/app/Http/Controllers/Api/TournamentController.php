@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tournament;
+use App\Support\PdfExportBuilder;
 use App\Models\TournamentTeam;
 use App\Support\SchedulingFeasibility;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class TournamentController extends Controller
 {
@@ -30,6 +32,24 @@ class TournamentController extends Controller
         return SchedulingFeasibility::evaluate($tournament, $teamCount);
     }
 
+    public function exportPdf(Request $request, Tournament $tournament)
+    {
+        $validated = $request->validate([
+            'sections' => ['nullable', 'array'],
+            'sections.*' => ['string', 'in:teams,standings,schedule,playoffs,feasibility'],
+        ]);
+
+        $pdf = PdfExportBuilder::tournament($tournament, $validated['sections'] ?? []);
+        $name = Str::slug($tournament->name ?: ('tournament-' . $tournament->id));
+        $filename = ($name !== '' ? $name : 'tournament-' . $tournament->id) . '-report.pdf';
+
+        return response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Length' => (string) strlen($pdf),
+        ]);
+    }
+
     public function store(Request $request)
     {
         $user = $request->user();
@@ -39,8 +59,8 @@ class TournamentController extends Controller
 
         $validated = $request->validate([
             'name' => ['required','string','max:150'],
-            'start_date' => ['required','date'],
-            'end_date' => ['nullable','date','after_or_equal:start_date'],
+            'start_date' => ['nullable','date'],
+            'end_date' => ['required','date'],
             'format' => ['required','in:round_robin,groups_playoffs,single_elimination'],
             'max_teams' => ['nullable', 'integer', 'min:2', 'max:512'],
             'duration_weeks' => ['nullable', 'integer', 'min:1', 'max:52'],
@@ -48,6 +68,12 @@ class TournamentController extends Controller
             'allowed_days.*' => ['integer', 'between:1,7'],
             'time_slots' => ['nullable', 'array'],
             'time_slots.*' => ['string', 'max:10'],
+            'venues_count' => ['nullable', 'integer', 'min:1', 'max:20'],
+            'venue_names' => ['nullable', 'array'],
+            'venue_names.*' => ['nullable', 'string', 'max:120'],
+            'playoff_round_gap_days' => ['nullable', 'integer', 'min:0', 'max:30'],
+            'groups_to_playoffs_gap_days' => ['nullable', 'integer', 'min:0', 'max:30'],
+            'group_games_per_day' => ['nullable', 'integer', 'min:1', 'max:100'],
             'registration_deadline' => ['nullable', 'date'],
         ]);
 
@@ -55,7 +81,11 @@ class TournamentController extends Controller
         $validated['status'] = 'draft';
         $validated['participants_locked'] = false;
         $validated['duration_weeks'] = $validated['duration_weeks'] ?? 1;
-        $validated['venues_count'] = 1;
+        $validated['venues_count'] = $validated['venues_count'] ?? 1;
+        $validated['start_date'] = $validated['start_date'] ?? $validated['end_date'];
+        $validated['playoff_round_gap_days'] = $validated['playoff_round_gap_days'] ?? 1;
+        $validated['groups_to_playoffs_gap_days'] = $validated['groups_to_playoffs_gap_days'] ?? 1;
+        $validated['venue_names'] = $this->normalizeVenueNames($validated['venue_names'] ?? [], (int) $validated['venues_count']);
 
         $tournament = Tournament::create($validated);
 
@@ -66,7 +96,7 @@ class TournamentController extends Controller
     {
         $validated = $request->validate([
             'name' => ['sometimes','string','max:150'],
-            'start_date' => ['sometimes','date'],
+            'start_date' => ['nullable','date'],
             'end_date' => ['nullable','date'],
             'format' => ['sometimes','in:round_robin,groups_playoffs,single_elimination'],
             'status' => ['sometimes','in:draft,published,finished,cancelled'],
@@ -76,11 +106,22 @@ class TournamentController extends Controller
             'allowed_days.*' => ['integer', 'between:1,7'],
             'time_slots' => ['nullable', 'array'],
             'time_slots.*' => ['string', 'max:10'],
+            'venues_count' => ['nullable', 'integer', 'min:1', 'max:20'],
+            'venue_names' => ['nullable', 'array'],
+            'venue_names.*' => ['nullable', 'string', 'max:120'],
+            'playoff_round_gap_days' => ['nullable', 'integer', 'min:0', 'max:30'],
+            'groups_to_playoffs_gap_days' => ['nullable', 'integer', 'min:0', 'max:30'],
+            'group_games_per_day' => ['nullable', 'integer', 'min:1', 'max:100'],
             'registration_deadline' => ['nullable', 'date'],
             'participants_locked' => ['sometimes', 'boolean'],
         ]);
 
-        $validated['venues_count'] = 1;
+        $validated['venues_count'] = $validated['venues_count'] ?? ($tournament->venues_count ?? 1);
+        $validated['playoff_round_gap_days'] = $validated['playoff_round_gap_days'] ?? ($tournament->playoff_round_gap_days ?? 1);
+        $validated['groups_to_playoffs_gap_days'] = $validated['groups_to_playoffs_gap_days'] ?? ($tournament->groups_to_playoffs_gap_days ?? 1);
+        if (array_key_exists('venue_names', $validated)) {
+            $validated['venue_names'] = $this->normalizeVenueNames($validated['venue_names'] ?? [], (int) $validated['venues_count']);
+        }
 
         $tournament->update($validated);
 
@@ -107,5 +148,18 @@ class TournamentController extends Controller
     {
         $tournament->delete();
         return response()->json(['message' => 'Deleted'], 200);
+    }
+
+    private function normalizeVenueNames(array $venueNames, int $venuesCount): array
+    {
+        $venuesCount = max(1, min(20, $venuesCount));
+        $normalized = [];
+
+        for ($index = 0; $index < $venuesCount; $index++) {
+            $name = trim((string) ($venueNames[$index] ?? ''));
+            $normalized[] = $name !== '' ? $name : 'Court ' . ($index + 1);
+        }
+
+        return $normalized;
     }
 }
