@@ -609,7 +609,7 @@ a.btn-primary:hover {
 .gp-sim-grid {
   display: grid;
   gap: 16px;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .gp-sim-panel {
@@ -653,10 +653,10 @@ a.btn-primary:hover {
 }
 
 .gp-sim-match-list {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 8px;
   margin-top: 14px;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 .gp-sim-match-card {
@@ -781,7 +781,7 @@ a.btn-primary:hover {
     padding: 16px;
   }
 
-  .gp-sim-match-list {
+  .gp-sim-grid {
     grid-template-columns: 1fr;
   }
 }
