@@ -72,6 +72,8 @@ function stagePlanningCopy(format) {
 }
 
 const TIME_SLOT_COUNTS = [2, 4, 6, 8];
+const GROUPS_PLAYOFFS_TEAM_COUNTS = [4, 8, 16];
+const RULE_LABEL_CLASS = "flex min-h-[2.75rem] items-end text-sm font-medium text-slate-700";
 const DEFAULT_TIME_SLOTS = ["12:00", "14:00", "16:00", "18:00", "20:00", "22:00", "09:00", "11:00"];
 
 function normalizeTimeSlots(value) {
@@ -87,6 +89,11 @@ function resizeTimeSlots(slots, count) {
 function normalizeGamesPerDay(value, fallback = 4) {
   const count = Number(value) || fallback;
   return TIME_SLOT_COUNTS.includes(count) ? count : fallback;
+}
+
+function normalizeGroupPlayoffTeamCount(value) {
+  const count = Number(value) || 8;
+  return GROUPS_PLAYOFFS_TEAM_COUNTS.includes(count) ? count : 8;
 }
 
 function OverviewAccordion({ title, subtitle, isOpen, onToggle, children, actions = null }) {
@@ -411,6 +418,12 @@ export default function TournamentView() {
     }
     if (!editForm.end_date) {
       const message = "Please select the final day.";
+      setErr(message);
+      if (!silent) showToast(message, "error");
+      return null;
+    }
+    if (editForm.format === "groups_playoffs" && !GROUPS_PLAYOFFS_TEAM_COUNTS.includes(Number(editForm.max_teams))) {
+      const message = "Groups + playoffs supports 4, 8, or 16 teams.";
       setErr(message);
       if (!silent) showToast(message, "error");
       return null;
@@ -1029,8 +1042,40 @@ export default function TournamentView() {
                 <input className="input" placeholder="https://..." value={editForm.banner_url} onChange={(e) => setEditForm({ ...editForm, banner_url: e.target.value })} />
               </div>
               <div className="space-y-1">
+                <label className="text-sm font-medium text-slate-700">Tournament format</label>
+                <select
+                  className="input"
+                  value={editForm.format}
+                  onChange={(e) => {
+                    const nextFormat = e.target.value;
+                    setEditForm({
+                      ...editForm,
+                      format: nextFormat,
+                      max_teams: nextFormat === "groups_playoffs" ? normalizeGroupPlayoffTeamCount(editForm.max_teams) : editForm.max_teams,
+                    });
+                  }}
+                >
+                  <option value="round_robin">round_robin</option>
+                  <option value="groups_playoffs">groups_playoffs</option>
+                  <option value="single_elimination">single_elimination</option>
+                </select>
+              </div>
+              <div className="space-y-1">
                 <label className="text-sm font-medium text-slate-700">Max teams</label>
-                <input className="input" type="number" min={2} placeholder="Max teams" value={editForm.max_teams} onChange={(e) => setEditForm({ ...editForm, max_teams: e.target.value })} />
+                {editForm.format === "groups_playoffs" ? (
+                  <select
+                    key="groups-playoffs-max-teams"
+                    className="input"
+                    value={normalizeGroupPlayoffTeamCount(editForm.max_teams)}
+                    onChange={(e) => setEditForm({ ...editForm, max_teams: Number(e.target.value) })}
+                  >
+                    {GROUPS_PLAYOFFS_TEAM_COUNTS.map((count) => (
+                      <option key={count} value={count}>{count} teams</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input key="open-max-teams" className="input" type="number" min={2} placeholder="Max teams" value={editForm.max_teams} onChange={(e) => setEditForm({ ...editForm, max_teams: e.target.value })} />
+                )}
               </div>
               <div className="space-y-1">
                 <div className="space-y-1">
@@ -1046,14 +1091,6 @@ export default function TournamentView() {
             )}
             <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
               <div className="space-y-1">
-                <label className="text-sm font-medium text-slate-700">Tournament format</label>
-                <select className="input" value={editForm.format} onChange={(e) => setEditForm({ ...editForm, format: e.target.value })}>
-                  <option value="round_robin">round_robin</option>
-                  <option value="groups_playoffs">groups_playoffs</option>
-                  <option value="single_elimination">single_elimination</option>
-                </select>
-              </div>
-              <div className="space-y-1">
                 <label className="text-sm font-medium text-slate-700">Status</label>
                 <select className="input" value={editForm.status} onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}>
                   <option value="draft">draft</option>
@@ -1065,7 +1102,7 @@ export default function TournamentView() {
             </div>
             <div className={`grid grid-cols-1 gap-2 ${planningCopy.usesStagePlanning ? "md:grid-cols-4" : "md:grid-cols-2"}`}>
               <div className="space-y-1">
-                <label className="text-sm font-medium text-slate-700">Days between playoff rounds</label>
+                <label className={RULE_LABEL_CLASS}>Days between playoff rounds</label>
                 <input
                   className="input"
                   type="number"
@@ -1077,7 +1114,7 @@ export default function TournamentView() {
               </div>
               {planningCopy.usesStagePlanning && (
                 <div className="space-y-1">
-                  <label className="text-sm font-medium text-slate-700">{planningCopy.gapLabel}</label>
+                  <label className={RULE_LABEL_CLASS}>{planningCopy.gapLabel}</label>
                   <input
                     className="input"
                     type="number"
@@ -1090,7 +1127,20 @@ export default function TournamentView() {
               )}
               {planningCopy.usesStagePlanning && (
                 <div className="space-y-1">
-                  <label className="text-sm font-medium text-slate-700">{planningCopy.capLabel}</label>
+                  <label className={RULE_LABEL_CLASS}>Days between {planningCopy.stageName} match days</label>
+                  <input
+                    className="input"
+                    type="number"
+                    min={0}
+                    max={30}
+                    value={editForm.stage_day_gap_days}
+                    onChange={(e) => setEditForm({ ...editForm, stage_day_gap_days: e.target.value })}
+                  />
+                </div>
+              )}
+              {planningCopy.usesStagePlanning && (
+                <div className="space-y-1">
+                  <label className={RULE_LABEL_CLASS}>{planningCopy.capLabel}</label>
                   <select
                     className="input"
                     value={editForm.group_games_per_day}
@@ -1107,19 +1157,6 @@ export default function TournamentView() {
                       <option key={count} value={count}>{count} games per day</option>
                     ))}
                   </select>
-                </div>
-              )}
-              {planningCopy.usesStagePlanning && (
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-slate-700">Days between {planningCopy.stageName} match days</label>
-                  <input
-                    className="input"
-                    type="number"
-                    min={0}
-                    max={30}
-                    value={editForm.stage_day_gap_days}
-                    onChange={(e) => setEditForm({ ...editForm, stage_day_gap_days: e.target.value })}
-                  />
                 </div>
               )}
             </div>

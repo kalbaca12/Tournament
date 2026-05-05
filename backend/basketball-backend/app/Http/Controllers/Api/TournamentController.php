@@ -77,6 +77,10 @@ class TournamentController extends Controller
             'registration_deadline' => ['nullable', 'date'],
         ]);
 
+        if (($validated['format'] ?? null) === 'groups_playoffs' && !$this->isValidGroupsPlayoffsTeamCount($validated['max_teams'] ?? null)) {
+            return response()->json(['message' => 'Groups + playoffs tournaments support 4, 8, or 16 teams.'], 422);
+        }
+
         $validated['created_by'] = $user->id;
         $validated['status'] = 'draft';
         $validated['participants_locked'] = false;
@@ -115,6 +119,12 @@ class TournamentController extends Controller
             'registration_deadline' => ['nullable', 'date'],
             'participants_locked' => ['sometimes', 'boolean'],
         ]);
+
+        $nextFormat = $validated['format'] ?? $tournament->format;
+        $nextMaxTeams = array_key_exists('max_teams', $validated) ? $validated['max_teams'] : $tournament->max_teams;
+        if ($nextFormat === 'groups_playoffs' && !$this->isValidGroupsPlayoffsTeamCount($nextMaxTeams)) {
+            return response()->json(['message' => 'Groups + playoffs tournaments support 4, 8, or 16 teams.'], 422);
+        }
 
         $validated['playoff_round_gap_days'] = $validated['playoff_round_gap_days'] ?? ($tournament->playoff_round_gap_days ?? 1);
         $validated['groups_to_playoffs_gap_days'] = $validated['groups_to_playoffs_gap_days'] ?? ($tournament->groups_to_playoffs_gap_days ?? 1);
@@ -163,5 +173,10 @@ class TournamentController extends Controller
                 $fail('Choose 2, 4, 6, or 8 time slots.');
             }
         };
+    }
+
+    private function isValidGroupsPlayoffsTeamCount(mixed $teamCount): bool
+    {
+        return in_array((int) $teamCount, [4, 8, 16], true);
     }
 }

@@ -71,7 +71,10 @@ class TournamentSchedulePlannerTest extends TestCase
     public function playoff_round_sizes_are_calculated_for_supported_formats(): void
     {
         self::assertSame([4, 2, 1], TournamentSchedulePlanner::playoffRoundSizes('single_elimination', 8));
-        self::assertSame([4, 2, 1], TournamentSchedulePlanner::playoffRoundSizes('groups_playoffs', 10));
+        self::assertSame([1], TournamentSchedulePlanner::playoffRoundSizes('groups_playoffs', 4));
+        self::assertSame([2, 1], TournamentSchedulePlanner::playoffRoundSizes('groups_playoffs', 8));
+        self::assertSame([], TournamentSchedulePlanner::playoffRoundSizes('groups_playoffs', 10));
+        self::assertSame([4, 2, 1], TournamentSchedulePlanner::playoffRoundSizes('groups_playoffs', 16));
         self::assertSame([2, 1], TournamentSchedulePlanner::playoffRoundSizes('round_robin', 8));
         self::assertSame([], TournamentSchedulePlanner::playoffRoundSizes('round_robin', 3));
     }

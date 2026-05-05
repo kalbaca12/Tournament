@@ -11,6 +11,20 @@ use Tests\TestCase;
 class ScheduleControllerTest extends TestCase
 {
     #[Test]
+    public function four_team_groups_playoffs_creates_only_a_final_after_group_stage(): void
+    {
+        $controller = new ScheduleController();
+        $plannedMatches = $this->invokeControllerMethod($controller, 'buildGroupsPlayoffsMatches', range(1, 4));
+
+        $groupMatches = array_values(array_filter($plannedMatches, fn (array $row) => ($row['stage'] ?? null) === 'group'));
+        $playoffMatches = array_values(array_filter($plannedMatches, fn (array $row) => ($row['stage'] ?? null) === 'playoffs'));
+
+        self::assertCount(6, $groupMatches);
+        self::assertCount(1, $playoffMatches);
+        self::assertSame(1, $playoffMatches[0]['round_number']);
+    }
+
+    #[Test]
     public function groups_playoffs_stage_days_are_spread_out_and_finish_before_playoffs(): void
     {
         $controller = new ScheduleController();
@@ -55,7 +69,7 @@ class ScheduleControllerTest extends TestCase
         );
 
         self::assertCount(3, $teamOneGroupGames);
-        self::assertSame(['2026-04-09', '2026-04-11', '2026-04-13'], $dates);
+        self::assertSame(['2026-04-11', '2026-04-13', '2026-04-15'], $dates);
         self::assertNotEmpty($groupStageTimestamps);
         self::assertNotEmpty($playoffTimestamps);
         self::assertLessThan(min($playoffTimestamps), max($groupStageTimestamps));

@@ -47,6 +47,9 @@ class ScheduleController extends Controller
         if (count($teams) < 2) {
             return response()->json(['message' => 'Need at least 2 teams registered.'], 409);
         }
+        if ($tournament->format === 'groups_playoffs' && !in_array(count($teams), [4, 8, 16], true)) {
+            return response()->json(['message' => 'Groups + playoffs schedule generation requires exactly 4, 8, or 16 registered teams.'], 409);
+        }
 
         $planningConfig = $this->buildPlanningConfig($tournament, $validated);
         $tournament->fill($planningConfig);
@@ -409,14 +412,7 @@ class ScheduleController extends Controller
 
     private function playoffQualifiedCount(int $teamCount): int
     {
-        if ($teamCount >= 8) {
-            return 8;
-        }
-        if ($teamCount >= 4) {
-            return 4;
-        }
-
-        return $teamCount >= 2 ? 2 : 0;
+        return TournamentProgression::playoffQualifiedCountForTeamCount($teamCount);
     }
 
     private function roundRobinPlayoffQualifiedCount(int $teamCount): int

@@ -138,14 +138,11 @@ class TournamentProgression
 
     public static function playoffQualifiedCountForTeamCount(int $teamCount): int
     {
-        if ($teamCount >= 8) {
-            return 8;
-        }
-        if ($teamCount >= 4) {
-            return 4;
+        if (!in_array($teamCount, [4, 8, 16], true)) {
+            return 0;
         }
 
-        return $teamCount >= 2 ? 2 : 0;
+        return intdiv($teamCount, 2);
     }
 
     public static function roundRobinPlayoffQualifiedCountForTeamCount(int $teamCount): int

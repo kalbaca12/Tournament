@@ -163,7 +163,7 @@ class TournamentSchedulePlanner
 
         return match ($format) {
             'single_elimination' => self::singleEliminationRoundSizes($teamCount),
-            'groups_playoffs' => self::shellRoundSizes(self::playoffQualifiedCount($teamCount)),
+            'groups_playoffs' => self::shellRoundSizes(TournamentProgression::playoffQualifiedCountForTeamCount($teamCount)),
             'round_robin' => self::shellRoundSizes(self::roundRobinPlayoffQualifiedCount($teamCount)),
             default => [],
         };
@@ -394,18 +394,6 @@ class TournamentSchedulePlanner
         }
 
         return $sizes;
-    }
-
-    private static function playoffQualifiedCount(int $teamCount): int
-    {
-        if ($teamCount >= 8) {
-            return 8;
-        }
-        if ($teamCount >= 4) {
-            return 4;
-        }
-
-        return $teamCount >= 2 ? 2 : 0;
     }
 
     private static function roundRobinPlayoffQualifiedCount(int $teamCount): int

@@ -28,6 +28,8 @@ function stageCopy(format) {
 }
 
 const TIME_SLOT_COUNTS = [2, 4, 6, 8];
+const GROUPS_PLAYOFFS_TEAM_COUNTS = [4, 8, 16];
+const RULE_LABEL_CLASS = "flex min-h-[2.75rem] items-end text-sm font-medium text-slate-700";
 const DEFAULT_TIME_SLOTS = ["12:00", "14:00", "16:00", "18:00", "20:00", "22:00", "09:00", "11:00"];
 
 function normalizeTimeSlots(value) {
@@ -38,6 +40,11 @@ function normalizeTimeSlots(value) {
 function resizeTimeSlots(slots, count) {
   const current = normalizeTimeSlots(slots);
   return Array.from({ length: count }, (_, index) => current[index] || DEFAULT_TIME_SLOTS[index] || "12:00");
+}
+
+function normalizeGroupPlayoffTeamCount(value) {
+  const count = Number(value) || 8;
+  return GROUPS_PLAYOFFS_TEAM_COUNTS.includes(count) ? count : 8;
 }
 
 export default function TournamentCreate() {
@@ -88,6 +95,9 @@ export default function TournamentCreate() {
     if (!liveForm.name.trim()) nextErrors.name = "Tournament name is required.";
     if (!liveForm.end_date) nextErrors.end_date = "Please select the final day.";
     if (!liveForm.max_teams || Number(liveForm.max_teams) < 2) nextErrors.max_teams = "At least 2 teams are required.";
+    if (liveForm.format === "groups_playoffs" && !GROUPS_PLAYOFFS_TEAM_COUNTS.includes(Number(liveForm.max_teams))) {
+      nextErrors.max_teams = "Groups + playoffs supports 4, 8, or 16 teams.";
+    }
     if (Object.keys(nextErrors).length > 0) {
       setFieldErrors(nextErrors);
       return;
@@ -165,7 +175,14 @@ export default function TournamentCreate() {
               className="input"
               name="format"
               value={form.format}
-              onChange={(e) => setForm({ ...form, format: e.target.value })}
+              onChange={(e) => {
+                const nextFormat = e.target.value;
+                setForm({
+                  ...form,
+                  format: nextFormat,
+                  max_teams: nextFormat === "groups_playoffs" ? normalizeGroupPlayoffTeamCount(form.max_teams) : form.max_teams,
+                });
+              }}
             >
               <option value="round_robin">round_robin</option>
               <option value="groups_playoffs">groups_playoffs</option>
@@ -185,16 +202,31 @@ export default function TournamentCreate() {
           </div>
           <div className="space-y-1">
             <label className="text-sm font-medium text-slate-700">Max teams</label>
-            <input
-              className="input"
-              type="number"
-              name="max_teams"
-              min={2}
-              max={512}
-              placeholder="Max teams"
-              value={form.max_teams}
-              onChange={(e) => setForm({ ...form, max_teams: e.target.value })}
-            />
+            {form.format === "groups_playoffs" ? (
+              <select
+                key="groups-playoffs-max-teams"
+                className="input"
+                name="max_teams"
+                value={normalizeGroupPlayoffTeamCount(form.max_teams)}
+                onChange={(e) => setForm({ ...form, max_teams: Number(e.target.value) })}
+              >
+                {GROUPS_PLAYOFFS_TEAM_COUNTS.map((count) => (
+                  <option key={count} value={count}>{count} teams</option>
+                ))}
+              </select>
+            ) : (
+              <input
+                key="open-max-teams"
+                className="input"
+                type="number"
+                name="max_teams"
+                min={2}
+                max={512}
+                placeholder="Max teams"
+                value={form.max_teams}
+                onChange={(e) => setForm({ ...form, max_teams: e.target.value })}
+              />
+            )}
             {fieldErrors.max_teams ? <div className="text-sm text-red-600">{fieldErrors.max_teams}</div> : null}
           </div>
         </div>
@@ -209,7 +241,7 @@ export default function TournamentCreate() {
 
           <div className={`grid grid-cols-1 gap-3 ${usesStagePlanning ? "md:grid-cols-4" : "md:grid-cols-2"}`}>
             <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-700">Days between playoff rounds</label>
+              <label className={RULE_LABEL_CLASS}>Days between playoff rounds</label>
               <input
                 className="input"
                 type="number"
@@ -222,7 +254,7 @@ export default function TournamentCreate() {
             </div>
             {usesStagePlanning && (
               <div className="space-y-1">
-                <label className="text-sm font-medium text-slate-700">{stageDetails.gapLabel}</label>
+                <label className={RULE_LABEL_CLASS}>{stageDetails.gapLabel}</label>
                 <input
                   className="input"
                   type="number"
@@ -236,7 +268,7 @@ export default function TournamentCreate() {
             )}
             {usesStagePlanning && (
               <div className="space-y-1">
-                <label className="text-sm font-medium text-slate-700">Days between {stageDetails.stageName} match days</label>
+                <label className={RULE_LABEL_CLASS}>Days between {stageDetails.stageName} match days</label>
                 <input
                   className="input"
                   type="number"
@@ -250,7 +282,7 @@ export default function TournamentCreate() {
             )}
             {usesStagePlanning && (
               <div className="space-y-1">
-                <label className="text-sm font-medium text-slate-700">{stageDetails.capLabel}</label>
+                <label className={RULE_LABEL_CLASS}>{stageDetails.capLabel}</label>
                 <select
                   className="input"
                   name="group_games_per_day"

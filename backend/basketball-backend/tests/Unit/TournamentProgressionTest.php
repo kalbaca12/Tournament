@@ -179,9 +179,11 @@ class TournamentProgressionTest extends TestCase
     public function qualifier_counts_are_calculated_from_team_count_without_database(): void
     {
         self::assertSame(0, TournamentProgression::playoffQualifiedCountForTeamCount(1));
-        self::assertSame(2, TournamentProgression::playoffQualifiedCountForTeamCount(2));
-        self::assertSame(4, TournamentProgression::playoffQualifiedCountForTeamCount(4));
-        self::assertSame(8, TournamentProgression::playoffQualifiedCountForTeamCount(12));
+        self::assertSame(0, TournamentProgression::playoffQualifiedCountForTeamCount(2));
+        self::assertSame(2, TournamentProgression::playoffQualifiedCountForTeamCount(4));
+        self::assertSame(4, TournamentProgression::playoffQualifiedCountForTeamCount(8));
+        self::assertSame(0, TournamentProgression::playoffQualifiedCountForTeamCount(12));
+        self::assertSame(8, TournamentProgression::playoffQualifiedCountForTeamCount(16));
 
         self::assertSame(0, TournamentProgression::roundRobinPlayoffQualifiedCountForTeamCount(3));
         self::assertSame(2, TournamentProgression::roundRobinPlayoffQualifiedCountForTeamCount(4));
