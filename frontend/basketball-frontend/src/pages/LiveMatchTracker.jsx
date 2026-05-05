@@ -911,9 +911,6 @@ export default function LiveMatchTracker() {
           <div>
             <p className="section-heading__eyebrow">Live Match Tracker</p>
             <h1 className="section-heading__title">{teamName(match, "home")} vs {teamName(match, "away")}</h1>
-            <p className="section-heading__copy">
-              Quarter {tracker.quarter} - {formatClock(currentElapsed())}
-            </p>
           </div>
           <div className="page-actions">
             <button onClick={() => nav(`/matches/${id}`)} className="btn-secondary">Back to match</button>
@@ -1020,7 +1017,10 @@ export default function LiveMatchTracker() {
             <div className="font-semibold text-slate-900">Add event</div>
             <div className="text-sm text-slate-500">Press Add event, then follow the visible buttons.</div>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900">
+              Q{tracker.quarter} {formatClock(currentElapsed())}
+            </div>
             <button
               type="button"
               onClick={startTimer}
