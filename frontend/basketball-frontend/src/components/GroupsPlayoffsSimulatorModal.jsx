@@ -122,9 +122,8 @@ function applyWinnerToTable(table, match, winnerSide, scoreRow) {
 }
 
 function playoffQualifiedCount(teamCount) {
-  if (teamCount >= 8) return 8;
-  if (teamCount >= 4) return 4;
-  return teamCount >= 2 ? 2 : 0;
+  if (![4, 8, 16].includes(Number(teamCount))) return 0;
+  return Math.floor(Number(teamCount) / 2);
 }
 
 function pairedGroupCrossovers(groups, qualifiersPerGroup) {

@@ -47,6 +47,7 @@ class DatabaseSeeder extends Seeder
         $this->seedFinishedTournament($adminId, array_slice($teamIds, 0, 4));
         $this->seedScheduleTestTournament($adminId, $teamIds);
         $this->seedLiveGroupsPlayoffsTournament($adminId, $playoffTeamIds);
+        $this->seedQualificationRaceTournament($adminId, array_slice($playoffTeamIds, 8, 8));
         $this->backfillTournamentBanners();
     }
 
@@ -424,6 +425,143 @@ class DatabaseSeeder extends Seeder
 
         $this->seedLiveDemoBoxScore($firstMatchId, $groups[0][0], $groups[0][3]);
         $this->seedRemainingLiveDemoMatches($tournamentId, $groups);
+    }
+
+    private function seedQualificationRaceTournament(?int $adminId, array $teamIds): void
+    {
+        $teamIds = array_values($teamIds);
+
+        if (count($teamIds) < 8) {
+            return;
+        }
+
+        $name = 'Demo: Qualification Race';
+        $tournamentId = DB::table('tournaments')->where('name', $name)->value('id');
+        $payload = [
+            'name' => $name,
+            'banner_url' => 'https://images.unsplash.com/photo-1519861531473-9200262188bf?auto=format&fit=crop&w=1200&q=80',
+            'start_date' => '2026-05-20',
+            'end_date' => '2026-05-31',
+            'format' => 'groups_playoffs',
+            'status' => 'draft',
+            'created_by' => $adminId,
+            'max_teams' => 8,
+            'duration_weeks' => 2,
+            'allowed_days' => json_encode([1, 2, 3, 4, 5, 6, 7]),
+            'time_slots' => json_encode(['12:00', '14:00', '16:00', '18:00']),
+            'venues_count' => 1,
+            'venue_names' => json_encode(['Main Court']),
+            'playoff_round_gap_days' => 1,
+            'groups_to_playoffs_gap_days' => 1,
+            'group_games_per_day' => 4,
+            'stage_day_gap_days' => 0,
+            'registration_deadline' => null,
+            'participants_locked' => true,
+            'updated_at' => now(),
+        ];
+
+        if ($tournamentId) {
+            DB::table('tournaments')->where('id', $tournamentId)->update($payload);
+        } else {
+            $payload['created_at'] = now();
+            $tournamentId = DB::table('tournaments')->insertGetId($payload);
+        }
+
+        $matchIds = DB::table('matches')->where('tournament_id', $tournamentId)->pluck('id');
+        DB::table('match_player_stats')->whereIn('match_id', $matchIds)->delete();
+        DB::table('matches')->where('tournament_id', $tournamentId)->delete();
+        DB::table('tournament_team_players')->where('tournament_id', $tournamentId)->delete();
+        DB::table('tournament_teams')->where('tournament_id', $tournamentId)->delete();
+
+        foreach (array_values($teamIds) as $index => $teamId) {
+            $groupCode = $index < 4 ? 'A' : 'B';
+            DB::table('tournament_teams')->insert([
+                'tournament_id' => $tournamentId,
+                'team_id' => $teamId,
+                'group_code' => $groupCode,
+                'seed' => $index + 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            DB::table('players')
+                ->where('team_id', $teamId)
+                ->orderBy('jersey_number')
+                ->limit(8)
+                ->pluck('id')
+                ->each(function ($playerId) use ($tournamentId, $teamId): void {
+                    DB::table('tournament_team_players')->insert([
+                        'tournament_id' => $tournamentId,
+                        'team_id' => $teamId,
+                        'player_id' => $playerId,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                });
+        }
+
+        $matches = [
+            ['A', 1, 0, 1, '2026-05-20 12:00:00', 78, 72, 'finished'],
+            ['A', 1, 2, 3, '2026-05-20 14:00:00', 77, 75, 'finished'],
+            ['A', 2, 0, 2, '2026-05-21 12:00:00', 81, 76, 'finished'],
+            ['A', 2, 1, 3, '2026-05-21 14:00:00', 74, 70, 'finished'],
+            ['A', 3, 0, 3, '2026-05-22 12:00:00', 68, 70, 'finished'],
+            ['A', 3, 1, 2, '2026-05-28 12:00:00', null, null, 'scheduled'],
+            ['B', 1, 4, 5, '2026-05-20 16:00:00', 74, 70, 'finished'],
+            ['B', 1, 6, 7, '2026-05-20 18:00:00', 79, 73, 'finished'],
+            ['B', 2, 4, 6, '2026-05-21 16:00:00', 69, 67, 'finished'],
+            ['B', 2, 5, 7, '2026-05-21 18:00:00', 83, 75, 'finished'],
+            ['B', 3, 4, 7, '2026-05-22 14:00:00', 81, 88, 'finished'],
+            ['B', 3, 5, 6, '2026-05-28 14:00:00', null, null, 'scheduled'],
+        ];
+
+        foreach ($matches as [$groupCode, $round, $homeIndex, $awayIndex, $scheduledAt, $homeScore, $awayScore, $status]) {
+            DB::table('matches')->insert([
+                'tournament_id' => $tournamentId,
+                'home_team_id' => $teamIds[$homeIndex],
+                'away_team_id' => $teamIds[$awayIndex],
+                'venue_id' => null,
+                'venue_slot' => 1,
+                'venue_name' => 'Main Court',
+                'stage' => 'group',
+                'group_code' => $groupCode,
+                'round_number' => $round,
+                'scheduled_at' => $scheduledAt,
+                'home_score' => $homeScore,
+                'away_score' => $awayScore,
+                'status' => $status,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $playoffRows = [
+            [1, 'GP1-1', '2026-05-30 12:00:00'],
+            [1, 'GP1-2', '2026-05-30 14:00:00'],
+            [2, 'GP2-1', '2026-05-31 18:00:00'],
+        ];
+
+        foreach ($playoffRows as [$round, $groupCode, $scheduledAt]) {
+            DB::table('matches')->insert([
+                'tournament_id' => $tournamentId,
+                'home_team_id' => null,
+                'away_team_id' => null,
+                'venue_id' => null,
+                'venue_slot' => 1,
+                'venue_name' => 'Main Court',
+                'stage' => 'playoffs',
+                'group_code' => $groupCode,
+                'round_number' => $round,
+                'scheduled_at' => $scheduledAt,
+                'home_score' => null,
+                'away_score' => null,
+                'status' => 'scheduled',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        \App\Support\TournamentProgression::sync(\App\Models\Tournament::findOrFail($tournamentId));
     }
 
     private function seedRemainingLiveDemoMatches(int $tournamentId, array $groups): void
