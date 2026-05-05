@@ -126,6 +126,17 @@ function playoffQualifiedCount(teamCount) {
   return Math.floor(Number(teamCount) / 2);
 }
 
+function roundRobinPlayoffQualifiedCount(teamCount) {
+  const qualified = Math.floor(Number(teamCount) / 2);
+  let bracketSize = 1;
+
+  while (bracketSize * 2 <= qualified) {
+    bracketSize *= 2;
+  }
+
+  return bracketSize >= 2 ? bracketSize : 0;
+}
+
 function pairedGroupCrossovers(groups, qualifiersPerGroup) {
   const pairings = [];
   for (let index = 0; index < groups.length; index += 2) {
@@ -364,9 +375,16 @@ export default function GroupsPlayoffsSimulatorModal({
     [groupMatches],
   );
 
+  const isRoundRobin = format === "round_robin";
   const totalTeamCount = simulatedGroups.reduce((sum, group) => sum + group.rows.length, 0);
   const roundOneMatchCount = bracketRounds[0]?.matches.length || 0;
-  const qualifierCount = Math.min(playoffQualifiedCount(totalTeamCount), roundOneMatchCount * 2);
+  const expectedQualifierCount = isRoundRobin
+    ? roundRobinPlayoffQualifiedCount(totalTeamCount)
+    : playoffQualifiedCount(totalTeamCount);
+  const qualifierCount = Math.min(expectedQualifierCount, roundOneMatchCount * 2);
+  const qualifiedRankLimit = isRoundRobin
+    ? qualifierCount
+    : Math.floor(qualifierCount / Math.max(1, simulatedGroups.length));
   const allGroupMatchesPicked = groupMatches.length > 0 && groupMatches.every((match) => Boolean(groupWinnerMap[match.id]));
   const roundOnePairings = useMemo(() => (allGroupMatchesPicked ? buildRoundOnePairings(simulatedGroups, qualifierCount) : []), [allGroupMatchesPicked, qualifierCount, simulatedGroups]);
   const playoffSeedKey = useMemo(
@@ -393,7 +411,6 @@ export default function GroupsPlayoffsSimulatorModal({
 
   const playoffRounds = useMemo(() => buildPlayoffRounds(bracketRounds, roundOnePairings, playoffSelections, initialPlayoffScores, roundLabel), [bracketRounds, initialPlayoffScores, playoffSelections, roundLabel, roundOnePairings]);
   const champion = playoffRounds.length > 0 ? playoffRounds[playoffRounds.length - 1]?.matches[0]?.winner ?? null : null;
-  const isRoundRobin = format === "round_robin";
   const stageTitle = isRoundRobin ? "Regular season" : "Group stage";
   const stageSummaryLabel = isRoundRobin ? "Regular-season picks" : "Group picks";
   const stagePanelTitle = isRoundRobin ? "League table" : null;
@@ -550,7 +567,7 @@ export default function GroupsPlayoffsSimulatorModal({
                     </thead>
                     <tbody>
                       {group.rows.map((row) => (
-                        <tr key={row.team_id} className={row.rank <= 2 ? "is-qualified" : ""}>
+                        <tr key={row.team_id} className={row.rank <= qualifiedRankLimit ? "is-qualified" : ""}>
                           <td>{row.rank}</td>
                           <td>{row.team_name || `Team ${row.team_id}`}</td>
                           <td>{row.played}</td>
