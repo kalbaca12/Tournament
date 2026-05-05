@@ -22,6 +22,16 @@ class ParticipationRequestController extends Controller
             ->get();
     }
 
+    public function managerAll(Request $request)
+    {
+        return TournamentParticipationRequest::where('manager_id', $request->user()->id)
+            ->with(['team', 'tournament'])
+            ->orderByRaw("CASE WHEN status IN ('approved', 'rejected') THEN 0 ELSE 1 END")
+            ->orderByDesc('reviewed_at')
+            ->orderByDesc('id')
+            ->get();
+    }
+
     public function adminIndex(Tournament $tournament)
     {
         return TournamentParticipationRequest::where('tournament_id', $tournament->id)

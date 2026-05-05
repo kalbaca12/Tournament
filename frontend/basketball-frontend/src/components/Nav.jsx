@@ -13,6 +13,7 @@ export default function Nav() {
   const { showToast } = useToast();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [notificationItems, setNotificationItems] = useState([]);
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -28,8 +29,9 @@ export default function Nav() {
 
   useEffect(() => {
     const loadNotifications = async () => {
-      if (!isAuthenticated || (!isAdmin && !isManager)) {
+      if (!isAuthenticated || !isAdmin) {
         setNotificationCount(0);
+        setNotificationItems([]);
         return;
       }
 
@@ -37,24 +39,31 @@ export default function Nav() {
         const tournamentsRes = await tournamentsApi.list();
         const tournaments = (tournamentsRes.data || []).slice(0, 8);
         const results = await Promise.allSettled(
-          tournaments.map((tournament) => (
-            isAdmin
-              ? tournamentsApi.participationRequests(tournament.id)
-              : tournamentsApi.myParticipationRequests(tournament.id)
-          )),
+          tournaments.map((tournament) => tournamentsApi.participationRequests(tournament.id)),
         );
-        const count = results.reduce((total, result) => {
-          if (result.status !== "fulfilled") return total;
-          return total + (result.value.data || []).filter((request) => request.status === "pending").length;
-        }, 0);
-        setNotificationCount(count);
+        const items = results.flatMap((result, index) => {
+          if (result.status !== "fulfilled") return [];
+
+          const tournament = tournaments[index];
+          return (result.value.data || [])
+            .filter((request) => request.status === "pending")
+            .map((request) => ({
+              id: `${tournament.id}:${request.id}:${request.status}`,
+              tournamentId: tournament.id,
+              label: `${request.team?.name || "Team"} requested ${tournament.name}`,
+              meta: "Pending participation request",
+            }));
+        });
+        setNotificationItems(items);
+        setNotificationCount(items.length);
       } catch {
         setNotificationCount(0);
+        setNotificationItems([]);
       }
     };
 
     loadNotifications();
-  }, [isAdmin, isAuthenticated, isManager]);
+  }, [isAdmin, isAuthenticated]);
 
   const onLogout = async () => {
     await logout();
@@ -97,18 +106,44 @@ export default function Nav() {
             </NavLink>
           ) : (
             <div ref={menuRef} className="profile-menu">
-              <button type="button" className="profile-menu__trigger" onClick={() => setIsMenuOpen((current) => !current)}>
+              <button
+                type="button"
+                className="profile-menu__trigger"
+                onClick={() => {
+                  if (isManager) {
+                    nav("/profile");
+                    return;
+                  }
+                  setIsMenuOpen((current) => !current);
+                }}
+              >
                 <span className="profile-menu__avatar">{(user?.name || user?.role || "U").slice(0, 1).toUpperCase()}</span>
                 <span className="profile-menu__copy">
                   <span className="profile-menu__name">{user?.name || user?.role}</span>
                   <span className="profile-menu__role">{user?.role}</span>
                 </span>
-                {notificationCount > 0 ? <span className="profile-menu__badge-dot">{notificationCount}</span> : null}
+                {isAdmin && notificationCount > 0 ? <span className="profile-menu__badge-dot">{notificationCount}</span> : null}
               </button>
-              {isMenuOpen && (
+              {isAdmin && isMenuOpen && (
                 <div className="profile-menu__panel">
                   <div className="profile-menu__email">{user?.email}</div>
-                  <div className="profile-menu__badge">{notificationCount > 0 ? `${notificationCount} pending request${notificationCount === 1 ? "" : "s"}` : user?.role}</div>
+                  {notificationCount > 0 ? (
+                    <div className="profile-menu__notifications">
+                      {notificationItems.map((item) => (
+                        <NavLink
+                          key={item.id}
+                          to={`/tournaments/${item.tournamentId}`}
+                          className="profile-menu__badge"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <span>{item.meta}</span>
+                          <strong>{item.label}</strong>
+                        </NavLink>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="profile-menu__badge">{user?.role}</div>
+                  )}
                   <NavLink to="/dashboard" className="profile-menu__item" onClick={() => setIsMenuOpen(false)}>
                     Dashboard
                   </NavLink>

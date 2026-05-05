@@ -313,6 +313,40 @@ h6 {
   text-transform: uppercase;
 }
 
+.profile-menu__notifications {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.profile-menu__notifications .profile-menu__badge {
+  display: grid;
+  width: 100%;
+  gap: 0.15rem;
+  border-radius: 12px;
+  padding: 0.55rem 0.65rem;
+  letter-spacing: 0;
+  text-transform: none;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.profile-menu__notifications .profile-menu__badge:hover {
+  background: #fde68a;
+}
+
+.profile-menu__notifications .profile-menu__badge span {
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.profile-menu__notifications .profile-menu__badge strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #78350f;
+  font-size: 0.78rem;
+}
+
 .profile-menu__item {
   border-radius: 14px;
   padding: 0.65rem 0.75rem;

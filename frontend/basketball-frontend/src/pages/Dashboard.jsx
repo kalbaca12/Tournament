@@ -35,6 +35,10 @@ function matchTeam(match, side) {
   return match?.[relation]?.name || match?.[snake]?.name || (id ? `Team ${id}` : "TBD");
 }
 
+function tournamentStartLabel(tournament) {
+  return Number(tournament.matches_count || 0) > 0 ? tournament.start_date || "not set" : "TBD";
+}
+
 export default function Dashboard() {
   const { user, isAdmin, isManager, isAuthenticated } = useAuth();
   const { showToast } = useToast();
@@ -196,7 +200,7 @@ export default function Dashboard() {
                   <h3>{tournament.name}</h3>
                   <div>
                     <b>{tournament.status}</b>
-                    <small>{tournament.start_date || "not set"} - {tournament.end_date || "not set"}</small>
+                    <small>{tournamentStartLabel(tournament)} - {tournament.end_date || "not set"}</small>
                   </div>
                 </Link>
               ))}

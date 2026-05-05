@@ -73,6 +73,7 @@ function stagePlanningCopy(format) {
 
 const TIME_SLOT_COUNTS = [2, 4, 6, 8];
 const GROUPS_PLAYOFFS_TEAM_COUNTS = [4, 8, 16];
+const SINGLE_ELIMINATION_TEAM_COUNTS = [4, 8, 16, 32];
 const RULE_LABEL_CLASS = "flex min-h-[2.75rem] items-end text-sm font-medium text-slate-700";
 const DEFAULT_TIME_SLOTS = ["12:00", "14:00", "16:00", "18:00", "20:00", "22:00", "09:00", "11:00"];
 
@@ -94,6 +95,11 @@ function normalizeGamesPerDay(value, fallback = 4) {
 function normalizeGroupPlayoffTeamCount(value) {
   const count = Number(value) || 8;
   return GROUPS_PLAYOFFS_TEAM_COUNTS.includes(count) ? count : 8;
+}
+
+function normalizeSingleEliminationTeamCount(value) {
+  const count = Number(value) || 8;
+  return SINGLE_ELIMINATION_TEAM_COUNTS.includes(count) ? count : 8;
 }
 
 function OverviewAccordion({ title, subtitle, isOpen, onToggle, children, actions = null }) {
@@ -424,6 +430,12 @@ export default function TournamentView() {
     }
     if (editForm.format === "groups_playoffs" && !GROUPS_PLAYOFFS_TEAM_COUNTS.includes(Number(editForm.max_teams))) {
       const message = "Groups + playoffs supports 4, 8, or 16 teams.";
+      setErr(message);
+      if (!silent) showToast(message, "error");
+      return null;
+    }
+    if (editForm.format === "single_elimination" && !SINGLE_ELIMINATION_TEAM_COUNTS.includes(Number(editForm.max_teams))) {
+      const message = "Single elimination supports 4, 8, 16, or 32 teams.";
       setErr(message);
       if (!silent) showToast(message, "error");
       return null;
@@ -902,6 +914,7 @@ export default function TournamentView() {
     : 0;
   const isOverviewTab = activeTab === "overview";
   const isAdminTab = activeTab === "admin" && isAdmin;
+  const displayStartDate = matches.length > 0 ? t?.start_date : null;
   const tournamentPdfOptions = useMemo(
     () => [
       {
@@ -955,7 +968,7 @@ export default function TournamentView() {
             <button type="button" onClick={() => setIsPdfModalOpen(true)} disabled={isExportingPdf} className="btn-secondary">
               {isExportingPdf ? "Exporting..." : "Export PDF"}
             </button>
-            {t.start_date ? <span className="list-tag">Starts {t.start_date}</span> : null}
+            <span className="list-tag">Starts {displayStartDate || "TBD"}</span>
             {t.end_date ? <span className="list-tag">Ends {t.end_date}</span> : null}
             {t.max_teams ? <span className="list-tag">{t.max_teams} team cap</span> : null}
           </div>
@@ -1051,7 +1064,11 @@ export default function TournamentView() {
                     setEditForm({
                       ...editForm,
                       format: nextFormat,
-                      max_teams: nextFormat === "groups_playoffs" ? normalizeGroupPlayoffTeamCount(editForm.max_teams) : editForm.max_teams,
+                      max_teams: nextFormat === "groups_playoffs"
+                        ? normalizeGroupPlayoffTeamCount(editForm.max_teams)
+                        : nextFormat === "single_elimination"
+                          ? normalizeSingleEliminationTeamCount(editForm.max_teams)
+                          : editForm.max_teams,
                     });
                   }}
                 >
@@ -1062,9 +1079,9 @@ export default function TournamentView() {
               </div>
               <div className="space-y-1">
                 <label className="text-sm font-medium text-slate-700">Max teams</label>
-                {editForm.format === "groups_playoffs" ? (
-                  <div key="groups-playoffs-max-teams" className="grid grid-cols-3 gap-2">
-                    {GROUPS_PLAYOFFS_TEAM_COUNTS.map((count) => (
+                {editForm.format === "groups_playoffs" || editForm.format === "single_elimination" ? (
+                  <div key={`${editForm.format}-max-teams`} className={`grid gap-2 ${editForm.format === "groups_playoffs" ? "grid-cols-3" : "grid-cols-4"}`}>
+                    {(editForm.format === "groups_playoffs" ? GROUPS_PLAYOFFS_TEAM_COUNTS : SINGLE_ELIMINATION_TEAM_COUNTS).map((count) => (
                       <button
                         key={count}
                         type="button"
@@ -1208,7 +1225,15 @@ export default function TournamentView() {
           <div className="grid gap-2">
             {adminRequests.map((r) => (
               <div key={r.id} className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                <div className="text-sm font-semibold text-slate-900">{r.team?.name || `Team ${r.team_id}`} - {r.status}</div>
+                <div className="text-sm font-semibold text-slate-900">
+                  {r.team_id ? (
+                    <Link to={`/teams/${r.team_id}`} className="underline decoration-slate-300 underline-offset-2 hover:text-sky-700">
+                      {r.team?.name || `Team ${r.team_id}`}
+                    </Link>
+                  ) : (
+                    r.team?.name || `Team ${r.team_id}`
+                  )} - {r.status}
+                </div>
                 <div className="text-xs text-slate-500">Manager: {r.manager?.name || r.manager_id}</div>
                 {r.note && <div className="mt-1 text-xs text-slate-600">{r.status === "rejected" ? "Rejection reason" : "Request note"}: {r.note}</div>}
                 {r.status === "pending" && (

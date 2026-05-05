@@ -13,6 +13,7 @@ import MatchView from "./pages/MatchView";
 import LiveMatchTracker from "./pages/LiveMatchTracker";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import ManagerProfile from "./pages/ManagerProfile";
 import "./App.css";
 
 function AccessDenied({ requiredRole }) {
@@ -50,6 +51,10 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Navigate to={isAuthenticated ? "/dashboard" : "/tournaments"} />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route
+            path="/profile"
+            element={isManager ? <ManagerProfile /> : <AccessDenied requiredRole="manager" />}
+          />
           <Route path="/login" element={<Login />} />
 
           <Route path="/tournaments" element={<TournamentsList />} />

@@ -14,6 +14,7 @@ export const tournamentsApi = {
   addTeam: (id, payload) => api.post(`/tournaments/${id}/teams`, payload),
   removeTeam: (id, teamId) => api.delete(`/tournaments/${id}/teams/${teamId}`),
   requestParticipation: (id, payload) => api.post(`/tournaments/${id}/participation-requests`, payload),
+  myAllParticipationRequests: () => api.get("/participation-requests/mine"),
   myParticipationRequests: (id) => api.get(`/tournaments/${id}/participation-requests/mine`),
   participationRequests: (id) => api.get(`/tournaments/${id}/participation-requests`),
   approveRequest: (requestId) => api.post(`/participation-requests/${requestId}/approve`),

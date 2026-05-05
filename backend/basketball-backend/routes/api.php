@@ -45,6 +45,7 @@ Route::middleware(['auth:sanctum', 'role:manager'])->group(function () {
     Route::post('/players', [PlayerController::class, 'store']);
     Route::put('/players/{player}', [PlayerController::class, 'update']);
     Route::delete('/players/{player}', [PlayerController::class, 'destroy']);
+    Route::get('/participation-requests/mine', [ParticipationRequestController::class, 'managerAll']);
     Route::get('/tournaments/{tournament}/participation-requests/mine', [ParticipationRequestController::class, 'managerIndex']);
     Route::post('/tournaments/{tournament}/participation-requests', [ParticipationRequestController::class, 'store']);
 });

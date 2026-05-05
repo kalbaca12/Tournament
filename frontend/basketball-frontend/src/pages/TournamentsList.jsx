@@ -49,6 +49,7 @@ export default function TournamentsList() {
   };
 
   const labelize = (value) => String(value || "").replaceAll("_", " ");
+  const hasGeneratedSchedule = (tournament) => Number(tournament.matches_count || 0) > 0;
   const activeCount = items.filter((item) => item.status !== "finished" && item.status !== "cancelled").length;
   const finishedCount = items.filter((item) => item.status === "finished").length;
 
@@ -104,7 +105,8 @@ export default function TournamentsList() {
             />
           ) : (
             visibleItems.map((t) => {
-              const startDate = t.start_date ? new Date(t.start_date) : null;
+              const displayStart = hasGeneratedSchedule(t) ? t.start_date : null;
+              const startDate = displayStart ? new Date(displayStart) : null;
               const endDate = t.end_date ? new Date(t.end_date) : null;
               const startDay = startDate && !Number.isNaN(startDate.getTime())
                 ? String(startDate.getDate()).padStart(2, "0")
@@ -138,7 +140,7 @@ export default function TournamentsList() {
                     <div className="event-ticket__league">{labelize(t.format)}</div>
                     <h2>{t.name}</h2>
                     <div className="event-ticket__meta">
-                      <span>{t.start_date || "not set"}</span>
+                      <span>{displayStart || "TBD"}</span>
                       <span>{t.end_date || "not set"}</span>
                       <span>{t.max_teams ? `${t.max_teams} teams` : "no limit"}</span>
                     </div>

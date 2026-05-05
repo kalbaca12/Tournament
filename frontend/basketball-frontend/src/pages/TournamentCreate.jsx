@@ -29,6 +29,7 @@ function stageCopy(format) {
 
 const TIME_SLOT_COUNTS = [2, 4, 6, 8];
 const GROUPS_PLAYOFFS_TEAM_COUNTS = [4, 8, 16];
+const SINGLE_ELIMINATION_TEAM_COUNTS = [4, 8, 16, 32];
 const RULE_LABEL_CLASS = "flex min-h-[2.75rem] items-end text-sm font-medium text-slate-700";
 const DEFAULT_TIME_SLOTS = ["12:00", "14:00", "16:00", "18:00", "20:00", "22:00", "09:00", "11:00"];
 
@@ -45,6 +46,11 @@ function resizeTimeSlots(slots, count) {
 function normalizeGroupPlayoffTeamCount(value) {
   const count = Number(value) || 8;
   return GROUPS_PLAYOFFS_TEAM_COUNTS.includes(count) ? count : 8;
+}
+
+function normalizeSingleEliminationTeamCount(value) {
+  const count = Number(value) || 8;
+  return SINGLE_ELIMINATION_TEAM_COUNTS.includes(count) ? count : 8;
 }
 
 export default function TournamentCreate() {
@@ -97,6 +103,9 @@ export default function TournamentCreate() {
     if (!liveForm.max_teams || Number(liveForm.max_teams) < 2) nextErrors.max_teams = "At least 2 teams are required.";
     if (liveForm.format === "groups_playoffs" && !GROUPS_PLAYOFFS_TEAM_COUNTS.includes(Number(liveForm.max_teams))) {
       nextErrors.max_teams = "Groups + playoffs supports 4, 8, or 16 teams.";
+    }
+    if (liveForm.format === "single_elimination" && !SINGLE_ELIMINATION_TEAM_COUNTS.includes(Number(liveForm.max_teams))) {
+      nextErrors.max_teams = "Single elimination supports 4, 8, 16, or 32 teams.";
     }
     if (Object.keys(nextErrors).length > 0) {
       setFieldErrors(nextErrors);
@@ -180,7 +189,11 @@ export default function TournamentCreate() {
                 setForm({
                   ...form,
                   format: nextFormat,
-                  max_teams: nextFormat === "groups_playoffs" ? normalizeGroupPlayoffTeamCount(form.max_teams) : form.max_teams,
+                  max_teams: nextFormat === "groups_playoffs"
+                    ? normalizeGroupPlayoffTeamCount(form.max_teams)
+                    : nextFormat === "single_elimination"
+                      ? normalizeSingleEliminationTeamCount(form.max_teams)
+                      : form.max_teams,
                 });
               }}
             >
@@ -202,14 +215,16 @@ export default function TournamentCreate() {
           </div>
           <div className="space-y-1">
             <label className="text-sm font-medium text-slate-700">Max teams</label>
-            {form.format === "groups_playoffs" ? (
-              <div key="groups-playoffs-max-teams" className="grid grid-cols-3 gap-2">
+            {form.format === "groups_playoffs" || form.format === "single_elimination" ? (
+              <div key={`${form.format}-max-teams`} className={`grid gap-2 ${form.format === "groups_playoffs" ? "grid-cols-3" : "grid-cols-4"}`}>
                 <input
                   type="hidden"
                   name="max_teams"
-                  value={normalizeGroupPlayoffTeamCount(form.max_teams)}
+                  value={form.format === "groups_playoffs"
+                    ? normalizeGroupPlayoffTeamCount(form.max_teams)
+                    : normalizeSingleEliminationTeamCount(form.max_teams)}
                 />
-                {GROUPS_PLAYOFFS_TEAM_COUNTS.map((count) => (
+                {(form.format === "groups_playoffs" ? GROUPS_PLAYOFFS_TEAM_COUNTS : SINGLE_ELIMINATION_TEAM_COUNTS).map((count) => (
                   <button
                     key={count}
                     type="button"

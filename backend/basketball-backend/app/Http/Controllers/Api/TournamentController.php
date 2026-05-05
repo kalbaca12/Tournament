@@ -14,12 +14,12 @@ class TournamentController extends Controller
 {
     public function index()
     {
-        return Tournament::orderByDesc('id')->get();
+        return Tournament::withCount('matches')->orderByDesc('id')->get();
     }
 
     public function show(Tournament $tournament)
     {
-        return $tournament->load([
+        return $tournament->loadCount('matches')->load([
             'teams',
             'matches.homeTeam',
             'matches.awayTeam',
@@ -80,6 +80,9 @@ class TournamentController extends Controller
         if (($validated['format'] ?? null) === 'groups_playoffs' && !$this->isValidGroupsPlayoffsTeamCount($validated['max_teams'] ?? null)) {
             return response()->json(['message' => 'Groups + playoffs tournaments support 4, 8, or 16 teams.'], 422);
         }
+        if (($validated['format'] ?? null) === 'single_elimination' && !$this->isValidSingleEliminationTeamCount($validated['max_teams'] ?? null)) {
+            return response()->json(['message' => 'Single elimination tournaments support 4, 8, 16, or 32 teams.'], 422);
+        }
 
         $validated['created_by'] = $user->id;
         $validated['status'] = 'draft';
@@ -124,6 +127,9 @@ class TournamentController extends Controller
         $nextMaxTeams = array_key_exists('max_teams', $validated) ? $validated['max_teams'] : $tournament->max_teams;
         if ($nextFormat === 'groups_playoffs' && !$this->isValidGroupsPlayoffsTeamCount($nextMaxTeams)) {
             return response()->json(['message' => 'Groups + playoffs tournaments support 4, 8, or 16 teams.'], 422);
+        }
+        if ($nextFormat === 'single_elimination' && !$this->isValidSingleEliminationTeamCount($nextMaxTeams)) {
+            return response()->json(['message' => 'Single elimination tournaments support 4, 8, 16, or 32 teams.'], 422);
         }
 
         $validated['playoff_round_gap_days'] = $validated['playoff_round_gap_days'] ?? ($tournament->playoff_round_gap_days ?? 1);
@@ -178,5 +184,10 @@ class TournamentController extends Controller
     private function isValidGroupsPlayoffsTeamCount(mixed $teamCount): bool
     {
         return in_array((int) $teamCount, [4, 8, 16], true);
+    }
+
+    private function isValidSingleEliminationTeamCount(mixed $teamCount): bool
+    {
+        return in_array((int) $teamCount, [4, 8, 16, 32], true);
     }
 }
