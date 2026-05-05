@@ -203,17 +203,23 @@ export default function TournamentCreate() {
           <div className="space-y-1">
             <label className="text-sm font-medium text-slate-700">Max teams</label>
             {form.format === "groups_playoffs" ? (
-              <select
-                key="groups-playoffs-max-teams"
-                className="input"
-                name="max_teams"
-                value={normalizeGroupPlayoffTeamCount(form.max_teams)}
-                onChange={(e) => setForm({ ...form, max_teams: Number(e.target.value) })}
-              >
+              <div key="groups-playoffs-max-teams" className="grid grid-cols-3 gap-2">
+                <input
+                  type="hidden"
+                  name="max_teams"
+                  value={normalizeGroupPlayoffTeamCount(form.max_teams)}
+                />
                 {GROUPS_PLAYOFFS_TEAM_COUNTS.map((count) => (
-                  <option key={count} value={count}>{count} teams</option>
+                  <button
+                    key={count}
+                    type="button"
+                    className={Number(form.max_teams) === count ? "btn-primary" : "btn-secondary"}
+                    onClick={() => setForm({ ...form, max_teams: count })}
+                  >
+                    {count}
+                  </button>
                 ))}
-              </select>
+              </div>
             ) : (
               <input
                 key="open-max-teams"

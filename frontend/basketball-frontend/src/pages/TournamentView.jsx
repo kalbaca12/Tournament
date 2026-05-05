@@ -1063,16 +1063,18 @@ export default function TournamentView() {
               <div className="space-y-1">
                 <label className="text-sm font-medium text-slate-700">Max teams</label>
                 {editForm.format === "groups_playoffs" ? (
-                  <select
-                    key="groups-playoffs-max-teams"
-                    className="input"
-                    value={normalizeGroupPlayoffTeamCount(editForm.max_teams)}
-                    onChange={(e) => setEditForm({ ...editForm, max_teams: Number(e.target.value) })}
-                  >
+                  <div key="groups-playoffs-max-teams" className="grid grid-cols-3 gap-2">
                     {GROUPS_PLAYOFFS_TEAM_COUNTS.map((count) => (
-                      <option key={count} value={count}>{count} teams</option>
+                      <button
+                        key={count}
+                        type="button"
+                        className={Number(editForm.max_teams) === count ? "btn-primary" : "btn-secondary"}
+                        onClick={() => setEditForm({ ...editForm, max_teams: count })}
+                      >
+                        {count}
+                      </button>
                     ))}
-                  </select>
+                  </div>
                 ) : (
                   <input key="open-max-teams" className="input" type="number" min={2} placeholder="Max teams" value={editForm.max_teams} onChange={(e) => setEditForm({ ...editForm, max_teams: e.target.value })} />
                 )}
