@@ -2514,27 +2514,26 @@ tbody tr {
 }
 
 .gp-sim-match-list {
-  display: flex;
-  gap: 10px;
+  display: grid;
+  gap: 8px;
   grid-template-columns: none;
   margin-top: 0;
   border: 0;
   background: transparent;
-  padding: 0 0 8px;
-  overflow-x: auto;
-  scroll-snap-type: x proximity;
+  padding: 0;
+  overflow: visible;
 }
 
 .gp-sim-match-card {
   display: grid;
-  flex: 0 0 318px;
-  gap: 8px;
+  grid-template-columns: 150px minmax(280px, 1fr) 230px minmax(180px, 0.7fr) auto;
+  align-items: center;
+  gap: 10px;
   position: relative;
-  scroll-snap-align: start;
   border: 1px solid #c8ced9;
   border-left: 4px solid #354154;
   background: #ffffff;
-  padding: 10px;
+  padding: 8px 10px;
   min-width: 0;
   box-shadow: none;
 }
@@ -2544,13 +2543,11 @@ tbody tr {
 }
 
 .gp-sim-match-meta {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 6px 10px;
+  display: grid;
+  gap: 3px;
   margin-bottom: 0;
-  padding-bottom: 7px;
-  border-bottom: 1px solid #d9e1ec;
+  padding-bottom: 0;
+  border-bottom: 0;
   font-size: 0.66rem;
   line-height: 1.2;
 }
@@ -2615,8 +2612,9 @@ tbody tr {
 }
 
 .gp-sim-match-card .sim-clear-pick {
-  justify-self: center;
+  justify-self: end;
   font-size: 0.56rem;
+  white-space: nowrap;
 }
 
 .gp-sim-pick.is-picked {
@@ -2644,11 +2642,12 @@ tbody tr {
   }
 
   .gp-sim-match-list {
-    padding-bottom: 10px;
+    gap: 10px;
   }
 
   .gp-sim-match-card {
-    flex-basis: min(300px, 86vw);
+    grid-template-columns: 1fr;
+    align-items: stretch;
   }
 
   .gp-sim-match-actions {
