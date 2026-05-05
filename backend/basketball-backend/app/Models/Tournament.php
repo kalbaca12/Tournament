@@ -8,6 +8,7 @@ class Tournament extends Model
 {
     protected $fillable = [
         'name',
+        'banner_url',
         'start_date',
         'end_date',
         'format',
@@ -17,11 +18,13 @@ class Tournament extends Model
         'duration_weeks',
         'allowed_days',
         'time_slots',
+        'venue_name',
         'venues_count',
         'venue_names',
         'playoff_round_gap_days',
         'groups_to_playoffs_gap_days',
         'group_games_per_day',
+        'stage_day_gap_days',
         'registration_deadline',
         'participants_locked',
     ];

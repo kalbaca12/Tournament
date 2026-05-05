@@ -17,7 +17,6 @@ class TournamentSchedulePlannerTest extends TestCase
             'format' => 'single_elimination',
             'allowed_days' => [0, 8],
             'time_slots' => ['12:00'],
-            'venues_count' => 1,
         ]);
 
         $plan = TournamentSchedulePlanner::plan($tournament, 4);
@@ -29,11 +28,10 @@ class TournamentSchedulePlannerTest extends TestCase
     }
 
     #[Test]
-    public function day_slots_respect_time_direction_venue_count_and_limit(): void
+    public function day_slots_respect_time_direction_and_limit(): void
     {
         $tournament = new Tournament([
             'time_slots' => ['10:00', '12:00', '14:00'],
-            'venues_count' => 2,
         ]);
 
         $slots = TournamentSchedulePlanner::daySlots(
@@ -45,10 +43,8 @@ class TournamentSchedulePlannerTest extends TestCase
 
         self::assertCount(3, $slots);
         self::assertSame('14:00', $slots[0]['slot']->format('H:i'));
-        self::assertSame(1, $slots[0]['venue_slot']);
-        self::assertSame('14:00', $slots[1]['slot']->format('H:i'));
-        self::assertSame(2, $slots[1]['venue_slot']);
-        self::assertSame('12:00', $slots[2]['slot']->format('H:i'));
+        self::assertSame('12:00', $slots[1]['slot']->format('H:i'));
+        self::assertSame('10:00', $slots[2]['slot']->format('H:i'));
     }
 
     #[Test]
@@ -56,12 +52,11 @@ class TournamentSchedulePlannerTest extends TestCase
     {
         $tournament = new Tournament([
             'time_slots' => ['10:00', '12:00'],
-            'venues_count' => 2,
             'group_games_per_day' => 10,
         ]);
 
-        self::assertSame(4, TournamentSchedulePlanner::slotCapacity($tournament));
-        self::assertSame(4, TournamentSchedulePlanner::stageMatchesPerDay($tournament));
+        self::assertSame(2, TournamentSchedulePlanner::slotCapacity($tournament));
+        self::assertSame(2, TournamentSchedulePlanner::stageMatchesPerDay($tournament));
     }
 
     #[Test]
@@ -89,7 +84,6 @@ class TournamentSchedulePlannerTest extends TestCase
             'end_date' => '2026-04-19',
             'allowed_days' => [1, 2, 3, 4, 5, 6, 7],
             'time_slots' => ['12:00', '14:00'],
-            'venues_count' => 1,
             'playoff_round_gap_days' => 1,
         ]);
 
@@ -105,6 +99,24 @@ class TournamentSchedulePlannerTest extends TestCase
     }
 
     #[Test]
+    public function playoff_gap_uses_exact_off_days_even_when_boundary_day_is_not_allowed(): void
+    {
+        $tournament = new Tournament([
+            'format' => 'single_elimination',
+            'end_date' => '2026-06-01',
+            'allowed_days' => [3, 6],
+            'time_slots' => ['12:00', '14:00', '16:00', '18:00'],
+            'playoff_round_gap_days' => 1,
+        ]);
+
+        $plan = TournamentSchedulePlanner::plan($tournament, 8);
+
+        self::assertSame(['2026-05-28'], $plan['playoff_round_dates'][1]);
+        self::assertSame(['2026-05-30'], $plan['playoff_round_dates'][2]);
+        self::assertSame(['2026-06-01'], $plan['playoff_round_dates'][3]);
+    }
+
+    #[Test]
     public function plan_reports_not_enough_calendar_days_for_large_playoff_bracket(): void
     {
         $tournament = new Tournament([
@@ -112,7 +124,6 @@ class TournamentSchedulePlannerTest extends TestCase
             'end_date' => '2026-04-19',
             'allowed_days' => [1, 2, 3, 4, 5, 6, 7],
             'time_slots' => ['18:00'],
-            'venues_count' => 1,
             'playoff_round_gap_days' => 1,
         ]);
 
@@ -128,11 +139,10 @@ class TournamentSchedulePlannerTest extends TestCase
     {
         $tournament = new Tournament([
             'time_slots' => ['', null],
-            'venues_count' => 2,
         ]);
 
-        self::assertSame(8, TournamentSchedulePlanner::slotCapacity($tournament));
-        self::assertSame(8, TournamentSchedulePlanner::stageMatchesPerDay($tournament));
+        self::assertSame(4, TournamentSchedulePlanner::slotCapacity($tournament));
+        self::assertSame(4, TournamentSchedulePlanner::stageMatchesPerDay($tournament));
     }
 
     #[Test]

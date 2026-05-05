@@ -571,7 +571,7 @@ export default function GroupsPlayoffsSimulatorModal({
                     return (
                       <div key={match.id} className="gp-sim-match-card">
                         <div className="gp-sim-match-meta">
-                          <span>Match #{match.id} | R{match.round_number}</span>
+                          <span>R{match.round_number || "-"} | {match.status || "scheduled"}</span>
                           <span>{formatDateTime(match.scheduled_at)}</span>
                         </div>
 
@@ -631,6 +631,10 @@ export default function GroupsPlayoffsSimulatorModal({
                     {roundData.matches.map((match) => (
                       <div key={match.id} className={`sim-slot ${roundIndex === 0 ? "is-opening-round" : ""}`}>
                         <div className="sim-match-card">
+                          <div className="sim-match-meta">
+                            <span>{match.title}</span>
+                            <strong>{match.participants.filter((participant) => participant && !participant.isPlaceholder).length}/2</strong>
+                          </div>
                           {match.participants.map((participant, sideIndex) => {
                             const canDrag = Boolean(participant && !participant.isPlaceholder && roundIndex < playoffRounds.length - 1);
                             const isPickedWinner = Boolean(participant && match.winner && participant.entryKey === match.winner.entryKey);
@@ -666,11 +670,17 @@ export default function GroupsPlayoffsSimulatorModal({
                             );
                           })}
 
-                          {match.winner && (
-                            <button type="button" className="sim-clear-pick" onClick={() => clearPlayoffPick(roundIndex, match.matchIndex)}>
-                              Clear winner
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            className={`sim-clear-pick ${match.winner ? "" : "is-hidden"}`}
+                            tabIndex={match.winner ? 0 : -1}
+                            aria-hidden={match.winner ? undefined : true}
+                            onClick={() => {
+                              if (match.winner) clearPlayoffPick(roundIndex, match.matchIndex);
+                            }}
+                          >
+                            Clear winner
+                          </button>
                         </div>
                       </div>
                     ))}

@@ -27,19 +27,33 @@ function stageCopy(format) {
   };
 }
 
+const TIME_SLOT_COUNTS = [2, 4, 6, 8];
+const DEFAULT_TIME_SLOTS = ["12:00", "14:00", "16:00", "18:00", "20:00", "22:00", "09:00", "11:00"];
+
+function normalizeTimeSlots(value) {
+  const slots = Array.isArray(value) ? value : String(value || "").split(",");
+  return slots.map((slot) => String(slot || "").trim()).filter(Boolean);
+}
+
+function resizeTimeSlots(slots, count) {
+  const current = normalizeTimeSlots(slots);
+  return Array.from({ length: count }, (_, index) => current[index] || DEFAULT_TIME_SLOTS[index] || "12:00");
+}
+
 export default function TournamentCreate() {
   const nav = useNavigate();
   const { showToast } = useToast();
   const [form, setForm] = useState({
     name: "",
+    banner_url: "",
     format: "round_robin",
     max_teams: 8,
     end_date: "",
-    venues_count: 1,
-    venue_names: "Main Court",
-    time_slots: "12:00,14:00,16:00,18:00",
+    venue_name: "",
+    time_slots: ["12:00", "14:00", "16:00", "18:00"],
     playoff_round_gap_days: 1,
     groups_to_playoffs_gap_days: 1,
+    stage_day_gap_days: 0,
     group_games_per_day: 4,
   });
   const [err, setErr] = useState("");
@@ -57,14 +71,15 @@ export default function TournamentCreate() {
     const liveForm = {
       ...form,
       name: String(formData.get("name") || form.name),
+      banner_url: String(formData.get("banner_url") || form.banner_url),
       format: String(formData.get("format") || form.format),
       max_teams: String(formData.get("max_teams") || form.max_teams),
       end_date: String(formData.get("end_date") || form.end_date),
-      venues_count: String(formData.get("venues_count") || form.venues_count),
-      venue_names: String(formData.get("venue_names") || form.venue_names),
-      time_slots: String(formData.get("time_slots") || form.time_slots),
+      venue_name: String(formData.get("venue_name") || form.venue_name),
+      time_slots: form.time_slots,
       playoff_round_gap_days: String(formData.get("playoff_round_gap_days") || form.playoff_round_gap_days),
       groups_to_playoffs_gap_days: String(formData.get("groups_to_playoffs_gap_days") || form.groups_to_playoffs_gap_days),
+      stage_day_gap_days: String(formData.get("stage_day_gap_days") || form.stage_day_gap_days),
       group_games_per_day: String(formData.get("group_games_per_day") || form.group_games_per_day),
     };
     const liveUsesStagePlanning = liveForm.format !== "single_elimination";
@@ -82,14 +97,15 @@ export default function TournamentCreate() {
     try {
       const payload = {
         name: liveForm.name.trim(),
+        banner_url: liveForm.banner_url.trim() || null,
         format: liveForm.format,
         max_teams: Number(liveForm.max_teams),
         end_date: liveForm.end_date,
-        venues_count: Math.max(1, Number(liveForm.venues_count) || 1),
-        venue_names: String(liveForm.venue_names || "").split(",").map((name) => name.trim()).filter(Boolean),
-        time_slots: String(liveForm.time_slots || "").split(",").map((slot) => slot.trim()).filter(Boolean),
+        venue_name: liveForm.venue_name.trim() || null,
+        time_slots: resizeTimeSlots(liveForm.time_slots, Number(liveForm.group_games_per_day) || 4),
         playoff_round_gap_days: Math.max(0, Number(liveForm.playoff_round_gap_days) || 0),
         groups_to_playoffs_gap_days: liveUsesStagePlanning ? Math.max(0, Number(liveForm.groups_to_playoffs_gap_days) || 0) : 0,
+        stage_day_gap_days: liveUsesStagePlanning ? Math.max(0, Number(liveForm.stage_day_gap_days) || 0) : 0,
         group_games_per_day: liveUsesStagePlanning ? Math.max(1, Number(liveForm.group_games_per_day) || 1) : null,
       };
 
@@ -130,6 +146,16 @@ export default function TournamentCreate() {
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
           {fieldErrors.name ? <div className="text-sm text-red-600">{fieldErrors.name}</div> : null}
+        </div>
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-slate-700">Banner URL</label>
+          <input
+            className="input"
+            name="banner_url"
+            placeholder="https://..."
+            value={form.banner_url}
+            onChange={(e) => setForm({ ...form, banner_url: e.target.value })}
+          />
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -181,7 +207,7 @@ export default function TournamentCreate() {
             </p>
           </div>
 
-          <div className={`grid grid-cols-1 gap-3 ${usesStagePlanning ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
+          <div className={`grid grid-cols-1 gap-3 ${usesStagePlanning ? "md:grid-cols-4" : "md:grid-cols-2"}`}>
             <div className="space-y-1">
               <label className="text-sm font-medium text-slate-700">Days between playoff rounds</label>
               <input
@@ -210,56 +236,73 @@ export default function TournamentCreate() {
             )}
             {usesStagePlanning && (
               <div className="space-y-1">
-                <label className="text-sm font-medium text-slate-700">{stageDetails.capLabel}</label>
+                <label className="text-sm font-medium text-slate-700">Days between {stageDetails.stageName} match days</label>
                 <input
                   className="input"
                   type="number"
-                  name="group_games_per_day"
-                  min={1}
-                  max={100}
-                  value={form.group_games_per_day}
-                  onChange={(e) => setForm({ ...form, group_games_per_day: e.target.value })}
+                  name="stage_day_gap_days"
+                  min={0}
+                  max={30}
+                  value={form.stage_day_gap_days}
+                  onChange={(e) => setForm({ ...form, stage_day_gap_days: e.target.value })}
                 />
+              </div>
+            )}
+            {usesStagePlanning && (
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-slate-700">{stageDetails.capLabel}</label>
+                <select
+                  className="input"
+                  name="group_games_per_day"
+                  value={form.group_games_per_day}
+                  onChange={(e) => {
+                    const count = Number(e.target.value);
+                    setForm({
+                      ...form,
+                      group_games_per_day: count,
+                      time_slots: resizeTimeSlots(form.time_slots, count),
+                    });
+                  }}
+                >
+                  {TIME_SLOT_COUNTS.map((count) => (
+                    <option key={count} value={count}>{count} games per day</option>
+                  ))}
+                </select>
               </div>
             )}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-slate-700">Venue setup</label>
-            <input
-              className="input"
-              type="number"
-              name="venues_count"
-              min={1}
-              max={20}
-              value={form.venues_count}
-              onChange={(e) => setForm({ ...form, venues_count: e.target.value })}
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-slate-700">Court names</label>
-            <input
-              className="input"
-              name="venue_names"
-              placeholder="Main Court,Court 2,Court 3"
-              value={form.venue_names}
-              onChange={(e) => setForm({ ...form, venue_names: e.target.value })}
-            />
-          </div>
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-slate-700">Default venue</label>
+          <input
+            className="input"
+            name="venue_name"
+            placeholder="Main Arena"
+            value={form.venue_name}
+            onChange={(e) => setForm({ ...form, venue_name: e.target.value })}
+          />
+          <div className="text-xs text-slate-500">Generated matches use this venue unless a match-specific venue override is entered later.</div>
         </div>
 
         <div className="space-y-1">
           <label className="text-sm font-medium text-slate-700">Daily time slots</label>
-          <input
-            className="input"
-            name="time_slots"
-            placeholder="12:00,14:00,16:00,18:00"
-            value={form.time_slots}
-            onChange={(e) => setForm({ ...form, time_slots: e.target.value })}
-          />
-          <div className="text-xs text-slate-500">Separate slot start times with commas. Example: 12:00,14:00,16:00,18:00.</div>
+          <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {resizeTimeSlots(form.time_slots, Number(form.group_games_per_day) || 4).map((slot, index) => (
+              <input
+                key={index}
+                className="input"
+                type="time"
+                value={slot}
+                onChange={(e) => {
+                  const nextSlots = [...normalizeTimeSlots(form.time_slots)];
+                  nextSlots[index] = e.target.value;
+                  setForm({ ...form, time_slots: nextSlots });
+                }}
+              />
+            ))}
+          </div>
+          <div className="text-xs text-slate-500">Set one start time for each match allowed on a generated match day.</div>
         </div>
 
         {form.end_date && (

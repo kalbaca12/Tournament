@@ -45,6 +45,7 @@ class PdfExportBuilder
             ['label' => 'Start date', 'value' => self::safeValue($tournament->start_date), 'meta' => 'Tournament opening day'],
             ['label' => 'End date', 'value' => self::safeValue($tournament->end_date), 'meta' => 'Scheduled closing day'],
             ['label' => 'Registration', 'value' => self::safeValue($tournament->registration_deadline), 'meta' => 'Signup deadline'],
+            ['label' => 'Default venue', 'value' => self::venueName($tournament), 'meta' => 'Used unless a match overrides it'],
             ['label' => 'Participants', 'value' => $tournament->participants_locked ? 'Locked' : 'Open', 'meta' => 'Participant state'],
             ['label' => 'Approved teams', 'value' => (string) $sortedTeams->count(), 'meta' => 'Registered tournament teams'],
             ['label' => 'Matches', 'value' => (string) $tournament->matches->count(), 'meta' => 'Scheduled fixtures'],
@@ -177,6 +178,7 @@ class PdfExportBuilder
                             'round' => 'R' . self::safeValue($match->round_number),
                             'matchup' => self::teamName($match, 'home') . ' vs ' . self::teamName($match, 'away'),
                             'time' => self::timeOnly($match->scheduled_at),
+                            'venue' => self::venueName($match),
                             'status' => self::labelize($match->status),
                             'score' => self::resultLabel($match),
                         ];
@@ -184,8 +186,9 @@ class PdfExportBuilder
 
                     $doc->addTable([
                         ['key' => 'round', 'label' => 'Round', 'width' => 52],
-                        ['key' => 'matchup', 'label' => 'Matchup', 'width' => 248],
+                        ['key' => 'matchup', 'label' => 'Matchup', 'width' => 184],
                         ['key' => 'time', 'label' => 'Time', 'width' => 62],
+                        ['key' => 'venue', 'label' => 'Venue', 'width' => 74],
                         ['key' => 'status', 'label' => 'Status', 'width' => 74],
                         ['key' => 'score', 'label' => 'Score', 'width' => 56, 'align' => 'right'],
                     ], $rows);
@@ -209,7 +212,7 @@ class PdfExportBuilder
                     $diagramMatches = [];
                     foreach (array_values($matches) as $matchIndex => $match) {
                         $diagramMatches[] = [
-                            'meta' => 'Match #' . $match->id,
+                            'meta' => 'Round ' . self::safeValue($match->round_number),
                             'status' => self::labelize($match->status),
                             'top_label' => self::playoffParticipantName($match, 'home', $roundCounts, (int) $round, $matchIndex),
                             'top_score' => self::scoreDisplay($match->home_score),
@@ -252,7 +255,11 @@ class PdfExportBuilder
         $doc->addBanner(
             'Match Export',
             self::teamName($game, 'home') . ' vs ' . self::teamName($game, 'away'),
-            'Match #' . $game->id . ' | ' . self::labelize($game->stage) . ' | ' . self::formatDateTime($game->scheduled_at),
+            implode(' | ', array_filter([
+                'Round ' . self::safeValue($game->round_number),
+                self::labelize($game->stage),
+                self::formatDateTime($game->scheduled_at),
+            ])),
             [
                 self::labelize($game->status),
                 'Result ' . self::resultLabel($game),
@@ -266,6 +273,7 @@ class PdfExportBuilder
             ['label' => 'Round', 'value' => self::safeValue($game->round_number), 'meta' => 'Bracket round'],
             ['label' => 'Group', 'value' => self::safeValue($game->group_code), 'meta' => 'Grouping code'],
             ['label' => 'Scheduled', 'value' => self::formatDateTime($game->scheduled_at), 'meta' => 'Tip-off time'],
+            ['label' => 'Venue', 'value' => self::venueName($game), 'meta' => 'Match venue'],
             ['label' => 'Result', 'value' => self::resultLabel($game), 'meta' => 'Final score'],
         ]);
 
@@ -316,6 +324,7 @@ class PdfExportBuilder
                 ['key' => 'steals', 'label' => 'STL', 'width' => 32, 'align' => 'right'],
                 ['key' => 'blocks', 'label' => 'BLK', 'width' => 32, 'align' => 'right'],
                 ['key' => 'fouls', 'label' => 'FLS', 'width' => 32, 'align' => 'right'],
+                ['key' => 'turnovers', 'label' => 'TO', 'width' => 32, 'align' => 'right'],
                 ['key' => 'fgm', 'label' => 'FGM', 'width' => 34, 'align' => 'right'],
                 ['key' => 'fga', 'label' => 'FGA', 'width' => 34, 'align' => 'right'],
                 ['key' => 'tpm', 'label' => '3PM', 'width' => 34, 'align' => 'right'],
@@ -344,6 +353,7 @@ class PdfExportBuilder
                     ['key' => 'steals', 'label' => 'STL', 'width' => 28, 'align' => 'right'],
                     ['key' => 'blocks', 'label' => 'BLK', 'width' => 28, 'align' => 'right'],
                     ['key' => 'fouls', 'label' => 'FLS', 'width' => 28, 'align' => 'right'],
+                    ['key' => 'turnovers', 'label' => 'TO', 'width' => 28, 'align' => 'right'],
                     ['key' => 'fgm', 'label' => 'FGM', 'width' => 30, 'align' => 'right'],
                     ['key' => 'fga', 'label' => 'FGA', 'width' => 30, 'align' => 'right'],
                     ['key' => 'tpm', 'label' => '3PM', 'width' => 30, 'align' => 'right'],
@@ -442,6 +452,7 @@ class PdfExportBuilder
                 'steals' => 0,
                 'blocks' => 0,
                 'fouls' => 0,
+                'turnovers' => 0,
                 'fgm' => 0,
                 'fga' => 0,
                 'tpm' => 0,
@@ -459,6 +470,7 @@ class PdfExportBuilder
                     'steals' => (int) ($stat->steals ?? 0),
                     'blocks' => (int) ($stat->blocks ?? 0),
                     'fouls' => (int) ($stat->fouls ?? 0),
+                    'turnovers' => (int) ($stat->turnovers ?? 0),
                     'fgm' => (int) ($stat->fgm ?? 0),
                     'fga' => (int) ($stat->fga ?? 0),
                     'tpm' => (int) ($stat->tpm ?? 0),
@@ -496,6 +508,7 @@ class PdfExportBuilder
             'Assists' => 'assists',
             'Steals' => 'steals',
             'Blocks' => 'blocks',
+            'Turnovers' => 'turnovers',
         ];
         $teamNameById = [
             (int) $game->home_team_id => self::teamName($game, 'home'),
@@ -542,6 +555,38 @@ class PdfExportBuilder
         }
 
         return $game->home_score . '-' . $game->away_score;
+    }
+
+    private static function venueName(Tournament|Game $entity): string
+    {
+        if ($entity instanceof Game) {
+            $override = trim((string) ($entity->venue_name ?? ''));
+            if ($override !== '') {
+                return $override;
+            }
+
+            $tournament = $entity->tournament;
+            if ($tournament instanceof Tournament) {
+                return self::venueName($tournament);
+            }
+
+            return 'Venue TBD';
+        }
+
+        $name = trim((string) ($entity->venue_name ?? ''));
+        if ($name !== '') {
+            return $name;
+        }
+
+        $legacyNames = $entity->venue_names ?? [];
+        if (is_array($legacyNames)) {
+            $legacyName = trim((string) ($legacyNames[0] ?? ''));
+            if ($legacyName !== '') {
+                return $legacyName;
+            }
+        }
+
+        return 'Venue TBD';
     }
 
     private static function scoreDisplay(mixed $value): string

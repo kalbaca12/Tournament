@@ -62,100 +62,106 @@ export default function TeamsList() {
   };
 
   return (
-    <div className="page-stack">
-      <section className="panel page-hero">
-        <div className="section-heading">
-          <div>
-            <p className="section-heading__eyebrow">Club Hub</p>
-            <h1 className="section-heading__title">Teams Directory</h1>
-            <p className="section-heading__copy">
-              Browse every registered roster, jump into team pages, and keep manager-owned clubs updated for tournament registration.
-            </p>
-          </div>
+    <div className="catalog-shell">
+      <aside className="catalog-rail panel catalog-rail--teams">
+        <p className="catalog-rail__eyebrow">Team list</p>
+        <h1 className="catalog-rail__title">Teams</h1>
+        <p className="catalog-rail__copy">Team cards, cities, and roster access.</p>
 
-          <div className="page-actions">
-            {isManager ? (
-              myTeam ? (
-                <Link to={`/teams/${myTeam.id}`} className="btn-secondary">Edit my team</Link>
-              ) : (
-                <Link to="/teams/new" className="btn-primary">Create team</Link>
-              )
-            ) : (
-              <div className="status-pill">Manager access needed to edit</div>
-            )}
-          </div>
-        </div>
-
-        <div className="page-metrics mt-6">
-          <div className="hero-stat">
-            <div className="hero-stat__label">Registered Teams</div>
-            <div className="hero-stat__value">{loading ? "..." : items.length}</div>
-            <div className="hero-stat__meta">All clubs visible across the platform.</div>
-          </div>
-          <div className="hero-stat">
-            <div className="hero-stat__label">Your Status</div>
-            <div className="hero-stat__value">{isManager ? "Manager" : "Viewer"}</div>
-            <div className="hero-stat__meta">Create and maintain a roster when you have manager access.</div>
-          </div>
-        </div>
-      </section>
-
-      {err && <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{err}</div>}
-
-      <div className="panel p-4">
         <input
-          className="input w-full"
-          placeholder="Search teams by name, city, or ID..."
+          className="input catalog-rail__search"
+          placeholder="Search teams"
           value={query}
           onChange={(event) => updateQuery(event.target.value)}
         />
-      </div>
 
-      <section className="list-grid">
-        {loading ? (
-          <Skeleton rows={3} />
-        ) : items.length === 0 && !err ? (
-          <EmptyState
-            title="No teams available yet"
-            description={isManager ? "Create your team and start adding players." : "Managers can create teams after signing in."}
-            action={isManager ? <Link to="/teams/new" className="btn-primary">Create team</Link> : null}
-          />
-        ) : filteredItems.length === 0 ? (
-          <EmptyState
-            title="No matching teams"
-            description="Try a different search term or clear the search field."
-            action={<button type="button" onClick={() => setQuery("")} className="btn-secondary">Clear search</button>}
-          />
-        ) : (
-          visibleItems.map((team) => (
-            <Link key={team.id} to={`/teams/${team.id}`} className="panel list-card transition hover:-translate-y-0.5 hover:shadow-2xl">
-              <div className="list-card__header">
-                <div>
-                  <h2 className="list-card__title">{team.name}</h2>
-                  <p className="list-card__copy">{team.city || "City not set yet."}</p>
-                </div>
-                <span className="list-tag">Team #{team.id}</span>
-              </div>
-            </Link>
-          ))
-        )}
-      </section>
-
-      {!loading && filteredItems.length > pageSize && (
-        <div className="panel flex flex-wrap items-center justify-between gap-3 p-4">
-          <div className="text-sm font-semibold text-slate-500">
-            Page {currentPage} of {totalPages} · {filteredItems.length} teams
-          </div>
-          <div className="flex gap-2">
-            <button type="button" className="btn-secondary" disabled={currentPage === 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>
-              Previous
-            </button>
-            <button type="button" className="btn-secondary" disabled={currentPage === totalPages} onClick={() => setPage((value) => Math.min(totalPages, value + 1))}>
-              Next
-            </button>
-          </div>
+        <div className="catalog-rail__stats">
+          <div><span>{loading ? "..." : items.length}</span><small>teams</small></div>
+          <div><span>{myTeam ? "1" : "0"}</span><small>mine</small></div>
         </div>
-      )}
+
+        {isManager ? (
+          myTeam ? (
+            <Link to={`/teams/${myTeam.id}`} className="btn-secondary catalog-rail__action">My team</Link>
+          ) : (
+            <Link to="/teams/new" className="btn-primary catalog-rail__action">New team</Link>
+          )
+        ) : null}
+      </aside>
+
+      <main className="catalog-main">
+        {err && <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{err}</div>}
+
+        <div className="catalog-main__bar">
+          <span>{filteredItems.length} results</span>
+          <span>{isManager ? "Manager access" : "View only"}</span>
+        </div>
+
+        <section className="team-tile-grid">
+          {loading ? (
+            <Skeleton rows={3} />
+          ) : items.length === 0 && !err ? (
+            <EmptyState
+              title="No teams yet"
+              description={isManager ? "Create a team and add players." : "Teams are created by logged-in managers."}
+              action={isManager ? <Link to="/teams/new" className="btn-primary">New team</Link> : null}
+            />
+          ) : filteredItems.length === 0 ? (
+            <EmptyState
+              title="No results found"
+              description="Try changing the search text."
+              action={<button type="button" onClick={() => setQuery("")} className="btn-secondary">Clear</button>}
+            />
+          ) : (
+            visibleItems.map((team) => {
+              const initials = String(team.name || "K")
+                .split(" ")
+                .filter(Boolean)
+                .slice(0, 2)
+                .map((part) => part[0])
+                .join("")
+                .toUpperCase();
+
+              return (
+                <Link key={team.id} to={`/teams/${team.id}`} className="club-card">
+                  {team.logo_url ? (
+                    <div className="club-card__logo-wrap">
+                      <img className="club-card__logo" src={team.logo_url} alt={`${team.name} logo`} />
+                    </div>
+                  ) : (
+                    <div className="club-card__crest">{initials}</div>
+                  )}
+                  <div className="club-card__body">
+                    <span className="club-card__id">Team #{team.id}</span>
+                    <h2>{team.name}</h2>
+                    <p>{team.city || "City not set"}</p>
+                  </div>
+                  <div className="club-card__footer">
+                    <span>Roster</span>
+                    <span>Open</span>
+                  </div>
+                </Link>
+              );
+            })
+          )}
+        </section>
+
+        {!loading && filteredItems.length > pageSize && (
+          <div className="panel catalog-pagination">
+            <div className="text-sm font-semibold text-slate-500">
+              Page {currentPage} of {totalPages} / {filteredItems.length} teams
+            </div>
+            <div className="flex gap-2">
+              <button type="button" className="btn-secondary" disabled={currentPage === 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>
+                Previous
+              </button>
+              <button type="button" className="btn-secondary" disabled={currentPage === totalPages} onClick={() => setPage((value) => Math.min(totalPages, value + 1))}>
+                Next
+              </button>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }

@@ -230,6 +230,10 @@ export default function BracketSimulatorModal({ isOpen, onClose, bracketRounds, 
                 {roundData.matches.map((match) => (
                   <div key={match.id} className={`sim-slot ${roundIndex === 0 ? "is-opening-round" : ""}`}>
                     <div className="sim-match-card">
+                      <div className="sim-match-meta">
+                        <span>{match.title}</span>
+                        <strong>{match.participants.filter((participant) => participant && !participant.isPlaceholder).length}/2</strong>
+                      </div>
                       {match.participants.map((participant, sideIndex) => {
                         const canDrag = Boolean(participant && !participant.isPlaceholder && roundIndex < simulationRounds.length - 1);
                         const isPickedWinner = Boolean(participant && match.winner && participant.entryKey === match.winner.entryKey);
@@ -274,21 +278,22 @@ export default function BracketSimulatorModal({ isOpen, onClose, bracketRounds, 
                         );
                       })}
 
-                      {match.winner && (
-                        <button
-                          type="button"
-                          className="sim-clear-pick"
-                          onClick={() =>
-                            setWinnerState((current) => {
-                              const next = { ...current.selections };
-                              delete next[winnerKey(roundIndex, match.matchIndex)];
-                              return { ...current, selections: next };
-                            })
-                          }
-                        >
-                          Clear winner
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        className={`sim-clear-pick ${match.winner ? "" : "is-hidden"}`}
+                        tabIndex={match.winner ? 0 : -1}
+                        aria-hidden={match.winner ? undefined : true}
+                        onClick={() => {
+                          if (!match.winner) return;
+                          setWinnerState((current) => {
+                            const next = { ...current.selections };
+                            delete next[winnerKey(roundIndex, match.matchIndex)];
+                            return { ...current, selections: next };
+                          });
+                        }}
+                      >
+                        Clear winner
+                      </button>
                     </div>
                   </div>
                 ))}

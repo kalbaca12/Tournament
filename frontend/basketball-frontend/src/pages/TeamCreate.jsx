@@ -6,7 +6,7 @@ import { useToast } from "../components/useToast";
 export default function TeamCreate() {
   const nav = useNavigate();
   const { showToast } = useToast();
-  const [form, setForm] = useState({ name: "", city: "" });
+  const [form, setForm] = useState({ name: "", city: "", logo_url: "" });
   const [err, setErr] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
   const [saving, setSaving] = useState(false);
@@ -20,6 +20,7 @@ export default function TeamCreate() {
       ...form,
       name: String(formData.get("name") || form.name),
       city: String(formData.get("city") || form.city),
+      logo_url: String(formData.get("logo_url") || form.logo_url),
     };
 
     if (!liveForm.name.trim()) {
@@ -29,7 +30,10 @@ export default function TeamCreate() {
 
     setSaving(true);
     try {
-      const r = await teamsApi.create(liveForm);
+      const r = await teamsApi.create({
+        ...liveForm,
+        logo_url: liveForm.logo_url.trim() || null,
+      });
       showToast("Team created.");
       nav(`/teams/${r.data.id}`);
     } catch (e2) {
@@ -73,6 +77,16 @@ export default function TeamCreate() {
             placeholder="City"
             value={form.city}
             onChange={(e) => setForm({ ...form, city: e.target.value })}
+          />
+        </div>
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-slate-700">Logo URL</label>
+          <input
+            className="input"
+            name="logo_url"
+            placeholder="https://..."
+            value={form.logo_url}
+            onChange={(e) => setForm({ ...form, logo_url: e.target.value })}
           />
         </div>
         <button className="btn-primary" disabled={saving}>{saving ? "Saving..." : "Save team"}</button>

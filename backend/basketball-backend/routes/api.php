@@ -61,6 +61,7 @@ Route::post('/tournaments/{tournament}/teams/{team}/players', [TournamentRosterC
 Route::delete('/tournaments/{tournament}/teams/{team}/players/{player}', [TournamentRosterController::class, 'destroy']);
 
 Route::get('/tournaments/{tournament}/matches', [MatchController::class, 'index']);
+Route::get('/matches', [MatchController::class, 'all']);
 Route::get('/matches/{game}', [MatchController::class, 'show']);
 Route::get('/matches/{game}/export/pdf', [MatchController::class, 'exportPdf']);
 
@@ -87,4 +88,5 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::delete('/matches/{game}', [MatchController::class, 'destroy']);
     Route::post('/matches/{game}/result', [MatchController::class, 'setResult']);
     Route::post('/matches/{game}/stats', [MatchStatController::class, 'storeBulk']);
+    Route::post('/matches/{game}/live-events', [MatchController::class, 'storeLiveEvents']);
 });

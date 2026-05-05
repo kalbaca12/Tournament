@@ -68,11 +68,11 @@ export default function Nav() {
       <div className="app-header__inner">
         <div className="app-brand">
           <div className="app-brand__mark">
-            <span>BB</span>
+            <span>KT</span>
           </div>
           <div className="app-brand__copy">
-            <div className="app-brand__title">Basketball System</div>
-            <div className="app-brand__subtitle">Tournament Management Desk</div>
+            <div className="app-brand__title">Tournament System</div>
+            <div className="app-brand__subtitle">Teams / Matches / Results</div>
           </div>
         </div>
 
@@ -87,6 +87,9 @@ export default function Nav() {
           </NavLink>
           <NavLink to="/teams" className={linkClass}>
             Teams
+          </NavLink>
+          <NavLink to="/matches" className={linkClass}>
+            Matches
           </NavLink>
           {!isAuthenticated ? (
             <NavLink to="/login" className="btn-primary">

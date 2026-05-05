@@ -2,15 +2,30 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { tournamentsApi } from "../api/tournaments";
 import { teamsApi } from "../api/teams";
+import { matchesApi } from "../api/matches";
 import { useAuth } from "../auth/useAuth";
 import EmptyState from "../components/EmptyState";
 import Skeleton from "../components/Skeleton";
 import { useToast } from "../components/useToast";
 
 function formatDateTime(value) {
-  if (!value) return "No time";
+  if (!value) return "Time not set";
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+}
+
+function dateKey(value) {
+  if (!value) return "";
+  if (typeof value === "string") {
+    const directDate = value.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (directDate) return directDate[1];
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function matchTeam(match, side) {
@@ -27,6 +42,7 @@ export default function Dashboard() {
   const [tournaments, setTournaments] = useState([]);
   const [myTeam, setMyTeam] = useState(null);
   const [teamMatches, setTeamMatches] = useState([]);
+  const [allMatches, setAllMatches] = useState([]);
   const [pendingRequests, setPendingRequests] = useState([]);
   const [myRequests, setMyRequests] = useState([]);
 
@@ -35,8 +51,10 @@ export default function Dashboard() {
       setLoading(true);
       try {
         const tournamentsRes = await tournamentsApi.list();
+        const matchesRes = await matchesApi.list().catch(() => ({ data: [] }));
         const loadedTournaments = tournamentsRes.data || [];
         setTournaments(loadedTournaments);
+        setAllMatches(matchesRes.data || []);
 
         if (isAdmin) {
           const requestResults = await Promise.allSettled(
@@ -92,17 +110,22 @@ export default function Dashboard() {
     [teamMatches],
   );
 
+  const todayMatches = useMemo(() => {
+    const today = dateKey(new Date());
+    return allMatches
+      .filter((match) => dateKey(match.scheduled_at) === today)
+      .slice(0, 6);
+  }, [allMatches]);
+
   if (!isAuthenticated) {
     return (
-      <div className="page-stack">
-        <section className="panel page-hero">
-          <p className="page-kicker">Dashboard</p>
-          <h1 className="page-title mt-3">Sign in to manage tournaments</h1>
-          <p className="page-copy mt-4">Public tournament pages are still available, but the dashboard is personalized for admins and managers.</p>
-          <div className="mt-6">
-            <Link to="/login" className="btn-primary">Login</Link>
-          </div>
-        </section>
+      <div className="auth-gate panel">
+        <div>
+          <p className="page-kicker">Workspace</p>
+          <h1 className="page-title mt-3">Log in to manage</h1>
+          <p className="page-copy mt-4">Tournaments can be viewed publicly, but management requires an account.</p>
+        </div>
+        <Link to="/login" className="btn-primary">Login</Link>
       </div>
     );
   }
@@ -112,50 +135,69 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="page-stack">
-      <section className="panel page-hero">
-        <p className="page-kicker">Dashboard</p>
-        <h1 className="page-title mt-3">Welcome, {user?.name || user?.role}</h1>
-        <p className="page-copy mt-4">
-          Quick access to active tournaments, pending work, and the next matches that need attention.
-        </p>
+    <div className="workbench">
+      <aside className="workbench-rail panel">
+        <p className="workbench-rail__eyebrow">Account</p>
+        <h1>{user?.name || user?.role}</h1>
+        <p>{user?.email}</p>
 
-        <div className="page-metrics mt-8">
-          <div className="hero-stat">
-            <div className="hero-stat__label">Active tournaments</div>
-            <div className="hero-stat__value">{activeTournaments.length}</div>
-            <div className="hero-stat__meta">Events still open, published, or in progress.</div>
-          </div>
-          <div className="hero-stat">
-            <div className="hero-stat__label">{isAdmin ? "Pending requests" : "My team"}</div>
-            <div className="hero-stat__value">{isAdmin ? pendingRequests.length : (myTeam ? "Ready" : "None")}</div>
-            <div className="hero-stat__meta">{isAdmin ? "Teams waiting for review." : "Manager-owned club status."}</div>
-          </div>
-          <div className="hero-stat">
-            <div className="hero-stat__label">Role</div>
-            <div className="hero-stat__value">{user?.role}</div>
-            <div className="hero-stat__meta">{user?.email}</div>
-          </div>
+        <div className="workbench-rail__stats">
+          <div><span>{activeTournaments.length}</span><small>active</small></div>
+          <div><span>{todayMatches.length}</span><small>today</small></div>
+          <div><span>{user?.role}</span><small>role</small></div>
         </div>
-      </section>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <section className="panel space-y-3 p-5">
-          <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="workbench-rail__actions">
+          <Link to="/tournaments" className="btn-secondary">Tournaments</Link>
+          {isAdmin ? <Link to="/tournaments/new" className="btn-primary">New tournament</Link> : null}
+          {isManager && !myTeam ? <Link to="/teams/new" className="btn-primary">New team</Link> : null}
+        </div>
+      </aside>
+
+      <main className="workbench-main">
+        <section className="work-section work-section--today">
+          <div className="work-section__head">
             <div>
-              <h2 className="text-xl font-semibold text-slate-900">Active tournaments</h2>
-              <p className="text-sm text-slate-500">Open a tournament desk to manage schedule, requests, standings, and PDF exports.</p>
+              <p>Today</p>
+              <h2>Matches on the calendar</h2>
             </div>
-            <Link to="/tournaments" className="btn-secondary">View all</Link>
+            <Link to="/matches" className="btn-secondary">Calendar</Link>
+          </div>
+          {todayMatches.length === 0 ? (
+            <EmptyState title="No matches today" description="All matches can be viewed on the calendar page." />
+          ) : (
+            <div className="dash-match-strip">
+              {todayMatches.map((match) => (
+                <Link key={match.id} to={`/matches/${match.id}`} className="dash-match-card">
+                  <span>{match.tournament?.name || `Tournament #${match.tournament_id}`}</span>
+                  <h3>{matchTeam(match, "home")} vs {matchTeam(match, "away")}</h3>
+                  <p>{formatDateTime(match.scheduled_at)} / {match.status}</p>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="work-section">
+          <div className="work-section__head">
+            <div>
+              <p>Tournaments</p>
+              <h2>Active work</h2>
+            </div>
+            <Link to="/tournaments" className="btn-secondary">All</Link>
           </div>
           {activeTournaments.length === 0 ? (
-            <EmptyState title="No active tournaments" description="Create or publish a tournament to make it appear here." />
+            <EmptyState title="No active tournaments" description="Published or newly created tournaments will appear here." />
           ) : (
-            <div className="grid gap-2">
+            <div className="work-card-grid">
               {activeTournaments.map((tournament) => (
-                <Link key={tournament.id} to={`/tournaments/${tournament.id}`} className="rounded-xl border border-slate-200 bg-white p-3 transition hover:border-amber-300">
-                  <div className="font-semibold text-slate-900">{tournament.name}</div>
-                  <div className="text-sm text-slate-500">{tournament.format} · {tournament.status} · {tournament.start_date || "No start date"}</div>
+                <Link key={tournament.id} to={`/tournaments/${tournament.id}`} className="dash-tournament-card">
+                  <span>{tournament.format}</span>
+                  <h3>{tournament.name}</h3>
+                  <div>
+                    <b>{tournament.status}</b>
+                    <small>{tournament.start_date || "not set"} - {tournament.end_date || "not set"}</small>
+                  </div>
                 </Link>
               ))}
             </div>
@@ -163,74 +205,94 @@ export default function Dashboard() {
         </section>
 
         {isAdmin ? (
-          <section className="panel space-y-3 p-5">
-            <h2 className="text-xl font-semibold text-slate-900">Pending participation</h2>
+          <section className="work-section">
+            <div className="work-section__head">
+              <div>
+                <p>Requests</p>
+                <h2>Waiting for review</h2>
+              </div>
+            </div>
             {pendingRequests.length === 0 ? (
-              <EmptyState title="No pending requests" description="New team participation requests will appear here." />
+              <EmptyState title="No pending requests" description="New team requests will appear here." />
             ) : (
-              <div className="grid gap-2">
+              <div className="work-card-grid">
                 {pendingRequests.slice(0, 6).map((request) => (
-                  <Link key={request.id} to={`/tournaments/${request.tournament_id}`} className="rounded-xl border border-slate-200 bg-white p-3 transition hover:border-amber-300">
-                    <div className="font-semibold text-slate-900">{request.team?.name || `Team ${request.team_id}`}</div>
-                    <div className="text-sm text-slate-500">Manager: {request.manager?.name || request.manager_id}</div>
+                  <Link key={request.id} to={`/tournaments/${request.tournament_id}`} className="work-card">
+                    <span>pending</span>
+                    <h3>{request.team?.name || `Team ${request.team_id}`}</h3>
+                    <p>Manager: {request.manager?.name || request.manager_id}</p>
                   </Link>
                 ))}
               </div>
             )}
           </section>
         ) : (
-          <section className="panel space-y-3 p-5">
-            <div className="flex flex-wrap items-center justify-between gap-2">
+          <section className="work-section">
+            <div className="work-section__head">
               <div>
-                <h2 className="text-xl font-semibold text-slate-900">My team</h2>
-                <p className="text-sm text-slate-500">Roster and upcoming match access for managers.</p>
+                <p>Team</p>
+                <h2>My roster</h2>
               </div>
-              {myTeam ? <Link to={`/teams/${myTeam.id}`} className="btn-secondary">Open team</Link> : <Link to="/teams/new" className="btn-primary">Create team</Link>}
+              {myTeam ? <Link to={`/teams/${myTeam.id}`} className="btn-secondary">Open</Link> : <Link to="/teams/new" className="btn-primary">Create</Link>}
             </div>
             {myTeam ? (
-              <div className="rounded-xl border border-slate-200 bg-white p-3">
-                <div className="font-semibold text-slate-900">{myTeam.name}</div>
-                <div className="text-sm text-slate-500">{myTeam.city || "City not set"}</div>
+              <div className="work-card-grid">
+                <Link to={`/teams/${myTeam.id}`} className="work-card">
+                  <span>{myTeam.city || "city not set"}</span>
+                  <h3>{myTeam.name}</h3>
+                  <p>Team page and players</p>
+                </Link>
               </div>
             ) : (
-              <EmptyState title="No team yet" description="Create your team before requesting participation in tournaments." />
+              <EmptyState title="No team yet" description="Create a team before sending tournament requests." />
             )}
           </section>
         )}
-      </div>
 
-      {isManager && (
-        <section className="panel space-y-3 p-5">
-          <h2 className="text-xl font-semibold text-slate-900">Upcoming matches</h2>
-          {upcomingMatches.length === 0 ? (
-            <EmptyState title="No upcoming matches" description="Matches will appear after an admin generates or creates a schedule." />
-          ) : (
-            <div className="grid gap-2">
-              {upcomingMatches.map((match) => (
-                <Link key={match.id} to={`/matches/${match.id}`} className="rounded-xl border border-slate-200 bg-white p-3 transition hover:border-amber-300">
-                  <div className="font-semibold text-slate-900">{matchTeam(match, "home")} vs {matchTeam(match, "away")}</div>
-                  <div className="text-sm text-slate-500">Round {match.round_number || "-"} · {formatDateTime(match.scheduled_at)} · {match.status}</div>
-                </Link>
+        {isManager && (
+          <section className="work-section">
+            <div className="work-section__head">
+              <div>
+                <p>Matches</p>
+                <h2>Upcoming</h2>
+              </div>
+            </div>
+            {upcomingMatches.length === 0 ? (
+              <EmptyState title="No matches" description="They will appear after an administrator generates the schedule." />
+            ) : (
+              <div className="work-card-grid">
+                {upcomingMatches.map((match) => (
+                  <Link key={match.id} to={`/matches/${match.id}`} className="work-card">
+                    <span>{match.status}</span>
+                    <h3>{matchTeam(match, "home")} vs {matchTeam(match, "away")}</h3>
+                    <p>Round {match.round_number || "-"} / {formatDateTime(match.scheduled_at)}</p>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        {isManager && myRequests.length > 0 && (
+          <section className="work-section">
+            <div className="work-section__head">
+              <div>
+                <p>Requests</p>
+                <h2>My submissions</h2>
+              </div>
+            </div>
+            <div className="work-card-grid">
+              {myRequests.slice(0, 6).map((request) => (
+                <div key={request.id} className="work-card">
+                  <span>{request.status}</span>
+                  <h3>{request.team?.name || `Team ${request.team_id}`}</h3>
+                  {request.note ? <p>{request.note}</p> : <p>No notes</p>}
+                </div>
               ))}
             </div>
-          )}
-        </section>
-      )}
-
-      {isManager && myRequests.length > 0 && (
-        <section className="panel space-y-3 p-5">
-          <h2 className="text-xl font-semibold text-slate-900">My participation requests</h2>
-          <div className="grid gap-2">
-            {myRequests.slice(0, 6).map((request) => (
-              <div key={request.id} className="rounded-xl border border-slate-200 bg-white p-3">
-                <div className="font-semibold text-slate-900">{request.team?.name || `Team ${request.team_id}`}</div>
-                <div className="text-sm text-slate-500">Status: {request.status}</div>
-                {request.note ? <div className="mt-1 text-sm text-slate-600">{request.note}</div> : null}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+          </section>
+        )}
+      </main>
     </div>
   );
 }

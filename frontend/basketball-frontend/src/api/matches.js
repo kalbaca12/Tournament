@@ -1,6 +1,7 @@
 ﻿import { api } from "./client";
 
 export const matchesApi = {
+  list: () => api.get("/matches"),
   get: (id) => api.get(`/matches/${id}`),
   exportPdf: (id, sections = []) => api.get(`/matches/${id}/export/pdf`, {
     responseType: "blob",
@@ -12,5 +13,6 @@ export const matchesApi = {
   setResult: (id, data) => api.post(`/matches/${id}/result`, data),
   stats: (id) => api.get(`/matches/${id}/stats`),
   submitStatsBulk: (id, data) => api.post(`/matches/${id}/stats`, data),
+  submitLiveEvents: (id, data) => api.post(`/matches/${id}/live-events`, data),
 };
 

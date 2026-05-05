@@ -44,11 +44,13 @@ return new class extends Migration
                 $table->unsignedInteger('duration_weeks')->default(1);
                 $table->json('allowed_days')->nullable();
                 $table->json('time_slots')->nullable();
+                $table->string('venue_name', 150)->nullable();
                 $table->unsignedInteger('venues_count')->default(1);
                 $table->json('venue_names')->nullable();
                 $table->unsignedInteger('playoff_round_gap_days')->default(1);
                 $table->unsignedInteger('groups_to_playoffs_gap_days')->default(1);
                 $table->unsignedInteger('group_games_per_day')->nullable();
+                $table->unsignedInteger('stage_day_gap_days')->default(0);
                 $table->date('registration_deadline')->nullable();
                 $table->boolean('participants_locked')->default(false);
                 $table->timestamps();
@@ -83,6 +85,7 @@ return new class extends Migration
                 $table->unsignedBigInteger('away_team_id')->nullable();
                 $table->unsignedBigInteger('venue_id')->nullable();
                 $table->unsignedInteger('venue_slot')->nullable();
+                $table->string('venue_name', 150)->nullable();
                 $table->string('stage', 50)->nullable();
                 $table->string('group_code', 10)->nullable();
                 $table->unsignedInteger('round_number')->default(1);
@@ -132,6 +135,7 @@ return new class extends Migration
                 $table->unsignedInteger('steals')->default(0);
                 $table->unsignedInteger('blocks')->default(0);
                 $table->unsignedInteger('fouls')->default(0);
+                $table->unsignedInteger('turnovers')->default(0);
                 $table->unsignedInteger('fgm')->default(0);
                 $table->unsignedInteger('fga')->default(0);
                 $table->unsignedInteger('tpm')->default(0);

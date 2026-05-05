@@ -10,7 +10,8 @@ class Player extends Model
         'team_id',
         'first_name',
         'last_name',
-        'jersey_number'
+        'photo_url',
+        'jersey_number',
     ];
 
     public function team()

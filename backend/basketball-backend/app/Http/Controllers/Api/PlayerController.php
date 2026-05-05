@@ -31,6 +31,7 @@ class PlayerController extends Controller
             'team_id' => ['required','integer','exists:teams,id'],
             'first_name' => ['required','string','max:100'],
             'last_name' => ['required','string','max:100'],
+            'photo_url' => ['nullable', 'url', 'max:2048'],
             'jersey_number' => ['nullable','integer','min:0','max:99'],
         ]);
 
@@ -56,6 +57,7 @@ class PlayerController extends Controller
             'team_id' => ['sometimes','integer','exists:teams,id'],
             'first_name' => ['sometimes','string','max:100'],
             'last_name' => ['sometimes','string','max:100'],
+            'photo_url' => ['nullable', 'url', 'max:2048'],
             'jersey_number' => ['nullable','integer','min:0','max:99'],
         ]);
 

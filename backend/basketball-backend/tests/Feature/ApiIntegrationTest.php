@@ -187,7 +187,7 @@ class ApiIntegrationTest extends TestCase
             'format' => 'single_elimination',
             'participants_locked' => true,
             'end_date' => '2026-06-07',
-            'time_slots' => ['18:00'],
+            'time_slots' => ['18:00', '20:00'],
         ]);
 
         foreach ($teams as $index => $team) {
@@ -490,10 +490,11 @@ class ApiIntegrationTest extends TestCase
             'stage' => 'group',
             'round_number' => 1,
             'scheduled_at' => '2026-06-01 18:00:00',
-            'venue_slot' => 1,
+            'venue_name' => 'Main Arena',
         ])
             ->assertCreated()
             ->assertJsonPath('home_team_id', $homeTeam->id)
+            ->assertJsonPath('venue_name', 'Main Arena')
             ->json();
 
         $gameId = $created['id'];
@@ -508,12 +509,12 @@ class ApiIntegrationTest extends TestCase
 
         $this->putJson("/api/matches/{$gameId}", [
             'scheduled_at' => '2026-06-01 20:00:00',
-            'venue_slot' => 2,
+            'venue_name' => 'Practice Hall',
             'status' => 'live',
         ])
             ->assertOk()
             ->assertJsonPath('status', 'live')
-            ->assertJsonPath('venue_slot', 2);
+            ->assertJsonPath('venue_name', 'Practice Hall');
 
         $this->postJson("/api/matches/{$gameId}/stats", [
             'stats' => [
@@ -659,9 +660,11 @@ class ApiIntegrationTest extends TestCase
             $table->json('time_slots')->nullable();
             $table->unsignedInteger('venues_count')->default(1);
             $table->json('venue_names')->nullable();
+            $table->string('venue_name', 150)->nullable();
             $table->unsignedInteger('playoff_round_gap_days')->default(1);
             $table->unsignedInteger('groups_to_playoffs_gap_days')->default(1);
             $table->unsignedInteger('group_games_per_day')->nullable();
+            $table->unsignedInteger('stage_day_gap_days')->default(0);
             $table->date('registration_deadline')->nullable();
             $table->boolean('participants_locked')->default(false);
             $table->timestamps();
@@ -683,6 +686,7 @@ class ApiIntegrationTest extends TestCase
             $table->unsignedBigInteger('away_team_id')->nullable();
             $table->unsignedBigInteger('venue_id')->nullable();
             $table->unsignedInteger('venue_slot')->nullable();
+            $table->string('venue_name', 150)->nullable();
             $table->string('stage', 50)->nullable();
             $table->string('group_code', 10)->nullable();
             $table->unsignedInteger('round_number')->default(1);
@@ -736,6 +740,7 @@ class ApiIntegrationTest extends TestCase
             $table->unsignedInteger('steals')->default(0);
             $table->unsignedInteger('blocks')->default(0);
             $table->unsignedInteger('fouls')->default(0);
+            $table->unsignedInteger('turnovers')->default(0);
             $table->unsignedInteger('fgm')->default(0);
             $table->unsignedInteger('fga')->default(0);
             $table->unsignedInteger('tpm')->default(0);
@@ -745,6 +750,7 @@ class ApiIntegrationTest extends TestCase
             $table->boolean('dnp')->default(false);
             $table->boolean('fouled_out')->default(false);
             $table->unsignedInteger('minutes')->default(0);
+            $table->unsignedInteger('played_seconds')->default(0);
             $table->timestamps();
         });
     }
@@ -784,7 +790,7 @@ class ApiIntegrationTest extends TestCase
             'created_by' => $admin->id,
             'status' => 'draft',
             'participants_locked' => false,
-            'venue_names' => ['Court 1'],
+            'venue_name' => 'Main Arena',
         ], $attributes));
     }
 
@@ -798,8 +804,8 @@ class ApiIntegrationTest extends TestCase
             'max_teams' => 8,
             'duration_weeks' => 1,
             'allowed_days' => [1, 2, 3, 4, 5, 6, 7],
-            'time_slots' => ['18:00'],
-            'venues_count' => 1,
+            'time_slots' => ['18:00', '20:00'],
+            'venue_name' => 'Main Arena',
             'playoff_round_gap_days' => 1,
             'groups_to_playoffs_gap_days' => 1,
             'registration_deadline' => '2026-06-01',

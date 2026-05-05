@@ -44,7 +44,7 @@ export default function PlayoffBracket({ bracketRounds, roundLabel, playoffName,
                   <div className={`bracket-match ${match.status === "finished" ? "is-finished" : ""} ${match.status === "live" ? "is-live" : ""}`}>
                     <Link to={`/matches/${match.id}`} className="bracket-match-link">
                       <div className="bracket-match-meta">
-                        <span className="bracket-match-id">Match #{match.id}</span>
+                        <span className="bracket-match-id">Round {match.round_number || "-"}</span>
                         <span className={`bracket-status bracket-status-${match.status || "scheduled"}`}>{match.status || "scheduled"}</span>
                       </div>
 

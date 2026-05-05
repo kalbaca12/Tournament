@@ -14,13 +14,19 @@ class Game extends Model
         'away_team_id',
         'venue_id',
         'venue_slot',
+        'venue_name',
         'stage',
         'group_code',
         'round_number',
         'scheduled_at',
         'home_score',
         'away_score',
-        'status'
+        'status',
+        'live_events'
+    ];
+
+    protected $casts = [
+        'live_events' => 'array',
     ];
 
     public function tournament()

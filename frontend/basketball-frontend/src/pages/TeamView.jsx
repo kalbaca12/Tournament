@@ -35,8 +35,8 @@ export default function TeamView() {
   const [team, setTeam] = useState(null);
   const [players, setPlayers] = useState([]);
   const [matches, setMatches] = useState([]);
-  const [form, setForm] = useState({ name: "", city: "" });
-  const [newPlayer, setNewPlayer] = useState({ first_name: "", last_name: "", jersey_number: "" });
+  const [form, setForm] = useState({ name: "", city: "", logo_url: "" });
+  const [newPlayer, setNewPlayer] = useState({ first_name: "", last_name: "", photo_url: "", jersey_number: "" });
   const [editRows, setEditRows] = useState({});
   const [err, setErr] = useState("");
   const [saving, setSaving] = useState(false);
@@ -71,6 +71,7 @@ export default function TeamView() {
     setForm({
       name: teamRes.data?.name || "",
       city: teamRes.data?.city || "",
+      logo_url: teamRes.data?.logo_url || "",
     });
     setPlayers(playersRes.data || []);
     setMatches(matchesRes.data || []);
@@ -85,7 +86,10 @@ export default function TeamView() {
     setErr("");
     setSaving(true);
     try {
-      const res = await teamsApi.update(id, form);
+      const res = await teamsApi.update(id, {
+        ...form,
+        logo_url: form.logo_url.trim() || null,
+      });
       setTeam({ ...team, ...res.data });
       showToast("Team details saved.");
     } catch (e) {
@@ -123,6 +127,7 @@ export default function TeamView() {
     const livePlayer = {
       first_name: document.querySelector('input[placeholder="First name"]')?.value ?? newPlayer.first_name,
       last_name: document.querySelector('input[placeholder="Last name"]')?.value ?? newPlayer.last_name,
+      photo_url: document.querySelector('input[placeholder="Photo URL"]')?.value ?? newPlayer.photo_url,
       jersey_number: document.querySelector('input[placeholder="Jersey"]')?.value ?? newPlayer.jersey_number,
     };
     try {
@@ -130,9 +135,10 @@ export default function TeamView() {
         team_id: Number(id),
         first_name: livePlayer.first_name,
         last_name: livePlayer.last_name,
+        photo_url: livePlayer.photo_url.trim() || null,
         jersey_number: livePlayer.jersey_number === "" ? null : Number(livePlayer.jersey_number),
       });
-      setNewPlayer({ first_name: "", last_name: "", jersey_number: "" });
+      setNewPlayer({ first_name: "", last_name: "", photo_url: "", jersey_number: "" });
       await load();
       showToast("Player added.");
     } catch (e) {
@@ -148,6 +154,7 @@ export default function TeamView() {
       [p.id]: {
         first_name: p.first_name || "",
         last_name: p.last_name || "",
+        photo_url: p.photo_url || "",
         jersey_number: p.jersey_number ?? "",
       },
     }));
@@ -163,6 +170,7 @@ export default function TeamView() {
       await playersApi.update(playerId, {
         first_name: row.first_name,
         last_name: row.last_name,
+        photo_url: row.photo_url.trim() || null,
         jersey_number: row.jersey_number === "" ? null : Number(row.jersey_number),
       });
 
@@ -210,27 +218,43 @@ export default function TeamView() {
         <p className="text-sm text-slate-500">Team ID: {team.id}</p>
       </div>
 
-      {!canManageTeam && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
-          Read-only mode. Only this team's manager can edit team and players.
-        </div>
-      )}
-
       <div className="panel space-y-4 p-5">
-        <input
-          className="input"
-          placeholder="Name"
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-          disabled={!canManageTeam}
-        />
-        <input
-          className="input"
-          placeholder="City"
-          value={form.city}
-          onChange={(e) => setForm({ ...form, city: e.target.value })}
-          disabled={!canManageTeam}
-        />
+        {canManageTeam ? (
+          <>
+            <input
+              className="input"
+              placeholder="Name"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
+            <input
+              className="input"
+              placeholder="City"
+              value={form.city}
+              onChange={(e) => setForm({ ...form, city: e.target.value })}
+            />
+            <input
+              className="input"
+              placeholder="Logo URL"
+              value={form.logo_url}
+              onChange={(e) => setForm({ ...form, logo_url: e.target.value })}
+            />
+          </>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {team.logo_url ? (
+              <img className="team-detail-logo" src={team.logo_url} alt={`${team.name} logo`} />
+            ) : null}
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Name</div>
+              <div className="mt-1 text-base font-semibold text-slate-900">{team.name || "Unnamed team"}</div>
+            </div>
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">City</div>
+              <div className="mt-1 text-base font-semibold text-slate-900">{team.city || "N/A"}</div>
+            </div>
+          </div>
+        )}
 
         {canManageTeam && (
           <div className="flex flex-wrap gap-2">
@@ -249,7 +273,7 @@ export default function TeamView() {
         </div>
 
         {canManageTeam && (
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-5">
             <input
               className="input"
               placeholder="First name"
@@ -261,6 +285,12 @@ export default function TeamView() {
               placeholder="Last name"
               value={newPlayer.last_name}
               onChange={(e) => setNewPlayer({ ...newPlayer, last_name: e.target.value })}
+            />
+            <input
+              className="input"
+              placeholder="Photo URL"
+              value={newPlayer.photo_url}
+              onChange={(e) => setNewPlayer({ ...newPlayer, photo_url: e.target.value })}
             />
             <input
               className="input"
@@ -284,10 +314,15 @@ export default function TeamView() {
               <div key={p.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                 {!isEditing ? (
                   <div className="flex items-center justify-between gap-2">
-                    <div>
+                    <Link to={`/players/${p.id}`} className="flex min-w-0 items-center gap-3 rounded-md transition hover:text-sky-700">
+                      {p.photo_url ? (
+                        <img className="player-avatar" src={p.photo_url} alt={`${p.first_name} ${p.last_name}`} />
+                      ) : null}
+                      <div className="min-w-0">
                       <div className="font-medium text-slate-900">{p.first_name} {p.last_name}</div>
                       <div className="text-sm text-slate-500">Jersey #{p.jersey_number ?? "-"}</div>
-                    </div>
+                      </div>
+                    </Link>
                     {canManageTeam && (
                       <div className="flex gap-2">
                         <button onClick={() => startEditPlayer(p)} className="btn-secondary">Edit</button>
@@ -296,7 +331,7 @@ export default function TeamView() {
                     )}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
+                  <div className="grid grid-cols-1 gap-2 md:grid-cols-5">
                     <input
                       className="input"
                       value={row.first_name}
@@ -306,6 +341,12 @@ export default function TeamView() {
                       className="input"
                       value={row.last_name}
                       onChange={(e) => setEditRows((prev) => ({ ...prev, [p.id]: { ...prev[p.id], last_name: e.target.value } }))}
+                    />
+                    <input
+                      className="input"
+                      value={row.photo_url}
+                      placeholder="Photo URL"
+                      onChange={(e) => setEditRows((prev) => ({ ...prev, [p.id]: { ...prev[p.id], photo_url: e.target.value } }))}
                     />
                     <input
                       className="input"
@@ -362,7 +403,7 @@ export default function TeamView() {
                   {list.map((m) => (
                     <Link key={m.id} to={`/matches/${m.id}`} className="rounded-md border border-slate-200 bg-white px-2.5 py-2 transition hover:border-sky-300">
                       <div className="flex flex-wrap items-center justify-between gap-1 text-xs text-slate-500">
-                        <span className="font-semibold text-slate-700">#{m.id} - R{m.round_number ?? "-"} - {m.status}</span>
+                        <span className="font-semibold text-slate-700">R{m.round_number ?? "-"} - {m.status}</span>
                         <span>{formatDateTime(m.scheduled_at)}</span>
                       </div>
                       <div className="text-sm font-medium text-slate-900">

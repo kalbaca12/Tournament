@@ -51,6 +51,7 @@ class TeamController extends Controller
         $validated = $request->validate([
             'name' => ['required','string','max:150'],
             'city' => ['nullable','string','max:100'],
+            'logo_url' => ['nullable', 'url', 'max:2048'],
         ]);
 
         $validated['manager_id'] = $user->id;
@@ -68,6 +69,7 @@ class TeamController extends Controller
         $validated = $request->validate([
             'name' => ['sometimes','string','max:150'],
             'city' => ['nullable','string','max:100'],
+            'logo_url' => ['nullable', 'url', 'max:2048'],
         ]);
 
         $team->update($validated);

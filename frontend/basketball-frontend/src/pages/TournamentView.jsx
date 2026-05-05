@@ -71,6 +71,24 @@ function stagePlanningCopy(format) {
   };
 }
 
+const TIME_SLOT_COUNTS = [2, 4, 6, 8];
+const DEFAULT_TIME_SLOTS = ["12:00", "14:00", "16:00", "18:00", "20:00", "22:00", "09:00", "11:00"];
+
+function normalizeTimeSlots(value) {
+  const slots = Array.isArray(value) ? value : String(value || "").split(",");
+  return slots.map((slot) => String(slot || "").trim()).filter(Boolean);
+}
+
+function resizeTimeSlots(slots, count) {
+  const current = normalizeTimeSlots(slots);
+  return Array.from({ length: count }, (_, index) => current[index] || DEFAULT_TIME_SLOTS[index] || "12:00");
+}
+
+function normalizeGamesPerDay(value, fallback = 4) {
+  const count = Number(value) || fallback;
+  return TIME_SLOT_COUNTS.includes(count) ? count : fallback;
+}
+
 function OverviewAccordion({ title, subtitle, isOpen, onToggle, children, actions = null }) {
   return (
     <section className={`overview-accordion panel ${isOpen ? "is-open" : ""}`}>
@@ -102,7 +120,7 @@ function OverviewAccordion({ title, subtitle, isOpen, onToggle, children, action
 export default function TournamentView() {
   const { id } = useParams();
   const nav = useNavigate();
-  const { isAdmin, isManager, isAuthenticated } = useAuth();
+  const { isAdmin, isManager } = useAuth();
   const { confirm } = useConfirm();
   const { showToast } = useToast();
 
@@ -117,18 +135,19 @@ export default function TournamentView() {
   const [myRequests, setMyRequests] = useState([]);
   const [adminRequests, setAdminRequests] = useState([]);
 
-  const [teamToAdd, setTeamToAdd] = useState("");
+  const [selectedTeamIdsToAdd, setSelectedTeamIdsToAdd] = useState([]);
   const [editForm, setEditForm] = useState({
     name: "",
+    banner_url: "",
     end_date: "",
     format: "round_robin",
     status: "draft",
     max_teams: "",
-    venues_count: 1,
-    venue_names: "Main Court",
-    time_slots: "12:00,14:00,16:00,18:00",
+    venue_name: "",
+    time_slots: ["12:00", "14:00", "16:00", "18:00"],
     playoff_round_gap_days: 1,
     groups_to_playoffs_gap_days: 1,
+    stage_day_gap_days: 0,
     group_games_per_day: 4,
   });
   const [newMatch, setNewMatch] = useState({
@@ -136,7 +155,7 @@ export default function TournamentView() {
     away_team_id: "",
     round_number: 1,
     scheduled_at: "",
-    venue_slot: "",
+    venue_name: "",
   });
   const [selectedTeamId, setSelectedTeamId] = useState(null);
   const [selectedTeamName, setSelectedTeamName] = useState("");
@@ -148,6 +167,7 @@ export default function TournamentView() {
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const [pdfSections, setPdfSections] = useState(defaultTournamentPdfSections);
   const [activeTab, setActiveTab] = useState("overview");
+  const [isTeamPickerOpen, setIsTeamPickerOpen] = useState(false);
   const [matchQuery, setMatchQuery] = useState("");
   const [matchStatusFilter, setMatchStatusFilter] = useState("all");
   const [matchDateFilter, setMatchDateFilter] = useState("all");
@@ -175,23 +195,80 @@ export default function TournamentView() {
     [teams],
   );
 
-  const venueNames = useMemo(() => {
-    const count = Math.max(1, Number(t?.venues_count || editForm.venues_count || 1));
-    const rawNames = Array.isArray(t?.venue_names) && t.venue_names.length > 0
-      ? t.venue_names
-      : String(editForm.venue_names || "").split(",");
+  const approvedTeamIds = useMemo(
+    () => new Set(teams.map((tm) => Number(tm.team_id)).filter(Number.isFinite)),
+    [teams],
+  );
 
-    return Array.from({ length: count }, (_, index) => {
-      const name = String(rawNames[index] || "").trim();
-      return name || `Court ${index + 1}`;
+  const availableTeamsToAdd = useMemo(
+    () => allTeams.filter((tm) => !approvedTeamIds.has(Number(tm.id))),
+    [allTeams, approvedTeamIds],
+  );
+
+  const remainingTeamSlots = useMemo(() => {
+    const maxTeams = Number(t?.max_teams);
+    if (!Number.isFinite(maxTeams) || maxTeams <= 0) return null;
+    return Math.max(0, maxTeams - teams.length);
+  }, [t?.max_teams, teams.length]);
+
+  const canSelectMoreTeams = remainingTeamSlots === null || selectedTeamIdsToAdd.length < remainingTeamSlots;
+
+  useEffect(() => {
+    const availableIds = new Set(availableTeamsToAdd.map((tm) => Number(tm.id)));
+    setSelectedTeamIdsToAdd((current) => {
+      const filtered = current.filter((teamId) => availableIds.has(Number(teamId)));
+      return remainingTeamSlots === null ? filtered : filtered.slice(0, remainingTeamSlots);
     });
-  }, [editForm.venue_names, editForm.venues_count, t?.venue_names, t?.venues_count]);
+  }, [availableTeamsToAdd, remainingTeamSlots]);
 
-  const venueLabel = useCallback((venueId) => {
-    const idNumber = Number(venueId);
-    if (!Number.isFinite(idNumber) || idNumber <= 0) return "Court TBD";
-    return venueNames[idNumber - 1] || `Court ${idNumber}`;
-  }, [venueNames]);
+  const toggleTeamToAdd = (teamId) => {
+    const normalizedId = Number(teamId);
+    if (!Number.isFinite(normalizedId)) return;
+
+    setSelectedTeamIdsToAdd((current) => {
+      if (current.includes(normalizedId)) {
+        return current.filter((idValue) => idValue !== normalizedId);
+      }
+      if (remainingTeamSlots !== null && current.length >= remainingTeamSlots) {
+        return current;
+      }
+      return [...current, normalizedId];
+    });
+  };
+
+  const selectAllAvailableTeams = () => {
+    const limit = remainingTeamSlots === null ? availableTeamsToAdd.length : remainingTeamSlots;
+    setSelectedTeamIdsToAdd(availableTeamsToAdd.slice(0, limit).map((tm) => Number(tm.id)));
+  };
+
+  const selectedTeamNamesToAdd = useMemo(() => {
+    const namesById = new Map(allTeams.map((tm) => [Number(tm.id), tm.name]));
+    return selectedTeamIdsToAdd.map((teamId) => namesById.get(Number(teamId))).filter(Boolean);
+  }, [allTeams, selectedTeamIdsToAdd]);
+
+  const defaultVenueName = useMemo(() => {
+    const directName = String(t?.venue_name || editForm.venue_name || "").trim();
+    if (directName) return directName;
+    if (Array.isArray(t?.venue_names) && t.venue_names.length > 0) {
+      return String(t.venue_names[0] || "").trim();
+    }
+    return "";
+  }, [editForm.venue_name, t?.venue_name, t?.venue_names]);
+
+  const venueLabel = useCallback((matchRow) => {
+    const override = String(matchRow?.venue_name || "").trim();
+    return override || defaultVenueName || "Venue TBD";
+  }, [defaultVenueName]);
+
+  const venueFilterOptions = useMemo(() => {
+    const names = new Set();
+    if (defaultVenueName) names.add(defaultVenueName);
+    matches.forEach((matchRow) => {
+      const name = String(matchRow?.venue_name || "").trim();
+      if (name) names.add(name);
+    });
+    return Array.from(names).sort((left, right) => left.localeCompare(right));
+  }, [defaultVenueName, matches]);
 
   const planningCopy = useMemo(() => stagePlanningCopy(editForm.format), [editForm.format]);
 
@@ -240,30 +317,26 @@ export default function TournamentView() {
     setT(tRes.data);
     setEditForm({
       name: tRes.data?.name || "",
+      banner_url: tRes.data?.banner_url || "",
       end_date: tRes.data?.end_date || "",
       format: tRes.data?.format || "round_robin",
       status: tRes.data?.status || "draft",
       max_teams: tRes.data?.max_teams || "",
-      venues_count: tRes.data?.venues_count || 1,
-      venue_names: Array.isArray(tRes.data?.venue_names) && tRes.data.venue_names.length > 0
-        ? tRes.data.venue_names.join(",")
-        : Array.from({ length: Number(tRes.data?.venues_count || 1) }, (_, index) => `Court ${index + 1}`).join(","),
+      venue_name: tRes.data?.venue_name || (Array.isArray(tRes.data?.venue_names) ? tRes.data.venue_names[0] || "" : ""),
       time_slots: Array.isArray(tRes.data?.time_slots) && tRes.data.time_slots.length > 0
-        ? tRes.data.time_slots.join(",")
-        : "12:00,14:00,16:00,18:00",
+        ? resizeTimeSlots(tRes.data.time_slots, normalizeGamesPerDay(tRes.data?.group_games_per_day, 4))
+        : ["12:00", "14:00", "16:00", "18:00"],
       playoff_round_gap_days: tRes.data?.playoff_round_gap_days ?? 1,
       groups_to_playoffs_gap_days: tRes.data?.groups_to_playoffs_gap_days ?? 1,
-      group_games_per_day: tRes.data?.group_games_per_day ?? Math.min(
-        Math.max(1, Number(tRes.data?.venues_count || 1)) * (Array.isArray(tRes.data?.time_slots) && tRes.data.time_slots.length > 0 ? tRes.data.time_slots.length : 4),
-        4,
-      ),
+      stage_day_gap_days: tRes.data?.stage_day_gap_days ?? 0,
+      group_games_per_day: normalizeGamesPerDay(tRes.data?.group_games_per_day, 4),
     });
     setTeams(teamRes.data);
     setMatches(matchesRes.data);
     setMatchEdits((matchesRes.data || []).reduce((acc, matchRow) => {
       acc[matchRow.id] = {
         scheduled_at: matchRow.scheduled_at ? matchRow.scheduled_at.slice(0, 16) : "",
-        venue_slot: matchRow.venue_slot ?? matchRow.venue_id ?? "",
+        venue_name: matchRow.venue_name || "",
         status: matchRow.status || "scheduled",
       };
       return acc;
@@ -319,17 +392,12 @@ export default function TournamentView() {
   const buildPlanningPayload = () => ({
     ...editForm,
     max_teams: editForm.max_teams ? Number(editForm.max_teams) : null,
-    venues_count: Math.max(1, Number(editForm.venues_count) || 1),
-    venue_names: String(editForm.venue_names || "")
-      .split(",")
-      .map((name) => name.trim())
-      .filter(Boolean),
-    time_slots: String(editForm.time_slots || "")
-      .split(",")
-      .map((slot) => slot.trim())
-      .filter(Boolean),
+    banner_url: String(editForm.banner_url || "").trim() || null,
+    venue_name: String(editForm.venue_name || "").trim() || null,
+    time_slots: resizeTimeSlots(editForm.time_slots, Number(editForm.group_games_per_day) || 4),
     playoff_round_gap_days: Math.max(0, Number(editForm.playoff_round_gap_days) || 0),
     groups_to_playoffs_gap_days: planningCopy.usesStagePlanning ? Math.max(0, Number(editForm.groups_to_playoffs_gap_days) || 0) : 0,
+    stage_day_gap_days: planningCopy.usesStagePlanning ? Math.max(0, Number(editForm.stage_day_gap_days) || 0) : 0,
     group_games_per_day: planningCopy.usesStagePlanning ? Math.max(1, Number(editForm.group_games_per_day) || 1) : null,
   });
 
@@ -482,15 +550,40 @@ export default function TournamentView() {
   };
 
   const addTeam = async () => {
-    if (!isAdmin || !teamToAdd) return;
+    if (!isAdmin || selectedTeamIdsToAdd.length === 0) return;
     setErr("");
-    try {
-      await tournamentsApi.addTeam(id, { team_id: Number(teamToAdd) });
-      setTeamToAdd("");
-      await load();
-      showToast("Team added to tournament.");
-    } catch (e) {
-      handleActionError(e, "Failed to add team.");
+    const availableIds = new Set(availableTeamsToAdd.map((tm) => Number(tm.id)));
+    const teamIds = selectedTeamIdsToAdd
+      .map(Number)
+      .filter((teamId) => Number.isFinite(teamId) && availableIds.has(teamId))
+      .slice(0, remainingTeamSlots === null ? undefined : remainingTeamSlots);
+
+    if (teamIds.length === 0) return;
+
+    let addedCount = 0;
+    let firstError = "";
+
+    for (const teamId of teamIds) {
+      try {
+        await tournamentsApi.addTeam(id, { team_id: teamId });
+        addedCount += 1;
+      } catch (e) {
+        firstError = firstError || e?.response?.data?.message || e.message || "Failed to add team.";
+      }
+    }
+
+    setSelectedTeamIdsToAdd([]);
+    setIsTeamPickerOpen(false);
+    await load();
+
+    if (firstError) {
+      const message = addedCount > 0
+        ? `${addedCount} team${addedCount === 1 ? "" : "s"} added, but another team could not be added: ${firstError}`
+        : firstError;
+      setErr(message);
+      showToast(message, "error");
+    } else {
+      showToast(`${addedCount} team${addedCount === 1 ? "" : "s"} added to tournament.`);
     }
   };
 
@@ -595,9 +688,9 @@ export default function TournamentView() {
         away_team_id: Number(newMatch.away_team_id),
         round_number: Number(newMatch.round_number) || 1,
         scheduled_at: newMatch.scheduled_at || null,
-        venue_slot: newMatch.venue_slot ? Number(newMatch.venue_slot) : null,
+        venue_name: newMatch.venue_name?.trim() || null,
       });
-      setNewMatch({ home_team_id: "", away_team_id: "", round_number: 1, scheduled_at: "", venue_slot: "" });
+      setNewMatch({ home_team_id: "", away_team_id: "", round_number: 1, scheduled_at: "", venue_name: "" });
       await load();
       showToast("Match created.");
     } catch (e) {
@@ -680,7 +773,8 @@ export default function TournamentView() {
       if (matchDateFilter !== "all" && dayKey !== matchDateFilter) {
         return false;
       }
-      const venueKey = matchRow.venue_slot || matchRow.venue_id ? String(matchRow.venue_slot ?? matchRow.venue_id) : "none";
+      const venueName = venueLabel(matchRow);
+      const venueKey = venueName === "Venue TBD" ? "none" : venueName;
       if (matchVenueFilter !== "all" && venueKey !== matchVenueFilter) {
         return false;
       }
@@ -696,7 +790,7 @@ export default function TournamentView() {
         matchRow.round_number,
         matchRow.status,
         matchRow.scheduled_at,
-        venueLabel(matchRow.venue_slot ?? matchRow.venue_id),
+        venueName,
         homeName,
         awayName,
       ].join(" ").toLowerCase();
@@ -780,7 +874,7 @@ export default function TournamentView() {
     try {
       await matchesApi.update(matchId, {
         scheduled_at: draft.scheduled_at || null,
-        venue_slot: draft.venue_slot ? Number(draft.venue_slot) : null,
+        venue_name: draft.venue_name?.trim() || null,
         status: draft.status || "scheduled",
       });
       await load();
@@ -835,6 +929,9 @@ export default function TournamentView() {
       {err && <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{err}</div>}
 
       <div className="panel page-hero">
+        {t.banner_url ? (
+          <img className="tournament-hero-banner" src={t.banner_url} alt={`${t.name} banner`} />
+        ) : null}
         <div className="section-heading">
           <div>
             <p className="section-heading__eyebrow">Tournament Hub</p>
@@ -850,12 +947,6 @@ export default function TournamentView() {
             {t.max_teams ? <span className="list-tag">{t.max_teams} team cap</span> : null}
           </div>
         </div>
-
-        {!isAuthenticated && (
-          <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-            Public view: schedules, standings, brackets, and results are visible without logging in. Login is required to manage teams or tournaments.
-          </div>
-        )}
 
         {isManager && (
           <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
@@ -928,10 +1019,14 @@ export default function TournamentView() {
               <h2 className="text-xl font-semibold text-slate-900">Tournament settings</h2>
               <p className="text-sm text-slate-500">Edit the tournament, lock participants, and control the backwards schedule generation rules.</p>
             </div>
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
               <div className="space-y-1">
                 <label className="text-sm font-medium text-slate-700">Tournament name</label>
                 <input className="input" placeholder="Tournament name" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-slate-700">Banner URL</label>
+                <input className="input" placeholder="https://..." value={editForm.banner_url} onChange={(e) => setEditForm({ ...editForm, banner_url: e.target.value })} />
               </div>
               <div className="space-y-1">
                 <label className="text-sm font-medium text-slate-700">Max teams</label>
@@ -967,12 +1062,8 @@ export default function TournamentView() {
                   <option value="cancelled">cancelled</option>
                 </select>
               </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-slate-700">Venue setup</label>
-                <input className="input" type="number" min={1} max={20} value={editForm.venues_count} onChange={(e) => setEditForm({ ...editForm, venues_count: e.target.value })} />
-              </div>
             </div>
-            <div className={`grid grid-cols-1 gap-2 ${planningCopy.usesStagePlanning ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
+            <div className={`grid grid-cols-1 gap-2 ${planningCopy.usesStagePlanning ? "md:grid-cols-4" : "md:grid-cols-2"}`}>
               <div className="space-y-1">
                 <label className="text-sm font-medium text-slate-700">Days between playoff rounds</label>
                 <input
@@ -1000,36 +1091,66 @@ export default function TournamentView() {
               {planningCopy.usesStagePlanning && (
                 <div className="space-y-1">
                   <label className="text-sm font-medium text-slate-700">{planningCopy.capLabel}</label>
+                  <select
+                    className="input"
+                    value={editForm.group_games_per_day}
+                    onChange={(e) => {
+                      const count = Number(e.target.value);
+                      setEditForm({
+                        ...editForm,
+                        group_games_per_day: count,
+                        time_slots: resizeTimeSlots(editForm.time_slots, count),
+                      });
+                    }}
+                  >
+                    {TIME_SLOT_COUNTS.map((count) => (
+                      <option key={count} value={count}>{count} games per day</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {planningCopy.usesStagePlanning && (
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-slate-700">Days between {planningCopy.stageName} match days</label>
                   <input
                     className="input"
                     type="number"
-                    min={1}
-                    max={100}
-                    value={editForm.group_games_per_day}
-                    onChange={(e) => setEditForm({ ...editForm, group_games_per_day: e.target.value })}
+                    min={0}
+                    max={30}
+                    value={editForm.stage_day_gap_days}
+                    onChange={(e) => setEditForm({ ...editForm, stage_day_gap_days: e.target.value })}
                   />
                 </div>
               )}
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-700">Court names</label>
+              <label className="text-sm font-medium text-slate-700">Default venue</label>
               <input
                 className="input"
-                placeholder="Main Court,Court 2,Court 3"
-                value={editForm.venue_names}
-                onChange={(e) => setEditForm({ ...editForm, venue_names: e.target.value })}
+                placeholder="Main Arena"
+                value={editForm.venue_name}
+                onChange={(e) => setEditForm({ ...editForm, venue_name: e.target.value })}
               />
-              <div className="text-xs text-slate-500">Separate court names with commas. These labels are used in match filters and schedule editing.</div>
+              <div className="text-xs text-slate-500">Generated matches use this venue unless a match-specific override is entered below.</div>
             </div>
             <div className="space-y-1">
               <label className="text-sm font-medium text-slate-700">Daily time slots</label>
-              <input
-                className="input"
-                placeholder="12:00,14:00,16:00,18:00"
-                value={editForm.time_slots}
-                onChange={(e) => setEditForm({ ...editForm, time_slots: e.target.value })}
-              />
-              <div className="text-xs text-slate-500">Separate slot start times with commas. These slots are reused across the automatically generated planning window.</div>
+              <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {resizeTimeSlots(editForm.time_slots, Number(editForm.group_games_per_day) || 4).map((slot, index) => (
+                  <input
+                    key={index}
+                    className="input"
+                    type="time"
+                    value={slot}
+                    onChange={(e) => {
+                      const nextSlots = [...normalizeTimeSlots(editForm.time_slots)];
+                      nextSlots[index] = e.target.value;
+                      setEditForm({ ...editForm, time_slots: nextSlots });
+                    }}
+                  />
+                ))}
+              </div>
+              <div className="text-xs text-slate-500">Set one start time for each match allowed on a generated match day.</div>
             </div>
             <div className="flex flex-wrap gap-2">
               <button onClick={saveTournament} className="btn-primary">Save tournament</button>
@@ -1081,29 +1202,92 @@ export default function TournamentView() {
         </div>
       )}
 
-      <div className="panel space-y-4 p-5">
+      <div className="panel approved-teams-panel space-y-4 p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h2 className="text-xl font-semibold text-slate-900">Approved teams</h2>
             <p className="text-sm text-slate-500">Only approved teams are used for scheduling.</p>
           </div>
-          {isAdmin && (
-            <div className="flex gap-2">
-              <button onClick={generate} className="btn-primary">Generate schedule</button>
-              <button onClick={clear} className="btn-secondary">Clear schedule</button>
-            </div>
-          )}
         </div>
 
         {isAdmin && !t.participants_locked && (
           <div className="grid gap-2 md:grid-cols-[1fr_auto]">
-            <select className="input" value={teamToAdd} onChange={(e) => setTeamToAdd(e.target.value)}>
-              <option value="">Select team to add...</option>
-              {allTeams.map((tm) => (
-                <option key={tm.id} value={tm.id}>{tm.name}</option>
-              ))}
-            </select>
-            <button onClick={addTeam} className="btn-secondary">Add team directly</button>
+            <div className="relative">
+              <button
+                type="button"
+                className="input flex w-full items-center justify-between gap-3 text-left"
+                onClick={() => setIsTeamPickerOpen((open) => !open)}
+                disabled={availableTeamsToAdd.length === 0 || remainingTeamSlots === 0}
+              >
+                <span className="min-w-0 truncate">
+                  {selectedTeamNamesToAdd.length === 0
+                    ? remainingTeamSlots === 0
+                      ? "Team limit reached"
+                      : "Select teams to add..."
+                    : selectedTeamNamesToAdd.length <= 2
+                      ? selectedTeamNamesToAdd.join(", ")
+                      : `${selectedTeamNamesToAdd.slice(0, 2).join(", ")} +${selectedTeamNamesToAdd.length - 2}`}
+                </span>
+                <span className="text-xs font-semibold text-slate-500">
+                  {remainingTeamSlots === null ? `${selectedTeamIdsToAdd.length} selected` : `${selectedTeamIdsToAdd.length}/${remainingTeamSlots}`}
+                </span>
+              </button>
+
+              {isTeamPickerOpen && (
+                <div className="absolute left-0 right-0 top-full z-50 mt-1 border border-slate-300 bg-white shadow-lg">
+                  <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-2 py-1.5">
+                    <button
+                      type="button"
+                      onClick={selectAllAvailableTeams}
+                      disabled={availableTeamsToAdd.length === 0 || remainingTeamSlots === 0}
+                      className="text-xs font-semibold text-slate-700 hover:text-slate-950 disabled:text-slate-300"
+                    >
+                      Select available
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTeamIdsToAdd([])}
+                      disabled={selectedTeamIdsToAdd.length === 0}
+                      className="text-xs font-semibold text-slate-700 hover:text-slate-950 disabled:text-slate-300"
+                    >
+                      Clear
+                    </button>
+                  </div>
+
+                  <div className="max-h-72 overflow-y-auto p-1">
+                    {availableTeamsToAdd.length > 0 ? availableTeamsToAdd.map((tm) => {
+                      const teamId = Number(tm.id);
+                      const checked = selectedTeamIdsToAdd.includes(teamId);
+                      const disabled = !checked && !canSelectMoreTeams;
+
+                      return (
+                        <label
+                          key={tm.id}
+                          className={`flex cursor-pointer items-center gap-2 px-2 py-1 text-sm leading-tight hover:bg-slate-50 ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            disabled={disabled}
+                            onChange={() => toggleTeamToAdd(teamId)}
+                          />
+                          <span className="min-w-0">
+                            <span className="block truncate font-medium text-slate-900">{tm.name}</span>
+                            <span className="block truncate text-[11px] text-slate-500">{tm.city || "No city"}</span>
+                          </span>
+                        </label>
+                      );
+                    }) : (
+                      <div className="px-2 py-3 text-sm text-slate-500">No available teams to add.</div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <button type="button" onClick={addTeam} disabled={selectedTeamIdsToAdd.length === 0} className="btn-secondary">
+              Add selected teams
+            </button>
           </div>
         )}
 
@@ -1122,9 +1306,14 @@ export default function TournamentView() {
               }}
               className={`flex cursor-pointer items-center justify-between gap-2 rounded-md border px-3 py-2 ${selectedTeamId === tm.team_id ? "border-slate-500 bg-slate-100" : "border-slate-300 bg-white"}`}
             >
-              <div className="min-w-0 text-sm select-none">
-                <span className="font-medium text-slate-900">{tm.team?.name || `Team ${tm.team_id}`}</span>
-                <span className="text-slate-500"> - {tm.team?.city || "No city"}</span>
+              <div className="flex min-w-0 items-center gap-2 text-sm select-none">
+                {tm.team?.logo_url ? (
+                  <img className="team-logo-small" src={tm.team.logo_url} alt={`${tm.team?.name || "Team"} logo`} />
+                ) : null}
+                <div className="min-w-0">
+                  <span className="font-medium text-slate-900">{tm.team?.name || `Team ${tm.team_id}`}</span>
+                  <span className="text-slate-500"> - {tm.team?.city || "No city"}</span>
+                </div>
               </div>
               <div className="flex items-center gap-1.5">
                 <Link
@@ -1170,9 +1359,12 @@ export default function TournamentView() {
             ) : (
               <div className="flex flex-wrap gap-2">
                 {teamPlayers.map((p) => (
-                  <div key={p.id} className="rounded-md border border-slate-200 bg-white px-2 py-1 text-sm text-slate-700">
-                    #{p.jersey_number ?? "-"} {p.first_name} {p.last_name}
-                  </div>
+                  <Link key={p.id} to={`/players/${p.id}`} className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1 text-sm text-slate-700 transition hover:border-sky-300">
+                    {p.photo_url ? (
+                      <img className="player-avatar player-avatar--small" src={p.photo_url} alt={`${p.first_name} ${p.last_name}`} />
+                    ) : null}
+                    <span>#{p.jersey_number ?? "-"} {p.first_name} {p.last_name}</span>
+                  </Link>
                 ))}
               </div>
             )}
@@ -1186,7 +1378,10 @@ export default function TournamentView() {
                 <h2 className="text-xl font-semibold text-slate-900">Match controls</h2>
                 <p className="text-sm text-slate-500">Create manual matches or clear the current schedule without leaving the admin view.</p>
               </div>
-              <button onClick={clear} className="btn-danger">Clear all matches</button>
+              <div className="flex flex-wrap gap-2">
+                <button onClick={generate} className="btn-primary">Generate schedule</button>
+                <button onClick={clear} className="btn-danger">Clear all matches</button>
+              </div>
             </div>
 
             <div className="grid gap-2 md:grid-cols-6">
@@ -1217,13 +1412,8 @@ export default function TournamentView() {
                 <input className="input" type="datetime-local" value={newMatch.scheduled_at} onChange={(e) => setNewMatch({ ...newMatch, scheduled_at: e.target.value })} />
               </div>
               <div className="space-y-1">
-                <label className="text-sm font-medium text-slate-700">Court</label>
-                <select className="input" value={newMatch.venue_slot} onChange={(e) => setNewMatch({ ...newMatch, venue_slot: e.target.value })}>
-                  <option value="">Court TBD</option>
-                  {venueNames.map((name, index) => (
-                    <option key={name} value={index + 1}>{name}</option>
-                  ))}
-                </select>
+                <label className="text-sm font-medium text-slate-700">Venue override</label>
+                <input className="input" placeholder={defaultVenueName || "Venue TBD"} value={newMatch.venue_name} onChange={(e) => setNewMatch({ ...newMatch, venue_name: e.target.value })} />
               </div>
               <div className="space-y-1">
                 <label className="text-sm font-medium text-slate-700">Action</label>
@@ -1235,7 +1425,7 @@ export default function TournamentView() {
               <div className="space-y-2">
                 <div>
                   <h3 className="text-base font-semibold text-slate-800">Schedule editor</h3>
-                  <p className="text-sm text-slate-500">Adjust match time, court, and status without opening each match page.</p>
+                  <p className="text-sm text-slate-500">Adjust match time, venue override, and status without opening each match page.</p>
                 </div>
                 <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
                   <table className="min-w-full text-sm">
@@ -1243,7 +1433,7 @@ export default function TournamentView() {
                       <tr>
                         <th className="px-3 py-2 font-medium">Match</th>
                         <th className="px-3 py-2 font-medium">Time</th>
-                        <th className="px-3 py-2 font-medium">Court</th>
+                        <th className="px-3 py-2 font-medium">Venue override</th>
                         <th className="px-3 py-2 font-medium">Status</th>
                         <th className="px-3 py-2 font-medium">Action</th>
                       </tr>
@@ -1253,7 +1443,7 @@ export default function TournamentView() {
                         <tr key={matchRow.id} className="border-t border-slate-100">
                           <td className="min-w-[220px] px-3 py-2">
                             <Link to={`/matches/${matchRow.id}`} className="font-semibold text-slate-900 hover:text-sky-700">
-                              #{matchRow.id} · {resolveTeamName(matchRow, "home") || "TBD"} vs {resolveTeamName(matchRow, "away") || "TBD"}
+                              {resolveTeamName(matchRow, "home") || "TBD"} vs {resolveTeamName(matchRow, "away") || "TBD"}
                             </Link>
                             <div className="text-xs text-slate-500">Round {matchRow.round_number || "-"} · {matchRow.stage || "regular"}</div>
                           </td>
@@ -1266,16 +1456,12 @@ export default function TournamentView() {
                             />
                           </td>
                           <td className="px-3 py-2">
-                            <select
-                              className="input min-w-[150px]"
-                              value={matchEdits[matchRow.id]?.venue_slot ?? ""}
-                              onChange={(event) => updateMatchEdit(matchRow.id, "venue_slot", event.target.value)}
-                            >
-                              <option value="">Court TBD</option>
-                              {venueNames.map((name, index) => (
-                                <option key={`${matchRow.id}-${name}`} value={index + 1}>{name}</option>
-                              ))}
-                            </select>
+                            <input
+                              className="input min-w-[190px]"
+                              placeholder={defaultVenueName || "Venue TBD"}
+                              value={matchEdits[matchRow.id]?.venue_name ?? ""}
+                              onChange={(event) => updateMatchEdit(matchRow.id, "venue_name", event.target.value)}
+                            />
                           </td>
                           <td className="px-3 py-2">
                             <select
@@ -1362,14 +1548,19 @@ export default function TournamentView() {
               ) : teamPlayers.length > 0 ? (
                 <div className="grid gap-2 md:grid-cols-2">
                   {teamPlayers.map((player) => (
-                    <div key={player.id} className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
-                      <div className="font-medium text-slate-900">
-                        {player.first_name} {player.last_name}
+                    <Link key={player.id} to={`/players/${player.id}`} className="flex items-center gap-3 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition hover:border-sky-300">
+                      {player.photo_url ? (
+                        <img className="player-avatar" src={player.photo_url} alt={`${player.first_name} ${player.last_name}`} />
+                      ) : null}
+                      <div className="min-w-0">
+                        <div className="font-medium text-slate-900">
+                          {player.first_name} {player.last_name}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          #{player.jersey_number ?? "-"} · {player.position || "No position"}
+                        </div>
                       </div>
-                      <div className="text-xs text-slate-500">
-                        #{player.jersey_number ?? "-"} · {player.position || "No position"}
-                      </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               ) : (
@@ -1386,11 +1577,11 @@ export default function TournamentView() {
           subtitle={`One league table for the full regular season.${roundRobinQualifiedCount > 0 ? ` Top ${roundRobinQualifiedCount} teams advance to the playoff bracket.` : ""}`}
           isOpen={overviewOpen.standings}
           onToggle={() => toggleOverviewSection("standings")}
-          actions={isAdmin ? (
+          actions={
             <button type="button" onClick={() => setIsGroupsSimulatorOpen(true)} className="btn-secondary">
               Simulate
             </button>
-          ) : null}
+          }
         >
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
@@ -1432,11 +1623,11 @@ export default function TournamentView() {
           subtitle="Top teams update the playoff bracket automatically as group results come in."
           isOpen={overviewOpen.groups}
           onToggle={() => toggleOverviewSection("groups")}
-          actions={isAdmin ? (
+          actions={
             <button type="button" onClick={() => setIsGroupsSimulatorOpen(true)} className="btn-secondary">
               Simulate
             </button>
-          ) : null}
+          }
         >
           <div className="grid gap-3 lg:grid-cols-2">
             {groupStandings.map((group) => (
@@ -1510,7 +1701,7 @@ export default function TournamentView() {
           onToggle={() => toggleOverviewSection("matches")}
         >
           {dayListMatches.length > 0 && (
-            <div className="grid gap-2 lg:grid-cols-[1fr_170px_170px_170px_auto]">
+            <div className="grid gap-2 border border-slate-200 bg-slate-50 p-3 lg:grid-cols-[1fr_170px_170px_170px_auto]">
               <input
                 className="input"
                 placeholder="Search by team, round, status, or match ID..."
@@ -1542,10 +1733,10 @@ export default function TournamentView() {
                 value={matchVenueFilter}
                 onChange={(event) => setMatchVenueFilter(event.target.value)}
               >
-                <option value="all">All courts</option>
-                <option value="none">Court TBD</option>
-                {venueNames.map((name, index) => (
-                  <option key={name} value={index + 1}>{name}</option>
+                <option value="all">All venues</option>
+                <option value="none">Venue TBD</option>
+                {venueFilterOptions.map((name) => (
+                  <option key={name} value={name}>{name}</option>
                 ))}
               </select>
               <div className="flex items-center text-sm font-semibold text-slate-500">
@@ -1565,8 +1756,8 @@ export default function TournamentView() {
                       <div key={m.id} className="rounded-md border border-slate-200 bg-white px-2.5 py-2">
                         <Link to={`/matches/${m.id}`} className="block transition hover:text-sky-700">
                           <div className="flex flex-wrap items-center justify-between gap-1 text-xs text-slate-500">
-                            <span className="font-semibold text-slate-700">#{m.id} - R{m.round_number} - {m.status}</span>
-                            <span>{formatDateTime(m.scheduled_at)} · {venueLabel(m.venue_slot ?? m.venue_id)}</span>
+                            <span className="font-semibold text-slate-700">R{m.round_number || "-"} - {m.status}</span>
+                            <span>{formatDateTime(m.scheduled_at)} · {venueLabel(m)}</span>
                           </div>
                           {hasFinishedResult(m) ? (
                             <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 border-t border-slate-100 pt-2">

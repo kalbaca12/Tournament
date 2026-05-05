@@ -49,123 +49,128 @@ export default function TournamentsList() {
   };
 
   const labelize = (value) => String(value || "").replaceAll("_", " ");
+  const activeCount = items.filter((item) => item.status !== "finished" && item.status !== "cancelled").length;
+  const finishedCount = items.filter((item) => item.status === "finished").length;
 
   return (
-    <div className="page-stack">
-      <section className="panel page-hero">
-        <div className="section-heading">
-          <div>
-            <p className="section-heading__eyebrow">Match Desk</p>
-            <h1 className="section-heading__title">Tournament Center</h1>
-            <p className="section-heading__copy">
-              Track formats, lock participants, launch schedules, and jump straight into brackets, standings, and simulation tools.
-            </p>
-          </div>
+    <div className="catalog-shell">
+      <aside className="catalog-rail panel">
+        <p className="catalog-rail__eyebrow">Registry</p>
+        <h1 className="catalog-rail__title">Tournaments</h1>
+        <p className="catalog-rail__copy">Search, statuses, and quick access to tournament management.</p>
 
-          <div className="page-actions">
-            {isAdmin ? (
-              <Link to="/tournaments/new" className="btn-primary">
-                Create tournament
-              </Link>
-            ) : (
-              <div className="status-pill">Admin access needed to create</div>
-            )}
-          </div>
-        </div>
-
-        <div className="page-metrics mt-6">
-          <div className="hero-stat">
-            <div className="hero-stat__label">Live Database</div>
-            <div className="hero-stat__value">{loading ? "..." : items.length}</div>
-            <div className="hero-stat__meta">Tournaments currently tracked in the system.</div>
-          </div>
-          <div className="hero-stat">
-            <div className="hero-stat__label">Control Access</div>
-            <div className="hero-stat__value">{isAdmin ? "Admin" : "Viewer"}</div>
-            <div className="hero-stat__meta">Your current tournament management permissions.</div>
-          </div>
-          <div className="hero-stat">
-            <div className="hero-stat__label">Focus</div>
-            <div className="hero-stat__value">Schedules</div>
-            <div className="hero-stat__meta">Open any event to manage teams, matches, and playoff projections.</div>
-          </div>
-        </div>
-      </section>
-
-      {err && <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{err}</div>}
-
-      <div className="panel p-4">
         <input
-          className="input w-full"
-          placeholder="Search tournaments by name, format, status, or date..."
+          className="input catalog-rail__search"
+          placeholder="Search tournaments"
           value={query}
           onChange={(event) => updateQuery(event.target.value)}
         />
-      </div>
 
-      <section className="list-grid">
-        {loading ? (
-          <Skeleton rows={3} />
-        ) : items.length === 0 ? (
-          <EmptyState
-            title="No tournaments yet"
-            description={isAdmin ? "Create the first tournament to start registering teams." : "Ask an admin to create the first tournament."}
-            action={isAdmin ? <Link to="/tournaments/new" className="btn-primary">Create tournament</Link> : null}
-          />
-        ) : filteredItems.length === 0 ? (
-          <EmptyState
-            title="No matching tournaments"
-            description="Try a different search term or clear the search field."
-            action={<button type="button" onClick={() => setQuery("")} className="btn-secondary">Clear search</button>}
-          />
-        ) : (
-          visibleItems.map((t) => (
-            <article
-              key={t.id}
-              className={`panel list-card transition hover:-translate-y-0.5 hover:shadow-2xl ${
-                t.status === "finished" ? "list-card--finished" : ""
-              }`}
-            >
-              <div className="list-card__header">
-                <div>
-                  <h2 className="list-card__title">{t.name}</h2>
-                  <p className="list-card__copy">
-                    Runs from {t.start_date} to {t.end_date}.
-                  </p>
-                </div>
-
-                <Link to={`/tournaments/${t.id}`} className={t.status === "finished" ? "btn-secondary tournament-card__action tournament-card__action--finished" : "btn-secondary tournament-card__action"}>
-                  Open desk
-                </Link>
-              </div>
-
-              <div className="list-card__meta">
-                <span className="list-tag">{labelize(t.format)}</span>
-                <span className={`list-tag tournament-status-tag tournament-status-tag--${t.status || "draft"}`}>
-                  {t.status === "finished" ? "Finished tournament" : labelize(t.status)}
-                </span>
-                {t.max_teams ? <span className="list-tag">{t.max_teams} team cap</span> : null}
-              </div>
-            </article>
-          ))
-        )}
-      </section>
-
-      {!loading && filteredItems.length > pageSize && (
-        <div className="panel flex flex-wrap items-center justify-between gap-3 p-4">
-          <div className="text-sm font-semibold text-slate-500">
-            Page {currentPage} of {totalPages} · {filteredItems.length} tournaments
-          </div>
-          <div className="flex gap-2">
-            <button type="button" className="btn-secondary" disabled={currentPage === 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>
-              Previous
-            </button>
-            <button type="button" className="btn-secondary" disabled={currentPage === totalPages} onClick={() => setPage((value) => Math.min(totalPages, value + 1))}>
-              Next
-            </button>
-          </div>
+        <div className="catalog-rail__stats">
+          <div><span>{loading ? "..." : items.length}</span><small>total</small></div>
+          <div><span>{loading ? "..." : activeCount}</span><small>active</small></div>
+          <div><span>{loading ? "..." : finishedCount}</span><small>finished</small></div>
         </div>
-      )}
+
+        {isAdmin ? (
+          <Link to="/tournaments/new" className="btn-primary catalog-rail__action">
+            New tournament
+          </Link>
+        ) : null}
+      </aside>
+
+      <main className="catalog-main">
+        {err && <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{err}</div>}
+
+        <div className="catalog-main__bar">
+          <span>{filteredItems.length} results</span>
+          <span>{isAdmin ? "Admin mode" : "View mode"}</span>
+        </div>
+
+        <section className="catalog-grid">
+          {loading ? (
+            <Skeleton rows={3} />
+          ) : items.length === 0 ? (
+            <EmptyState
+              title="No tournaments yet"
+              description={isAdmin ? "Create the first tournament and add teams." : "Tournaments are created by an administrator."}
+              action={isAdmin ? <Link to="/tournaments/new" className="btn-primary">New tournament</Link> : null}
+            />
+          ) : filteredItems.length === 0 ? (
+            <EmptyState
+              title="No results found"
+              description="Try changing the search text."
+              action={<button type="button" onClick={() => setQuery("")} className="btn-secondary">Clear</button>}
+            />
+          ) : (
+            visibleItems.map((t) => {
+              const startDate = t.start_date ? new Date(t.start_date) : null;
+              const endDate = t.end_date ? new Date(t.end_date) : null;
+              const startDay = startDate && !Number.isNaN(startDate.getTime())
+                ? String(startDate.getDate()).padStart(2, "0")
+                : "--";
+              const endDay = endDate && !Number.isNaN(endDate.getTime())
+                ? String(endDate.getDate()).padStart(2, "0")
+                : "--";
+              const startMonth = startDate && !Number.isNaN(startDate.getTime())
+                ? startDate.toLocaleString("en-US", { month: "short" }).toUpperCase()
+                : "TBD";
+              const endMonth = endDate && !Number.isNaN(endDate.getTime())
+                ? endDate.toLocaleString("en-US", { month: "short" }).toUpperCase()
+                : "TBD";
+
+              return (
+                <Link
+                  key={t.id}
+                  to={`/tournaments/${t.id}`}
+                  className={`event-ticket ${t.banner_url ? "event-ticket--with-banner" : ""} ${t.status === "finished" ? "event-ticket--finished" : ""}`}
+                  style={t.banner_url ? { "--ticket-banner-url": `url("${t.banner_url}")` } : undefined}
+                >
+                  <div className="event-ticket__date event-ticket__date--period">
+                    <span>{startMonth}</span>
+                    <strong>{startDay}</strong>
+                    <em>to</em>
+                    <strong>{endDay}</strong>
+                    <span>{endMonth}</span>
+                  </div>
+
+                  <div className="event-ticket__body">
+                    <div className="event-ticket__league">{labelize(t.format)}</div>
+                    <h2>{t.name}</h2>
+                    <div className="event-ticket__meta">
+                      <span>{t.start_date || "not set"}</span>
+                      <span>{t.end_date || "not set"}</span>
+                      <span>{t.max_teams ? `${t.max_teams} teams` : "no limit"}</span>
+                    </div>
+                  </div>
+
+                  <div className="event-ticket__side">
+                    <span className={`list-tag tournament-status-tag tournament-status-tag--${t.status || "draft"}`}>
+                      {labelize(t.status)}
+                    </span>
+                  </div>
+                </Link>
+              );
+            })
+          )}
+        </section>
+
+        {!loading && filteredItems.length > pageSize && (
+          <div className="panel catalog-pagination">
+            <div className="text-sm font-semibold text-slate-500">
+              Page {currentPage} of {totalPages} / {filteredItems.length} tournaments
+            </div>
+            <div className="flex gap-2">
+              <button type="button" className="btn-secondary" disabled={currentPage === 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>
+                Previous
+              </button>
+              <button type="button" className="btn-secondary" disabled={currentPage === totalPages} onClick={() => setPage((value) => Math.min(totalPages, value + 1))}>
+                Next
+              </button>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }

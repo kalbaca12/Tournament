@@ -13,6 +13,15 @@ use Illuminate\Support\Facades\DB;
 
 class MatchController extends Controller
 {
+    public function all()
+    {
+        return Game::with(['homeTeam', 'awayTeam', 'tournament'])
+            ->orderByRaw('scheduled_at IS NULL')
+            ->orderBy('scheduled_at')
+            ->orderBy('id')
+            ->get();
+    }
+
     public function index(Tournament $tournament)
     {
         return Game::where('tournament_id', $tournament->id)
@@ -53,8 +62,7 @@ class MatchController extends Controller
             'group_code' => ['nullable', 'string', 'max:5'],
             'round_number' => ['nullable', 'integer', 'min:1'],
             'scheduled_at' => ['nullable', 'date'],
-            'venue_id' => ['nullable', 'integer'],
-            'venue_slot' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'venue_name' => ['nullable', 'string', 'max:150'],
             'status' => ['nullable', 'in:scheduled,live,finished,cancelled'],
         ]);
 
@@ -77,8 +85,7 @@ class MatchController extends Controller
             'group_code' => $validated['group_code'] ?? null,
             'round_number' => $validated['round_number'] ?? 1,
             'scheduled_at' => $validated['scheduled_at'] ?? null,
-            'venue_id' => null,
-            'venue_slot' => $validated['venue_slot'] ?? null,
+            'venue_name' => $this->normalizeVenueName($validated['venue_name'] ?? null),
             'status' => $validated['status'] ?? 'scheduled',
         ]);
 
@@ -89,15 +96,13 @@ class MatchController extends Controller
     {
         $validated = $request->validate([
             'scheduled_at' => ['nullable','date'],
-            'venue_id' => ['nullable','integer'],
-            'venue_slot' => ['nullable','integer', 'min:1', 'max:100'],
+            'venue_name' => ['nullable', 'string', 'max:150'],
             'status' => ['nullable','in:scheduled,live,finished,cancelled'],
         ]);
 
         $game->update([
             'scheduled_at' => $validated['scheduled_at'] ?? null,
-            'venue_id' => null,
-            'venue_slot' => $validated['venue_slot'] ?? null,
+            'venue_name' => $this->normalizeVenueName($validated['venue_name'] ?? null),
             'status' => $validated['status'] ?? $game->status,
         ]);
 
@@ -129,5 +134,44 @@ class MatchController extends Controller
         });
 
         return $game->fresh(['homeTeam', 'awayTeam']);
+    }
+
+    public function storeLiveEvents(Request $request, Game $game)
+    {
+        $validated = $request->validate([
+            'events' => ['required', 'array'],
+            'events.*.id' => ['required', 'string', 'max:80'],
+            'events.*.type' => ['required', 'string', 'in:shot,free_throw,rebound,block,steal,foul,turnover,substitution,quarter_end'],
+            'events.*.quarter' => ['required', 'integer', 'min:1', 'max:4'],
+            'events.*.clock' => ['required', 'string', 'max:10'],
+            'events.*.elapsed' => ['required', 'integer', 'min:0', 'max:600'],
+            'events.*.teamSide' => ['nullable', 'string', 'in:home,away'],
+            'events.*.createdAt' => ['nullable', 'date'],
+            'events.*.playerId' => ['nullable', 'integer', 'exists:players,id'],
+            'events.*.points' => ['nullable', 'integer', 'in:2,3'],
+            'events.*.made' => ['nullable', 'boolean'],
+            'events.*.assistPlayerId' => ['nullable', 'integer', 'exists:players,id'],
+            'events.*.reboundPlayerId' => ['nullable', 'integer', 'exists:players,id'],
+            'events.*.blockerId' => ['nullable', 'integer', 'exists:players,id'],
+            'events.*.shooterId' => ['nullable', 'integer', 'exists:players,id'],
+            'events.*.shotPoints' => ['nullable', 'integer', 'in:2,3'],
+            'events.*.outPlayerId' => ['nullable', 'integer', 'exists:players,id'],
+            'events.*.inPlayerId' => ['nullable', 'integer', 'exists:players,id'],
+        ]);
+
+        $game->update([
+            'live_events' => $validated['events'],
+        ]);
+
+        return response()->json([
+            'message' => 'Live events saved',
+            'events' => $game->fresh()->live_events,
+        ], 201);
+    }
+
+    private function normalizeVenueName(?string $venueName): ?string
+    {
+        $name = trim((string) ($venueName ?? ''));
+        return $name !== '' ? $name : null;
     }
 }

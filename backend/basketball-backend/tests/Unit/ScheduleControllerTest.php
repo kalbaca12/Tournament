@@ -19,9 +19,10 @@ class ScheduleControllerTest extends TestCase
             'end_date' => '2026-04-19',
             'allowed_days' => [1, 2, 3, 4, 5, 6, 7],
             'time_slots' => ['12:00', '14:00', '16:00', '18:00'],
-            'venues_count' => 1,
+            'venue_name' => 'Main Arena',
             'playoff_round_gap_days' => 1,
             'groups_to_playoffs_gap_days' => 1,
+            'stage_day_gap_days' => 1,
             'group_games_per_day' => 4,
         ]);
 
@@ -69,7 +70,7 @@ class ScheduleControllerTest extends TestCase
             'end_date' => '2026-04-19',
             'allowed_days' => [1, 2, 3, 4, 5, 6, 7],
             'time_slots' => ['12:00', '14:00', '16:00', '18:00'],
-            'venues_count' => 1,
+            'venue_name' => 'Main Arena',
             'playoff_round_gap_days' => 1,
             'groups_to_playoffs_gap_days' => 1,
             'group_games_per_day' => 2,
@@ -97,6 +98,39 @@ class ScheduleControllerTest extends TestCase
     }
 
     #[Test]
+    public function stage_generation_packs_multiple_rounds_into_daily_capacity(): void
+    {
+        $controller = new ScheduleController();
+        $tournament = new Tournament([
+            'format' => 'groups_playoffs',
+            'end_date' => '2026-05-24',
+            'allowed_days' => [1, 2, 3, 4, 5, 6, 7],
+            'time_slots' => ['07:00', '09:00', '11:00', '13:00', '15:00', '17:00', '19:00', '21:00'],
+            'venue_name' => 'Arena A',
+            'playoff_round_gap_days' => 1,
+            'groups_to_playoffs_gap_days' => 1,
+            'stage_day_gap_days' => 0,
+            'group_games_per_day' => 8,
+        ]);
+
+        $plannedMatches = $this->invokeControllerMethod($controller, 'buildGroupsPlayoffsMatches', range(1, 8));
+        $feasibility = SchedulingFeasibility::evaluate($tournament, 8);
+        $scheduledMatches = $this->invokeControllerMethod($controller, 'assignMatchesToSlots', $tournament, $plannedMatches, $feasibility, []);
+
+        $matchesByDate = [];
+        foreach ($scheduledMatches as $scheduledMatch) {
+            if (($scheduledMatch['row']['stage'] ?? null) !== 'group') {
+                continue;
+            }
+
+            $date = $scheduledMatch['slot']->toDateString();
+            $matchesByDate[$date] = ($matchesByDate[$date] ?? 0) + 1;
+        }
+
+        self::assertSame([8, 4], array_values($matchesByDate));
+    }
+
+    #[Test]
     public function single_elimination_keeps_the_final_on_the_selected_final_day(): void
     {
         $controller = new ScheduleController();
@@ -105,7 +139,7 @@ class ScheduleControllerTest extends TestCase
             'end_date' => '2026-04-19',
             'allowed_days' => [1, 2, 3, 4, 5, 6, 7],
             'time_slots' => ['12:00', '14:00', '16:00', '18:00'],
-            'venues_count' => 1,
+            'venue_name' => 'Main Arena',
             'playoff_round_gap_days' => 2,
         ]);
 

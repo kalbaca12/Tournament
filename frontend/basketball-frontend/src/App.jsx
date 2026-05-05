@@ -7,7 +7,10 @@ import TournamentView from "./pages/TournamentView";
 import TeamsList from "./pages/TeamsList";
 import TeamCreate from "./pages/TeamCreate";
 import TeamView from "./pages/TeamView";
+import PlayerView from "./pages/PlayerView";
+import MatchesList from "./pages/MatchesList";
 import MatchView from "./pages/MatchView";
+import LiveMatchTracker from "./pages/LiveMatchTracker";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import "./App.css";
@@ -31,8 +34,8 @@ export default function App() {
         <div className="app-shell__backdrop" />
         <div className="app-shell__grid" />
         <div className="app-loading">
-          <div className="app-loading__label">Basketball Control Center</div>
-          <div className="app-loading__text">Loading workspace...</div>
+          <div className="app-loading__label">Tournament System</div>
+          <div className="app-loading__text">Loading...</div>
         </div>
       </div>
     );
@@ -62,7 +65,13 @@ export default function App() {
             element={isManager ? <TeamCreate /> : <AccessDenied requiredRole="manager" />}
           />
           <Route path="/teams/:id" element={<TeamView />} />
+          <Route path="/players/:id" element={<PlayerView />} />
+          <Route path="/matches" element={<MatchesList />} />
           <Route path="/matches/:id" element={<MatchView />} />
+          <Route
+            path="/matches/:id/live-tracker"
+            element={isAdmin ? <LiveMatchTracker /> : <AccessDenied requiredRole="admin" />}
+          />
         </Routes>
       </main>
     </div>

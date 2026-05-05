@@ -59,6 +59,7 @@ class TournamentController extends Controller
 
         $validated = $request->validate([
             'name' => ['required','string','max:150'],
+            'banner_url' => ['nullable', 'url', 'max:2048'],
             'start_date' => ['nullable','date'],
             'end_date' => ['required','date'],
             'format' => ['required','in:round_robin,groups_playoffs,single_elimination'],
@@ -66,14 +67,13 @@ class TournamentController extends Controller
             'duration_weeks' => ['nullable', 'integer', 'min:1', 'max:52'],
             'allowed_days' => ['nullable', 'array'],
             'allowed_days.*' => ['integer', 'between:1,7'],
-            'time_slots' => ['nullable', 'array'],
-            'time_slots.*' => ['string', 'max:10'],
-            'venues_count' => ['nullable', 'integer', 'min:1', 'max:20'],
-            'venue_names' => ['nullable', 'array'],
-            'venue_names.*' => ['nullable', 'string', 'max:120'],
+            'time_slots' => ['nullable', 'array', $this->timeSlotCountRule()],
+            'time_slots.*' => ['string', 'regex:/^([01]\d|2[0-3]):[0-5]\d$/'],
+            'venue_name' => ['nullable', 'string', 'max:150'],
             'playoff_round_gap_days' => ['nullable', 'integer', 'min:0', 'max:30'],
             'groups_to_playoffs_gap_days' => ['nullable', 'integer', 'min:0', 'max:30'],
-            'group_games_per_day' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'group_games_per_day' => ['nullable', 'integer', 'in:2,4,6,8'],
+            'stage_day_gap_days' => ['nullable', 'integer', 'min:0', 'max:30'],
             'registration_deadline' => ['nullable', 'date'],
         ]);
 
@@ -81,11 +81,11 @@ class TournamentController extends Controller
         $validated['status'] = 'draft';
         $validated['participants_locked'] = false;
         $validated['duration_weeks'] = $validated['duration_weeks'] ?? 1;
-        $validated['venues_count'] = $validated['venues_count'] ?? 1;
         $validated['start_date'] = $validated['start_date'] ?? $validated['end_date'];
         $validated['playoff_round_gap_days'] = $validated['playoff_round_gap_days'] ?? 1;
         $validated['groups_to_playoffs_gap_days'] = $validated['groups_to_playoffs_gap_days'] ?? 1;
-        $validated['venue_names'] = $this->normalizeVenueNames($validated['venue_names'] ?? [], (int) $validated['venues_count']);
+        $validated['stage_day_gap_days'] = $validated['stage_day_gap_days'] ?? 0;
+        $validated['venue_name'] = $this->normalizeVenueName($validated['venue_name'] ?? null);
 
         $tournament = Tournament::create($validated);
 
@@ -96,6 +96,7 @@ class TournamentController extends Controller
     {
         $validated = $request->validate([
             'name' => ['sometimes','string','max:150'],
+            'banner_url' => ['nullable', 'url', 'max:2048'],
             'start_date' => ['nullable','date'],
             'end_date' => ['nullable','date'],
             'format' => ['sometimes','in:round_robin,groups_playoffs,single_elimination'],
@@ -104,23 +105,22 @@ class TournamentController extends Controller
             'duration_weeks' => ['nullable', 'integer', 'min:1', 'max:52'],
             'allowed_days' => ['nullable', 'array'],
             'allowed_days.*' => ['integer', 'between:1,7'],
-            'time_slots' => ['nullable', 'array'],
-            'time_slots.*' => ['string', 'max:10'],
-            'venues_count' => ['nullable', 'integer', 'min:1', 'max:20'],
-            'venue_names' => ['nullable', 'array'],
-            'venue_names.*' => ['nullable', 'string', 'max:120'],
+            'time_slots' => ['nullable', 'array', $this->timeSlotCountRule()],
+            'time_slots.*' => ['string', 'regex:/^([01]\d|2[0-3]):[0-5]\d$/'],
+            'venue_name' => ['nullable', 'string', 'max:150'],
             'playoff_round_gap_days' => ['nullable', 'integer', 'min:0', 'max:30'],
             'groups_to_playoffs_gap_days' => ['nullable', 'integer', 'min:0', 'max:30'],
-            'group_games_per_day' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'group_games_per_day' => ['nullable', 'integer', 'in:2,4,6,8'],
+            'stage_day_gap_days' => ['nullable', 'integer', 'min:0', 'max:30'],
             'registration_deadline' => ['nullable', 'date'],
             'participants_locked' => ['sometimes', 'boolean'],
         ]);
 
-        $validated['venues_count'] = $validated['venues_count'] ?? ($tournament->venues_count ?? 1);
         $validated['playoff_round_gap_days'] = $validated['playoff_round_gap_days'] ?? ($tournament->playoff_round_gap_days ?? 1);
         $validated['groups_to_playoffs_gap_days'] = $validated['groups_to_playoffs_gap_days'] ?? ($tournament->groups_to_playoffs_gap_days ?? 1);
-        if (array_key_exists('venue_names', $validated)) {
-            $validated['venue_names'] = $this->normalizeVenueNames($validated['venue_names'] ?? [], (int) $validated['venues_count']);
+        $validated['stage_day_gap_days'] = $validated['stage_day_gap_days'] ?? ($tournament->stage_day_gap_days ?? 0);
+        if (array_key_exists('venue_name', $validated)) {
+            $validated['venue_name'] = $this->normalizeVenueName($validated['venue_name'] ?? null);
         }
 
         $tournament->update($validated);
@@ -150,16 +150,18 @@ class TournamentController extends Controller
         return response()->json(['message' => 'Deleted'], 200);
     }
 
-    private function normalizeVenueNames(array $venueNames, int $venuesCount): array
+    private function normalizeVenueName(?string $venueName): ?string
     {
-        $venuesCount = max(1, min(20, $venuesCount));
-        $normalized = [];
+        $name = trim((string) ($venueName ?? ''));
+        return $name !== '' ? $name : null;
+    }
 
-        for ($index = 0; $index < $venuesCount; $index++) {
-            $name = trim((string) ($venueNames[$index] ?? ''));
-            $normalized[] = $name !== '' ? $name : 'Court ' . ($index + 1);
-        }
-
-        return $normalized;
+    private function timeSlotCountRule(): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail): void {
+            if (is_array($value) && !in_array(count($value), [2, 4, 6, 8], true)) {
+                $fail('Choose 2, 4, 6, or 8 time slots.');
+            }
+        };
     }
 }
