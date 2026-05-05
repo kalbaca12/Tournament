@@ -2279,6 +2279,13 @@ tbody tr {
   min-height: 124px;
   border: 1px solid #c8ced9;
   background: #ffffff;
+  transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.match-ticket:hover {
+  border-color: #0d3b66;
+  box-shadow: 0 14px 28px rgba(13, 59, 102, 0.12);
+  transform: translateY(-1px);
 }
 
 .match-ticket__body {

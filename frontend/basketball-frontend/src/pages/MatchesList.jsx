@@ -179,7 +179,7 @@ export default function MatchesList() {
                     : "--";
 
                   return (
-                    <article key={match.id} className="match-ticket">
+                    <Link key={match.id} to={`/matches/${match.id}`} className="match-ticket">
                       <div className="event-ticket__date">
                         <span>{month}</span>
                         <strong>{day}</strong>
@@ -196,9 +196,8 @@ export default function MatchesList() {
                           <strong>-:-</strong>
                         )}
                         <span>{match.status}</span>
-                        <Link to={`/matches/${match.id}`} className="btn-secondary">Open</Link>
                       </div>
-                    </article>
+                    </Link>
                   );
                 })}
               </section>
