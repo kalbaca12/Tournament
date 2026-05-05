@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { matchesApi } from "../api/matches";
 import { playersApi } from "../api/players";
@@ -180,6 +180,7 @@ function buildScoreChartData(events) {
 
 function ScoringChart({ events, homeName, awayName, playersById, matchRow, resolveTeamName }) {
   const { linePoints, markers } = useMemo(() => buildScoreChartData(events), [events]);
+  const chartRef = useRef(null);
   const [tooltip, setTooltip] = useState(null);
   const maxScore = Math.max(1, ...linePoints.flatMap((point) => [point.home, point.away]));
   const width = 720;
@@ -200,11 +201,17 @@ function ScoringChart({ events, homeName, awayName, playersById, matchRow, resol
   }, []).join(" ");
   const scoreTicks = Array.from(new Set([0, Math.ceil(maxScore / 2), maxScore]));
   const updateTooltipPosition = (event, marker) => {
-    const bounds = event.currentTarget.ownerSVGElement.getBoundingClientRect();
+    const chartBounds = chartRef.current?.getBoundingClientRect();
+    const svgBounds = event.currentTarget.ownerSVGElement.getBoundingClientRect();
+    const hasPointerPosition = Number.isFinite(event.clientX) && Number.isFinite(event.clientY);
     const label = liveEventLabel(marker.event, playersById, matchRow, resolveTeamName);
     setTooltip({
-      x: event.clientX - bounds.left,
-      y: event.clientY - bounds.top,
+      x: hasPointerPosition && chartBounds
+        ? event.clientX - chartBounds.left + chartRef.current.scrollLeft
+        : x(marker.second) + (svgBounds.left - (chartBounds?.left ?? svgBounds.left)),
+      y: hasPointerPosition && chartBounds
+        ? event.clientY - chartBounds.top + chartRef.current.scrollTop
+        : y(marker.score) + (svgBounds.top - (chartBounds?.top ?? svgBounds.top)),
       team: marker.side === "home" ? homeName : awayName,
       time: `Q${marker.event.quarter} ${marker.event.clock || ""}`.trim(),
       statName: eventStatName(marker.event),
@@ -225,7 +232,7 @@ function ScoringChart({ events, homeName, awayName, playersById, matchRow, resol
           {awayName}
         </span>
       </div>
-      <div className="relative overflow-x-auto">
+      <div ref={chartRef} className="relative overflow-x-auto">
         <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Scoring timeline chart" className="min-w-[560px]">
           {scoreTicks.map((tick) => (
             <g key={tick}>
@@ -275,8 +282,8 @@ function ScoringChart({ events, homeName, awayName, playersById, matchRow, resol
           <div
             className="pointer-events-none absolute z-10 max-w-xs rounded-md border border-slate-200 bg-white px-3 py-2 text-xs shadow-lg"
             style={{
-              left: `${Math.min(Math.max(tooltip.x + 10, 8), 430)}px`,
-              top: `${Math.max(tooltip.y - 58, 8)}px`,
+              left: `${Math.max(tooltip.x + 14, 8)}px`,
+              top: `${Math.max(tooltip.y - 24, 8)}px`,
             }}
           >
             <div className="font-semibold text-slate-900">{tooltip.time} · {tooltip.statName}</div>
