@@ -109,13 +109,7 @@ export default function Nav() {
               <button
                 type="button"
                 className="profile-menu__trigger"
-                onClick={() => {
-                  if (isManager) {
-                    nav("/profile");
-                    return;
-                  }
-                  setIsMenuOpen((current) => !current);
-                }}
+                onClick={() => setIsMenuOpen((current) => !current)}
               >
                 <span className="profile-menu__avatar">{(user?.name || user?.role || "U").slice(0, 1).toUpperCase()}</span>
                 <span className="profile-menu__copy">
@@ -124,10 +118,10 @@ export default function Nav() {
                 </span>
                 {isAdmin && notificationCount > 0 ? <span className="profile-menu__badge-dot">{notificationCount}</span> : null}
               </button>
-              {isAdmin && isMenuOpen && (
+              {isMenuOpen && (
                 <div className="profile-menu__panel">
                   <div className="profile-menu__email">{user?.email}</div>
-                  {notificationCount > 0 ? (
+                  {isAdmin && notificationCount > 0 ? (
                     <div className="profile-menu__notifications">
                       {notificationItems.map((item) => (
                         <NavLink
@@ -144,9 +138,15 @@ export default function Nav() {
                   ) : (
                     <div className="profile-menu__badge">{user?.role}</div>
                   )}
-                  <NavLink to="/dashboard" className="profile-menu__item" onClick={() => setIsMenuOpen(false)}>
-                    Dashboard
-                  </NavLink>
+                  {isManager ? (
+                    <NavLink to="/profile" className="profile-menu__item" onClick={() => setIsMenuOpen(false)}>
+                      Profile
+                    </NavLink>
+                  ) : (
+                    <NavLink to="/dashboard" className="profile-menu__item" onClick={() => setIsMenuOpen(false)}>
+                      Dashboard
+                    </NavLink>
+                  )}
                   <button type="button" onClick={onLogout} className="profile-menu__item profile-menu__item--danger">
                     Logout
                   </button>
