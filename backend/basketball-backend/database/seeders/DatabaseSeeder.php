@@ -34,11 +34,12 @@ class DatabaseSeeder extends Seeder
         DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
         $adminId = $this->createUser('Lukas Admin', self::ADMIN_EMAIL, 'admin');
-        $managerId = $this->createUser('Mantas Kazlauskas', self::MANAGER_EMAIL, 'manager');
-        $teamIds = $this->createTeams($managerId);
+        $this->createUser('Mantas Kazlauskas', self::MANAGER_EMAIL, 'manager');
+        $teamManagerId = $this->createUser('Tomas Vaitkus', 'team.manager@example.com', 'manager');
+        $teamIds = $this->createTeams($teamManagerId);
 
         $this->createFinishedTournament($adminId, $teamIds);
-        $this->createFutureTournamentWithRequests($adminId, $managerId, $teamIds);
+        $this->createFutureTournamentWithRequests($adminId, $teamManagerId, $teamIds);
     }
 
     private function createUser(string $name, string $email, string $role): int

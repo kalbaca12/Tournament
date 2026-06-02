@@ -1,0 +1,1756 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mdOwnedViews>
+	<mdElement elementClass='Actor' xmi:id='_bb_view_actor_guest'>
+		<elementID xmi:idref='_bb_actor_guest'/>
+		<geometry>35, 189, 105, 60</geometry>
+		<mdOwnedViews/>
+		<symbolStyleID>_18_5_10ba0377_1484676734837_49398_78</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Actor' xmi:id='_bb_view_actor_admin'>
+		<elementID xmi:idref='_bb_actor_admin'/>
+		<geometry>42, 504, 130, 60</geometry>
+		<mdOwnedViews/>
+		<symbolStyleID>_18_5_10ba0377_1484676734837_49398_78</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Actor' xmi:id='_bb_view_actor_manager'>
+		<elementID xmi:idref='_bb_actor_manager'/>
+		<geometry>7, 644, 160, 60</geometry>
+		<mdOwnedViews/>
+		<symbolStyleID>_18_5_10ba0377_1484676734837_49398_78</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Association' xmi:id='_a_guest_01_view'>
+		<elementID xmi:idref='_a_guest_01'/>
+		<linkFirstEndID xmi:idref='_v_uc01'/>
+		<linkSecondEndID xmi:idref='_bb_view_actor_guest'/>
+		<geometry>239, 124; 110, 205; </geometry>
+		<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+		<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+		<nameVisible xmi:value='true'/>
+		<mdOwnedViews>
+			<mdElement elementClass='Role' xmi:id='_a_guest_01_role_uc'>
+				<elementID xmi:idref='_a_guest_01_end_uc'/>
+				<geometry>234, 124, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Role' xmi:id='_a_guest_01_role_actor'>
+				<elementID xmi:idref='_a_guest_01_end_actor'/>
+				<geometry>105, 205, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<associationFirstEndID xmi:idref='_a_guest_01_role_uc'/>
+		<associationSecondEndID xmi:idref='_a_guest_01_role_actor'/>
+		<symbolStyleID>_9_5_be00301_1123081756555_231111_479</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Association' xmi:id='_a_guest_02_view'>
+		<elementID xmi:idref='_a_guest_02'/>
+		<linkFirstEndID xmi:idref='_v_uc02'/>
+		<linkSecondEndID xmi:idref='_bb_view_actor_guest'/>
+		<geometry>319, 159; 110, 213; </geometry>
+		<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+		<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+		<nameVisible xmi:value='true'/>
+		<mdOwnedViews>
+			<mdElement elementClass='Role' xmi:id='_a_guest_02_role_uc'>
+				<elementID xmi:idref='_a_guest_02_end_uc'/>
+				<geometry>314, 159, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Role' xmi:id='_a_guest_02_role_actor'>
+				<elementID xmi:idref='_a_guest_02_end_actor'/>
+				<geometry>105, 213, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<associationFirstEndID xmi:idref='_a_guest_02_role_uc'/>
+		<associationSecondEndID xmi:idref='_a_guest_02_role_actor'/>
+		<symbolStyleID>_9_5_be00301_1123081756555_231111_479</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Association' xmi:id='_a_guest_03_view'>
+		<elementID xmi:idref='_a_guest_03'/>
+		<linkFirstEndID xmi:idref='_v_uc03'/>
+		<linkSecondEndID xmi:idref='_bb_view_actor_guest'/>
+		<geometry>347, 190; 110, 216; </geometry>
+		<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+		<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+		<nameVisible xmi:value='true'/>
+		<mdOwnedViews>
+			<mdElement elementClass='Role' xmi:id='_a_guest_03_role_uc'>
+				<elementID xmi:idref='_a_guest_03_end_uc'/>
+				<geometry>342, 190, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Role' xmi:id='_a_guest_03_role_actor'>
+				<elementID xmi:idref='_a_guest_03_end_actor'/>
+				<geometry>105, 216, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<associationFirstEndID xmi:idref='_a_guest_03_role_uc'/>
+		<associationSecondEndID xmi:idref='_a_guest_03_role_actor'/>
+		<symbolStyleID>_9_5_be00301_1123081756555_231111_479</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Association' xmi:id='_a_guest_04_view'>
+		<elementID xmi:idref='_a_guest_04'/>
+		<linkFirstEndID xmi:idref='_v_uc04'/>
+		<linkSecondEndID xmi:idref='_bb_view_actor_guest'/>
+		<geometry>329, 216; 110, 219; </geometry>
+		<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+		<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+		<nameVisible xmi:value='true'/>
+		<mdOwnedViews>
+			<mdElement elementClass='Role' xmi:id='_a_guest_04_role_uc'>
+				<elementID xmi:idref='_a_guest_04_end_uc'/>
+				<geometry>319, 211, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Role' xmi:id='_a_guest_04_role_actor'>
+				<elementID xmi:idref='_a_guest_04_end_actor'/>
+				<geometry>105, 219, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<associationFirstEndID xmi:idref='_a_guest_04_role_uc'/>
+		<associationSecondEndID xmi:idref='_a_guest_04_role_actor'/>
+		<symbolStyleID>_9_5_be00301_1123081756555_231111_479</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Association' xmi:id='_a_guest_05_view'>
+		<elementID xmi:idref='_a_guest_05'/>
+		<linkFirstEndID xmi:idref='_v_uc05'/>
+		<linkSecondEndID xmi:idref='_bb_view_actor_guest'/>
+		<geometry>334, 248; 110, 222; </geometry>
+		<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+		<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+		<nameVisible xmi:value='true'/>
+		<mdOwnedViews>
+			<mdElement elementClass='Role' xmi:id='_a_guest_05_role_uc'>
+				<elementID xmi:idref='_a_guest_05_end_uc'/>
+				<geometry>329, 248, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Role' xmi:id='_a_guest_05_role_actor'>
+				<elementID xmi:idref='_a_guest_05_end_actor'/>
+				<geometry>105, 222, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<associationFirstEndID xmi:idref='_a_guest_05_role_uc'/>
+		<associationSecondEndID xmi:idref='_a_guest_05_role_actor'/>
+		<symbolStyleID>_9_5_be00301_1123081756555_231111_479</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Association' xmi:id='_a_guest_07_view'>
+		<elementID xmi:idref='_a_guest_07'/>
+		<linkFirstEndID xmi:idref='_v_uc07'/>
+		<linkSecondEndID xmi:idref='_bb_view_actor_guest'/>
+		<geometry>386, 285; 110, 224; </geometry>
+		<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+		<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+		<nameVisible xmi:value='true'/>
+		<mdOwnedViews>
+			<mdElement elementClass='Role' xmi:id='_a_guest_07_role_uc'>
+				<elementID xmi:idref='_a_guest_07_end_uc'/>
+				<geometry>381, 285, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Role' xmi:id='_a_guest_07_role_actor'>
+				<elementID xmi:idref='_a_guest_07_end_actor'/>
+				<geometry>105, 224, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<associationFirstEndID xmi:idref='_a_guest_07_role_uc'/>
+		<associationSecondEndID xmi:idref='_a_guest_07_role_actor'/>
+		<symbolStyleID>_9_5_be00301_1123081756555_231111_479</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Association' xmi:id='_a_admin_14_view'>
+		<elementID xmi:idref='_a_admin_14'/>
+		<linkFirstEndID xmi:idref='_v_uc14'/>
+		<linkSecondEndID xmi:idref='_bb_view_actor_admin'/>
+		<geometry>780, 387; 129, 529; </geometry>
+		<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+		<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+		<nameVisible xmi:value='true'/>
+		<mdOwnedViews>
+			<mdElement elementClass='Role' xmi:id='_a_admin_14_role_uc'>
+				<elementID xmi:idref='_a_admin_14_end_uc'/>
+				<geometry>775, 387, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Role' xmi:id='_a_admin_14_role_actor'>
+				<elementID xmi:idref='_a_admin_14_end_actor'/>
+				<geometry>124, 529, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<associationFirstEndID xmi:idref='_a_admin_14_role_uc'/>
+		<associationSecondEndID xmi:idref='_a_admin_14_role_actor'/>
+		<symbolStyleID>_9_5_be00301_1123081756555_231111_479</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Association' xmi:id='_a_admin_15_view'>
+		<elementID xmi:idref='_a_admin_15'/>
+		<linkFirstEndID xmi:idref='_v_uc15'/>
+		<linkSecondEndID xmi:idref='_bb_view_actor_admin'/>
+		<geometry>438, 486; 129, 531; </geometry>
+		<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+		<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+		<nameVisible xmi:value='true'/>
+		<mdOwnedViews>
+			<mdElement elementClass='Role' xmi:id='_a_admin_15_role_uc'>
+				<elementID xmi:idref='_a_admin_15_end_uc'/>
+				<geometry>433, 486, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Role' xmi:id='_a_admin_15_role_actor'>
+				<elementID xmi:idref='_a_admin_15_end_actor'/>
+				<geometry>124, 531, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<associationFirstEndID xmi:idref='_a_admin_15_role_uc'/>
+		<associationSecondEndID xmi:idref='_a_admin_15_role_actor'/>
+		<symbolStyleID>_9_5_be00301_1123081756555_231111_479</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Association' xmi:id='_a_admin_16_view'>
+		<elementID xmi:idref='_a_admin_16'/>
+		<linkFirstEndID xmi:idref='_v_uc16'/>
+		<linkSecondEndID xmi:idref='_bb_view_actor_admin'/>
+		<geometry>588, 502; 129, 533; </geometry>
+		<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+		<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+		<nameVisible xmi:value='true'/>
+		<mdOwnedViews>
+			<mdElement elementClass='Role' xmi:id='_a_admin_16_role_uc'>
+				<elementID xmi:idref='_a_admin_16_end_uc'/>
+				<geometry>578, 497, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Role' xmi:id='_a_admin_16_role_actor'>
+				<elementID xmi:idref='_a_admin_16_end_actor'/>
+				<geometry>124, 533, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<associationFirstEndID xmi:idref='_a_admin_16_role_uc'/>
+		<associationSecondEndID xmi:idref='_a_admin_16_role_actor'/>
+		<symbolStyleID>_9_5_be00301_1123081756555_231111_479</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Association' xmi:id='_a_mgr_10_view'>
+		<elementID xmi:idref='_a_mgr_10'/>
+		<linkFirstEndID xmi:idref='_v_uc22'/>
+		<linkSecondEndID xmi:idref='_bb_view_actor_manager'/>
+		<geometry>352, 662; 109, 673; </geometry>
+		<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+		<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+		<nameVisible xmi:value='true'/>
+		<mdOwnedViews>
+			<mdElement elementClass='Role' xmi:id='_a_mgr_10_role_uc'>
+				<elementID xmi:idref='_a_mgr_10_end_uc'/>
+				<geometry>347, 662, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Role' xmi:id='_a_mgr_10_role_actor'>
+				<elementID xmi:idref='_a_mgr_10_end_actor'/>
+				<geometry>104, 673, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<associationFirstEndID xmi:idref='_a_mgr_10_role_uc'/>
+		<associationSecondEndID xmi:idref='_a_mgr_10_role_actor'/>
+		<symbolStyleID>_9_5_be00301_1123081756555_231111_479</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Association' xmi:id='_a_mgr_15_view'>
+		<elementID xmi:idref='_a_mgr_15'/>
+		<linkFirstEndID xmi:idref='_v_uc27'/>
+		<linkSecondEndID xmi:idref='_bb_view_actor_manager'/>
+		<geometry>336, 714; 109, 678; </geometry>
+		<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+		<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+		<nameVisible xmi:value='true'/>
+		<mdOwnedViews>
+			<mdElement elementClass='Role' xmi:id='_a_mgr_15_role_uc'>
+				<elementID xmi:idref='_a_mgr_15_end_uc'/>
+				<geometry>331, 714, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Role' xmi:id='_a_mgr_15_role_actor'>
+				<elementID xmi:idref='_a_mgr_15_end_actor'/>
+				<geometry>104, 678, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<associationFirstEndID xmi:idref='_a_mgr_15_role_uc'/>
+		<associationSecondEndID xmi:idref='_a_mgr_15_role_actor'/>
+		<symbolStyleID>_9_5_be00301_1123081756555_231111_479</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Generalization' xmi:id='_2024x_3_90d0202_1774431262117_773075_1389'>
+		<elementID xmi:idref='_2024x_3_90d0202_1774431262116_14173_1388'/>
+		<linkFirstEndID xmi:idref='_bb_view_actor_manager'/>
+		<linkSecondEndID xmi:idref='_bb_view_actor_guest'/>
+		<geometry>75, 644; 14, 490; 80, 246; </geometry>
+		<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+		<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+		<nameVisible xmi:value='false'/>
+		<symbolStyleID>_17_0_3beta_f980370_1347883981500_725884_2846</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Generalization' xmi:id='_2024x_3_90d0202_1774431263763_662052_1392'>
+		<elementID xmi:idref='_2024x_3_90d0202_1774431263762_523255_1391'/>
+		<linkFirstEndID xmi:idref='_bb_view_actor_admin'/>
+		<linkSecondEndID xmi:idref='_bb_view_actor_guest'/>
+		<geometry>105, 504; 89, 246; </geometry>
+		<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+		<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+		<nameVisible xmi:value='false'/>
+		<symbolStyleID>_17_0_3beta_f980370_1347883981500_725884_2846</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Package' xmi:id='_bb_view_system_pkg'>
+		<elementID xmi:idref='_bb_system_pkg'/>
+		<geometry>157, 8, 853, 789</geometry>
+		<mdOwnedViews>
+			<mdElement elementClass='Package' xmi:id='_bb_view_pkg_public'>
+				<elementID xmi:idref='_bb_pkg_public'/>
+				<geometry>168, 49, 822, 728</geometry>
+				<mdOwnedViews>
+					<mdElement elementClass='Dependency' xmi:id='_bb_view_ext_sim_matches'>
+						<elementID xmi:idref='_bb_ext_sim_matches'/>
+						<linkFirstEndID xmi:idref='_v_uc02'/>
+						<linkSecondEndID xmi:idref='_2024x_3_90d0202_1774431184299_409731_1340'/>
+						<geometry>486, 148; 652, 154; </geometry>
+						<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+						<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+						<linkNameID xmi:idref='_2024x_3_90d0202_1777201046870_837446_1418'/>
+						<nameVisible xmi:value='true'/>
+						<mdOwnedViews>
+							<mdElement elementClass='TextBox' xmi:id='_2024x_3_90d0202_1777201046870_837446_1418'>
+								<geometry>540, 136, 58, 12</geometry>
+								<mdOwnedViews/>
+								<text>&lt;&lt;extend&gt;&gt;</text>
+								<symbolStyleID>_18_5_10ba0377_1484676734822_957732_8</symbolStyleID>
+							</mdElement>
+						</mdOwnedViews>
+						<symbolStyleID>_12_1_8f90291_1171295786375_225373_292</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='UseCase' xmi:id='_2024x_3_90d0202_1774431184299_409731_1340'>
+						<elementID xmi:idref='_2024x_3_90d0202_1774431184295_982098_1339'/>
+						<geometry>651, 136, 174, 42</geometry>
+						<mdOwnedViews/>
+						<symbolStyleID>_18_5_10ba0377_1484676734822_173226_6</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='UseCase' xmi:id='_v_uc07'>
+						<elementID xmi:idref='_uc07'/>
+						<geometry>336, 283, 220, 32</geometry>
+						<mdOwnedViews/>
+						<symbolStyleID>_18_5_10ba0377_1484676734822_173226_6</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='UseCase' xmi:id='_v_uc01'>
+						<elementID xmi:idref='_uc01'/>
+						<properties>
+							<mdElement elementClass='BooleanProperty'>
+								<propertyID>AUTOSIZE</propertyID>
+								<value xmi:value='true'/>
+							</mdElement>
+						</properties>
+						<geometry>196, 94, 134, 32</geometry>
+						<mdOwnedViews/>
+						<symbolStyleID>_18_5_10ba0377_1484676734822_173226_6</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='UseCase' xmi:id='_v_uc02'>
+						<elementID xmi:idref='_uc02'/>
+						<geometry>259, 129, 230, 32</geometry>
+						<mdOwnedViews/>
+						<symbolStyleID>_18_5_10ba0377_1484676734822_173226_6</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='UseCase' xmi:id='_v_uc03'>
+						<elementID xmi:idref='_uc03'/>
+						<properties>
+							<mdElement elementClass='BooleanProperty'>
+								<propertyID>AUTOSIZE</propertyID>
+								<value xmi:value='true'/>
+							</mdElement>
+						</properties>
+						<geometry>329, 171, 170, 24</geometry>
+						<mdOwnedViews/>
+						<symbolStyleID>_18_5_10ba0377_1484676734822_173226_6</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='UseCase' xmi:id='_v_uc08'>
+						<elementID xmi:idref='_uc08'/>
+						<properties>
+							<mdElement elementClass='BooleanProperty'>
+								<propertyID>AUTOSIZE</propertyID>
+								<value xmi:value='true'/>
+							</mdElement>
+						</properties>
+						<geometry>189, 297, 84, 44</geometry>
+						<mdOwnedViews/>
+						<symbolStyleID>_18_5_10ba0377_1484676734822_173226_6</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='UseCase' xmi:id='_v_uc14'>
+						<elementID xmi:idref='_uc14'/>
+						<properties>
+							<mdElement elementClass='BooleanProperty'>
+								<propertyID>AUTOSIZE</propertyID>
+								<value xmi:value='true'/>
+							</mdElement>
+						</properties>
+						<geometry>763, 353, 154, 42</geometry>
+						<mdOwnedViews/>
+						<symbolStyleID>_18_5_10ba0377_1484676734822_173226_6</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='UseCase' xmi:id='_2024x_3_90d0202_1777205359231_875313_1635'>
+						<elementID xmi:idref='_2024x_3_90d0202_1777205359227_613681_1634'/>
+						<geometry>224, 584, 140, 42</geometry>
+						<mdOwnedViews/>
+						<symbolStyleID>_18_5_10ba0377_1484676734822_173226_6</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='UseCase' xmi:id='_v_uc16'>
+						<elementID xmi:idref='_uc16'/>
+						<geometry>588, 458, 140, 80</geometry>
+						<mdOwnedViews/>
+						<symbolStyleID>_18_5_10ba0377_1484676734822_173226_6</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='UseCase' xmi:id='_v_uc15'>
+						<elementID xmi:idref='_uc15'/>
+						<properties>
+							<mdElement elementClass='BooleanProperty'>
+								<propertyID>AUTOSIZE</propertyID>
+								<value xmi:value='true'/>
+							</mdElement>
+						</properties>
+						<geometry>434, 458, 120, 42</geometry>
+						<mdOwnedViews/>
+						<symbolStyleID>_18_5_10ba0377_1484676734822_173226_6</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='UseCase' xmi:id='_v_uc28'>
+						<elementID xmi:idref='_uc28'/>
+						<geometry>679, 703, 225, 32</geometry>
+						<mdOwnedViews/>
+						<symbolStyleID>_18_5_10ba0377_1484676734822_173226_6</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='UseCase' xmi:id='_v_uc22'>
+						<elementID xmi:idref='_uc22'/>
+						<properties>
+							<mdElement elementClass='BooleanProperty'>
+								<propertyID>AUTOSIZE</propertyID>
+								<value xmi:value='true'/>
+							</mdElement>
+						</properties>
+						<geometry>350, 647, 138, 24</geometry>
+						<mdOwnedViews/>
+						<symbolStyleID>_18_5_10ba0377_1484676734822_173226_6</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='UseCase' xmi:id='_v_uc27'>
+						<elementID xmi:idref='_uc27'/>
+						<geometry>315, 703, 234, 54</geometry>
+						<mdOwnedViews/>
+						<symbolStyleID>_18_5_10ba0377_1484676734822_173226_6</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='Dependency' xmi:id='_bb_view_ext_req_status'>
+						<elementID xmi:idref='_bb_ext_req_status'/>
+						<linkFirstEndID xmi:idref='_v_uc27'/>
+						<linkSecondEndID xmi:idref='_v_uc28'/>
+						<geometry>548, 726; 681, 722; </geometry>
+						<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+						<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+						<linkNameID xmi:idref='_2024x_3_90d0202_1777201241654_744296_1563'/>
+						<nameVisible xmi:value='true'/>
+						<mdOwnedViews>
+							<mdElement elementClass='TextBox' xmi:id='_2024x_3_90d0202_1777201241654_744296_1563'>
+								<geometry>585, 709, 58, 12</geometry>
+								<mdOwnedViews/>
+								<text>&lt;&lt;extend&gt;&gt;</text>
+								<symbolStyleID>_18_5_10ba0377_1484676734822_957732_8</symbolStyleID>
+							</mdElement>
+						</mdOwnedViews>
+						<symbolStyleID>_12_1_8f90291_1171295786375_225373_292</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='UseCase' xmi:id='_v_uc05'>
+						<elementID xmi:idref='_uc05'/>
+						<geometry>322, 241, 165, 32</geometry>
+						<mdOwnedViews/>
+						<symbolStyleID>_18_5_10ba0377_1484676734822_173226_6</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='Dependency' xmi:id='_bb_view_ext_stats_matches'>
+						<elementID xmi:idref='_bb_ext_stats_matches'/>
+						<linkFirstEndID xmi:idref='_v_uc05'/>
+						<linkSecondEndID xmi:idref='_v_uc06'/>
+						<geometry>471, 266; 644, 289; </geometry>
+						<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+						<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+						<linkNameID xmi:idref='_2024x_3_90d0202_1777201332930_641044_1631'/>
+						<nameVisible xmi:value='true'/>
+						<mdOwnedViews>
+							<mdElement elementClass='TextBox' xmi:id='_2024x_3_90d0202_1777201332930_641044_1631'>
+								<geometry>537, 262, 58, 12</geometry>
+								<mdOwnedViews/>
+								<text>&lt;&lt;extend&gt;&gt;</text>
+								<symbolStyleID>_18_5_10ba0377_1484676734822_957732_8</symbolStyleID>
+							</mdElement>
+						</mdOwnedViews>
+						<symbolStyleID>_12_1_8f90291_1171295786375_225373_292</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='UseCase' xmi:id='_v_uc06'>
+						<elementID xmi:idref='_uc06'/>
+						<geometry>630, 283, 160, 32</geometry>
+						<mdOwnedViews/>
+						<symbolStyleID>_18_5_10ba0377_1484676734822_173226_6</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='UseCase' xmi:id='_v_uc04'>
+						<elementID xmi:idref='_uc04'/>
+						<geometry>329, 199, 250, 32</geometry>
+						<mdOwnedViews/>
+						<symbolStyleID>_18_5_10ba0377_1484676734822_173226_6</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='Dependency' xmi:id='_v_bb_inc_schedule_feasibility'>
+						<elementID xmi:idref='_bb_inc_schedule_feasibility'/>
+						<linkFirstEndID xmi:idref='_v_uc35'/>
+						<linkSecondEndID xmi:idref='_v_uc16'/>
+						<geometry>819, 459; 723, 482; </geometry>
+						<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+						<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+						<linkNameID xmi:idref='_v_bb_inc_schedule_feasibility_label'/>
+						<nameVisible xmi:value='true'/>
+						<mdOwnedViews>
+							<mdElement elementClass='TextBox' xmi:id='_v_bb_inc_schedule_feasibility_label'>
+								<geometry>724, 454, 59, 12</geometry>
+								<mdOwnedViews/>
+								<text>&lt;&lt;include&gt;&gt;</text>
+								<symbolStyleID>_18_5_10ba0377_1484676734822_957732_8</symbolStyleID>
+							</mdElement>
+						</mdOwnedViews>
+						<symbolStyleID>_12_1_8f90291_1171295786375_225373_292</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='UseCase' xmi:id='_v_uc29'>
+						<elementID xmi:idref='_uc29'/>
+						<geometry>637, 87, 210, 44</geometry>
+						<mdOwnedViews/>
+						<symbolStyleID>_18_5_10ba0377_1484676734822_173226_6</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='UseCase' xmi:id='_v_uc30'>
+						<elementID xmi:idref='_uc30'/>
+						<geometry>644, 227, 220, 44</geometry>
+						<mdOwnedViews/>
+						<symbolStyleID>_18_5_10ba0377_1484676734822_173226_6</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='UseCase' xmi:id='_v_uc32'>
+						<elementID xmi:idref='_uc32'/>
+						<geometry>574, 339, 165, 54</geometry>
+						<mdOwnedViews/>
+						<symbolStyleID>_18_5_10ba0377_1484676734822_173226_6</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='UseCase' xmi:id='_v_uc33'>
+						<elementID xmi:idref='_uc33'/>
+						<geometry>532, 570, 165, 42</geometry>
+						<mdOwnedViews/>
+						<symbolStyleID>_18_5_10ba0377_1484676734822_173226_6</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='UseCase' xmi:id='_v_uc35'>
+						<elementID xmi:idref='_uc35'/>
+						<geometry>812, 402, 158, 82</geometry>
+						<mdOwnedViews/>
+						<symbolStyleID>_18_5_10ba0377_1484676734822_173226_6</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='Extend' xmi:id='_2024x_3_90d0202_1777305671039_469870_1399'>
+						<elementID xmi:idref='_2024x_3_90d0202_1777305668397_309069_1398'/>
+						<linkFirstEndID xmi:idref='_v_uc29'/>
+						<linkSecondEndID xmi:idref='_v_uc02'/>
+						<geometry>647, 118; 468, 135; </geometry>
+						<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+						<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+						<nameVisible xmi:value='true'/>
+						<mdOwnedViews>
+							<mdElement elementClass='TextBoxWithIcon' xmi:id='_2024x_3_90d0202_1777305671040_853835_1400'>
+								<geometry>532, 110, 51, 13</geometry>
+								<mdOwnedViews/>
+								<text>«extend»</text>
+								<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+							</mdElement>
+						</mdOwnedViews>
+						<linkStereotypeID xmi:idref='_2024x_3_90d0202_1777305671040_853835_1400'/>
+						<symbolStyleID>_12_1_8f90291_1171296308031_235209_1539</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='Extend' xmi:id='_2024x_3_90d0202_1777305695344_387276_1405'>
+						<elementID xmi:idref='_2024x_3_90d0202_1777305694332_788121_1404'/>
+						<linkFirstEndID xmi:idref='_v_uc30'/>
+						<linkSecondEndID xmi:idref='_v_uc05'/>
+						<geometry>645, 251; 485, 255; </geometry>
+						<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+						<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+						<nameVisible xmi:value='true'/>
+						<mdOwnedViews>
+							<mdElement elementClass='TextBoxWithIcon' xmi:id='_2024x_3_90d0202_1777305695344_244534_1406'>
+								<geometry>540, 237, 51, 13</geometry>
+								<mdOwnedViews/>
+								<text>«extend»</text>
+								<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+							</mdElement>
+						</mdOwnedViews>
+						<linkStereotypeID xmi:idref='_2024x_3_90d0202_1777305695344_244534_1406'/>
+						<symbolStyleID>_12_1_8f90291_1171296308031_235209_1539</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='Association' xmi:id='_2024x_3_90d0202_1777305757959_982758_1441'>
+						<elementID xmi:idref='_2024x_3_90d0202_1777305757957_230660_1438'/>
+						<linkFirstEndID xmi:idref='_bb_view_actor_admin'/>
+						<linkSecondEndID xmi:idref='_v_uc33'/>
+						<geometry>129, 536; 539, 582; </geometry>
+						<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+						<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+						<nameVisible xmi:value='true'/>
+						<mdOwnedViews>
+							<mdElement elementClass='Role' xmi:id='_2024x_3_90d0202_1777305757959_250903_1442'>
+								<elementID xmi:idref='_2024x_3_90d0202_1777305757957_151540_1440'/>
+								<geometry>534, 582, 10, 10</geometry>
+								<mdOwnedViews/>
+								<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+							</mdElement>
+							<mdElement elementClass='Role' xmi:id='_2024x_3_90d0202_1777305757959_164955_1445'>
+								<elementID xmi:idref='_2024x_3_90d0202_1777305757957_164061_1439'/>
+								<geometry>124, 536, 10, 10</geometry>
+								<mdOwnedViews/>
+								<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+							</mdElement>
+						</mdOwnedViews>
+						<associationFirstEndID xmi:idref='_2024x_3_90d0202_1777305757959_164955_1445'/>
+						<associationSecondEndID xmi:idref='_2024x_3_90d0202_1777305757959_250903_1442'/>
+						<symbolStyleID>_9_5_be00301_1123081756555_231111_479</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='UseCase' xmi:id='_2024x_3_90d0202_1777994730502_700233_1402'>
+						<elementID xmi:idref='_2024x_3_90d0202_1777994730488_970167_1398'/>
+						<geometry>259, 353, 140, 54</geometry>
+						<mdOwnedViews/>
+						<symbolStyleID>_18_5_10ba0377_1484676734822_173226_6</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='UseCase' xmi:id='_2024x_3_90d0202_1778597904683_454734_1397'>
+						<elementID xmi:idref='_2024x_3_90d0202_1778597904674_867540_1396'/>
+						<geometry>420, 353, 140, 28</geometry>
+						<mdOwnedViews/>
+						<symbolStyleID>_18_5_10ba0377_1484676734822_173226_6</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='UseCase' xmi:id='_2024x_3_90d0202_1778598102814_994013_1439'>
+						<elementID xmi:idref='_2024x_3_90d0202_1778598102812_893173_1438'/>
+						<geometry>448, 521, 140, 28</geometry>
+						<mdOwnedViews/>
+						<symbolStyleID>_18_5_10ba0377_1484676734822_173226_6</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='UseCase' xmi:id='_2024x_3_90d0202_1778598176059_366487_1466'>
+						<elementID xmi:idref='_2024x_3_90d0202_1778598176056_906344_1465'/>
+						<geometry>504, 675, 140, 28</geometry>
+						<mdOwnedViews/>
+						<symbolStyleID>_18_5_10ba0377_1484676734822_173226_6</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='UseCase' xmi:id='_2024x_3_90d0202_1778598271477_745267_1493'>
+						<elementID xmi:idref='_2024x_3_90d0202_1778598271474_198619_1492'/>
+						<geometry>763, 532, 146, 82</geometry>
+						<mdOwnedViews/>
+						<symbolStyleID>_18_5_10ba0377_1484676734822_173226_6</symbolStyleID>
+					</mdElement>
+				</mdOwnedViews>
+				<symbolStyleID>_18_5_10ba0377_1484676734826_960674_24</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<symbolStyleID>_18_5_10ba0377_1484676734826_960674_24</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Association' xmi:id='_2024x_3_90d0202_1777205369921_439206_1653'>
+		<elementID xmi:idref='_2024x_3_90d0202_1777205369917_361158_1650'/>
+		<linkFirstEndID xmi:idref='_2024x_3_90d0202_1777205359231_875313_1635'/>
+		<linkSecondEndID xmi:idref='_bb_view_actor_admin'/>
+		<geometry>251, 588; 169, 558; </geometry>
+		<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+		<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+		<nameVisible xmi:value='true'/>
+		<mdOwnedViews>
+			<mdElement elementClass='Role' xmi:id='_2024x_3_90d0202_1777205369921_539449_1657'>
+				<elementID xmi:idref='_2024x_3_90d0202_1777205369917_442544_1651'/>
+				<geometry>246, 588, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Role' xmi:id='_2024x_3_90d0202_1777205369921_582632_1654'>
+				<elementID xmi:idref='_2024x_3_90d0202_1777205369918_964094_1652'/>
+				<geometry>164, 558, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<associationFirstEndID xmi:idref='_2024x_3_90d0202_1777205369921_539449_1657'/>
+		<associationSecondEndID xmi:idref='_2024x_3_90d0202_1777205369921_582632_1654'/>
+		<symbolStyleID>_9_5_be00301_1123081756555_231111_479</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Association' xmi:id='_2024x_3_90d0202_1777205383673_448814_1666'>
+		<elementID xmi:idref='_2024x_3_90d0202_1777205383671_862164_1663'/>
+		<linkFirstEndID xmi:idref='_2024x_3_90d0202_1777205359231_875313_1635'/>
+		<linkSecondEndID xmi:idref='_bb_view_actor_manager'/>
+		<geometry>247, 620; 109, 667; </geometry>
+		<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+		<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+		<nameVisible xmi:value='true'/>
+		<mdOwnedViews>
+			<mdElement elementClass='Role' xmi:id='_2024x_3_90d0202_1777205383674_986823_1670'>
+				<elementID xmi:idref='_2024x_3_90d0202_1777205383671_756988_1664'/>
+				<geometry>242, 620, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Role' xmi:id='_2024x_3_90d0202_1777205383673_697930_1667'>
+				<elementID xmi:idref='_2024x_3_90d0202_1777205383672_494540_1665'/>
+				<geometry>104, 667, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<associationFirstEndID xmi:idref='_2024x_3_90d0202_1777205383674_986823_1670'/>
+		<associationSecondEndID xmi:idref='_2024x_3_90d0202_1777205383673_697930_1667'/>
+		<symbolStyleID>_9_5_be00301_1123081756555_231111_479</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Association' xmi:id='_2024x_3_90d0202_1777205554477_622923_1679'>
+		<elementID xmi:idref='_2024x_3_90d0202_1777205554475_194127_1676'/>
+		<linkFirstEndID xmi:idref='_v_uc08'/>
+		<linkSecondEndID xmi:idref='_bb_view_actor_guest'/>
+		<geometry>206, 301; 126, 246; </geometry>
+		<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+		<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+		<nameVisible xmi:value='true'/>
+		<mdOwnedViews>
+			<mdElement elementClass='Role' xmi:id='_2024x_3_90d0202_1777205554477_984161_1683'>
+				<elementID xmi:idref='_2024x_3_90d0202_1777205554475_144568_1677'/>
+				<geometry>201, 301, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Role' xmi:id='_2024x_3_90d0202_1777205554477_923402_1680'>
+				<elementID xmi:idref='_2024x_3_90d0202_1777205554476_953254_1678'/>
+				<geometry>121, 246, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<associationFirstEndID xmi:idref='_2024x_3_90d0202_1777205554477_984161_1683'/>
+		<associationSecondEndID xmi:idref='_2024x_3_90d0202_1777205554477_923402_1680'/>
+		<symbolStyleID>_9_5_be00301_1123081756555_231111_479</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='DiagramFrame' xmi:id='_bb_view_frame'>
+		<elementID xmi:idref='_2024x_3_90d0202_1774393304646_584845_1323'/>
+		<geometry>5, 5, 1025, 812</geometry>
+		<mdOwnedViews/>
+		<symbolStyleID>_18_5_10ba0377_1484676734842_968677_119</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Association' xmi:id='_2024x_3_90d0202_1777305735052_417706_1415'>
+		<elementID xmi:idref='_2024x_3_90d0202_1777305735049_796577_1412'/>
+		<linkFirstEndID xmi:idref='_v_uc32'/>
+		<linkSecondEndID xmi:idref='_bb_view_actor_admin'/>
+		<geometry>596, 384; 129, 527; </geometry>
+		<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+		<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+		<nameVisible xmi:value='true'/>
+		<mdOwnedViews>
+			<mdElement elementClass='Role' xmi:id='_2024x_3_90d0202_1777305735052_96832_1416'>
+				<elementID xmi:idref='_2024x_3_90d0202_1777305735049_127586_1414'/>
+				<geometry>124, 527, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Role' xmi:id='_2024x_3_90d0202_1777305735052_891184_1419'>
+				<elementID xmi:idref='_2024x_3_90d0202_1777305735049_775518_1413'/>
+				<geometry>591, 384, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<associationFirstEndID xmi:idref='_2024x_3_90d0202_1777305735052_891184_1419'/>
+		<associationSecondEndID xmi:idref='_2024x_3_90d0202_1777305735052_96832_1416'/>
+		<symbolStyleID>_9_5_be00301_1123081756555_231111_479</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Association' xmi:id='_2024x_3_90d0202_1777994730502_775111_1414'>
+		<elementID xmi:idref='_2024x_3_90d0202_1777994730496_320598_1399'/>
+		<linkFirstEndID xmi:idref='_2024x_3_90d0202_1777994730502_700233_1402'/>
+		<linkSecondEndID xmi:idref='_bb_view_actor_admin'/>
+		<geometry>295, 403; 129, 519; </geometry>
+		<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+		<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+		<nameVisible xmi:value='true'/>
+		<mdOwnedViews>
+			<mdElement elementClass='Role' xmi:id='_2024x_3_90d0202_1777994730502_687280_1415'>
+				<elementID xmi:idref='_2024x_3_90d0202_1777994730497_847722_1401'/>
+				<geometry>124, 519, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Role' xmi:id='_2024x_3_90d0202_1777994730502_888599_1418'>
+				<elementID xmi:idref='_2024x_3_90d0202_1777994730497_329707_1400'/>
+				<geometry>290, 403, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<associationFirstEndID xmi:idref='_2024x_3_90d0202_1777994730502_888599_1418'/>
+		<associationSecondEndID xmi:idref='_2024x_3_90d0202_1777994730502_687280_1415'/>
+		<symbolStyleID>_9_5_be00301_1123081756555_231111_479</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Association' xmi:id='_2024x_3_90d0202_1778597995631_211586_1415'>
+		<elementID xmi:idref='_2024x_3_90d0202_1778597995627_602188_1412'/>
+		<linkFirstEndID xmi:idref='_2024x_3_90d0202_1778597904683_454734_1397'/>
+		<linkSecondEndID xmi:idref='_bb_view_actor_admin'/>
+		<geometry>461, 379; 129, 524; </geometry>
+		<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+		<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+		<nameVisible xmi:value='true'/>
+		<mdOwnedViews>
+			<mdElement elementClass='Role' xmi:id='_2024x_3_90d0202_1778597995631_133967_1416'>
+				<elementID xmi:idref='_2024x_3_90d0202_1778597995627_833205_1414'/>
+				<geometry>124, 524, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Role' xmi:id='_2024x_3_90d0202_1778597995631_721470_1419'>
+				<elementID xmi:idref='_2024x_3_90d0202_1778597995627_794690_1413'/>
+				<geometry>456, 379, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<associationFirstEndID xmi:idref='_2024x_3_90d0202_1778597995631_721470_1419'/>
+		<associationSecondEndID xmi:idref='_2024x_3_90d0202_1778597995631_133967_1416'/>
+		<symbolStyleID>_9_5_be00301_1123081756555_231111_479</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Association' xmi:id='_2024x_3_90d0202_1778598118378_321023_1457'>
+		<elementID xmi:idref='_2024x_3_90d0202_1778598118376_365360_1454'/>
+		<linkFirstEndID xmi:idref='_2024x_3_90d0202_1778598102814_994013_1439'/>
+		<linkSecondEndID xmi:idref='_bb_view_actor_admin'/>
+		<geometry>448, 534; 129, 534; </geometry>
+		<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+		<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+		<nameVisible xmi:value='true'/>
+		<mdOwnedViews>
+			<mdElement elementClass='Role' xmi:id='_2024x_3_90d0202_1778598118378_890199_1458'>
+				<elementID xmi:idref='_2024x_3_90d0202_1778598118377_135026_1456'/>
+				<geometry>124, 534, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Role' xmi:id='_2024x_3_90d0202_1778598118378_500986_1461'>
+				<elementID xmi:idref='_2024x_3_90d0202_1778598118377_336745_1455'/>
+				<geometry>438, 529, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<associationFirstEndID xmi:idref='_2024x_3_90d0202_1778598118378_500986_1461'/>
+		<associationSecondEndID xmi:idref='_2024x_3_90d0202_1778598118378_890199_1458'/>
+		<symbolStyleID>_9_5_be00301_1123081756555_231111_479</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Association' xmi:id='_2024x_3_90d0202_1778598201282_150035_1484'>
+		<elementID xmi:idref='_2024x_3_90d0202_1778598201280_560367_1481'/>
+		<linkFirstEndID xmi:idref='_2024x_3_90d0202_1778598176059_366487_1466'/>
+		<linkSecondEndID xmi:idref='_bb_view_actor_manager'/>
+		<geometry>505, 686; 109, 675; </geometry>
+		<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+		<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+		<nameVisible xmi:value='true'/>
+		<mdOwnedViews>
+			<mdElement elementClass='Role' xmi:id='_2024x_3_90d0202_1778598201282_953665_1485'>
+				<elementID xmi:idref='_2024x_3_90d0202_1778598201280_244261_1483'/>
+				<geometry>104, 675, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Role' xmi:id='_2024x_3_90d0202_1778598201282_280979_1488'>
+				<elementID xmi:idref='_2024x_3_90d0202_1778598201280_886534_1482'/>
+				<geometry>500, 686, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<associationFirstEndID xmi:idref='_2024x_3_90d0202_1778598201282_280979_1488'/>
+		<associationSecondEndID xmi:idref='_2024x_3_90d0202_1778598201282_953665_1485'/>
+		<symbolStyleID>_9_5_be00301_1123081756555_231111_479</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Association' xmi:id='_2024x_3_90d0202_1778598305205_209862_1511'>
+		<elementID xmi:idref='_2024x_3_90d0202_1778598305203_459699_1508'/>
+		<linkFirstEndID xmi:idref='_2024x_3_90d0202_1778598271477_745267_1493'/>
+		<linkSecondEndID xmi:idref='_bb_view_actor_admin'/>
+		<geometry>763, 569; 129, 535; </geometry>
+		<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+		<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+		<nameVisible xmi:value='true'/>
+		<mdOwnedViews>
+			<mdElement elementClass='Role' xmi:id='_2024x_3_90d0202_1778598305205_628242_1512'>
+				<elementID xmi:idref='_2024x_3_90d0202_1778598305203_820105_1510'/>
+				<geometry>124, 535, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Role' xmi:id='_2024x_3_90d0202_1778598305205_250699_1515'>
+				<elementID xmi:idref='_2024x_3_90d0202_1778598305203_492976_1509'/>
+				<geometry>753, 564, 10, 10</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734824_780945_18</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<associationFirstEndID xmi:idref='_2024x_3_90d0202_1778598305205_250699_1515'/>
+		<associationSecondEndID xmi:idref='_2024x_3_90d0202_1778598305205_628242_1512'/>
+		<symbolStyleID>_9_5_be00301_1123081756555_231111_479</symbolStyleID>
+	</mdElement>
+	<symbolStyles>
+		<mdElement elementClass='SimpleStyle'>
+			<mdElement elementClass='ExtendableManager'>
+				<name>Actor</name>
+				<propertyManagerID>_18_5_10ba0377_1484676734837_49398_78</propertyManagerID>
+				<parentPropertyManager>_18_5_10ba0377_1484676734821_607711_2</parentPropertyManager>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>PEN_COLOR</propertyID>
+					<value xmi:value='-10066361'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>STEREOTYPES_DISPLAY_MODE</propertyID>
+					<index xmi:value='3'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SUPPRESS_BEHAVIORS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>BEHAVIORS_COLOR</propertyID>
+					<value xmi:value='-14155776'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_BEHAVIORS_INHERITED_SIGN</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_MORE_SIGN_FOR_BEHAVIORS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_BEHAVIORS_PROPERTIES</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_BEHAVIORS_TAGGED_VALUES</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_BEHAVIORS_CONSTRAINTS</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>BEHAVIORS_CONSTRAINT_TEXT_MODE</propertyID>
+					<index xmi:value='1'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_BEHAVIORS_SIGNATURE</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_BEHAVIORS_PARAMETERS_DIRECTION_KIND</propertyID>
+				</mdElement>
+				<mdElement elementClass='FontProperty'>
+					<propertyID>BEHAVIORS_FONT</propertyID>
+					<fontName>Arial</fontName>
+					<size xmi:value='11'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_BEHAVIORS_STEREOTYPE</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>TAGGED_VALUES_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_TAGGED_VALUES_STEREOTYPES</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_QUALIFIED_NAME_IN_TAGGED_VALUES</propertyID>
+				</mdElement>
+				<hiddenProperties xmi:value='SUSPEND_LABEL_AUTO_DISPLAY^SHOW_TAGGED_VALUES^LABEL_ORIENTATION'/>
+			</mdElement>
+			<mdElement elementClass='ExtendableManager'>
+				<name>Association</name>
+				<propertyManagerID>_18_5_10ba0377_1484676734842_565206_117</propertyManagerID>
+				<parentPropertyManager>_18_5_10ba0377_1484676734821_332269_3</parentPropertyManager>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>STEREOTYPE_COLOR</propertyID>
+					<value xmi:value='-16777216'/>
+				</mdElement>
+				<mdElement elementClass='FontProperty'>
+					<propertyID>STEREOTYPE_FONT</propertyID>
+					<fontName>Arial</fontName>
+					<size xmi:value='11'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>WRAP_WORDS</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_NAME</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>STEREOTYPES_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>DSL_STEREOTYPE_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_TAGGED_VALUES</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ELEMENT_PROPERTIES</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ICONS_IN_COMPARTMENTS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ELEMENT_TYPE_IN_COMPARTMENTS</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_DERIVED_SIGN</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_CONVEYED_A</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_CONVEYED_B</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_CONSTRAINTS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ASSOCIATION_DIRECTION_ICON</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ID_FOR_CONVEYED_ITEM</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ID_OF_INFORMATION_FLOW</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_NAME_OF_INFORMATION_FLOW</propertyID>
+				</mdElement>
+			</mdElement>
+			<mdElement elementClass='ExtendableManager'>
+				<name>Dependency</name>
+				<propertyManagerID>_18_5_10ba0377_1484676734840_177082_110</propertyManagerID>
+				<parentPropertyManager>_18_5_10ba0377_1484676734821_332269_3</parentPropertyManager>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>LINK_LINE_STYLE</propertyID>
+					<index xmi:value='1'/>
+				</mdElement>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>STEREOTYPE_COLOR</propertyID>
+					<value xmi:value='-16777216'/>
+				</mdElement>
+				<mdElement elementClass='FontProperty'>
+					<propertyID>STEREOTYPE_FONT</propertyID>
+					<fontName>Arial</fontName>
+					<size xmi:value='11'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>WRAP_WORDS</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_NAME</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>STEREOTYPES_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>DSL_STEREOTYPE_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_TAGGED_VALUES</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ELEMENT_PROPERTIES</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ICONS_IN_COMPARTMENTS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ELEMENT_TYPE_IN_COMPARTMENTS</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_DERIVED_SIGN</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_CONVEYED_A</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_CONVEYED_B</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_CONSTRAINTS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+			</mdElement>
+			<mdElement elementClass='ExtendableManager'>
+				<name>Diagram</name>
+				<propertyManagerID>_18_5_10ba0377_1484676734842_968677_119</propertyManagerID>
+				<parentPropertyManager>_18_5_10ba0377_1484676734821_953768_1</parentPropertyManager>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>DIAGRAM_BACKGROUND_COLOR</propertyID>
+					<value xmi:value='-1'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>USE_GRADIENT_FOR_FILL</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>USE_SHADOW_FOR_SHAPES</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_GRID</propertyID>
+				</mdElement>
+				<mdElement elementClass='NumberProperty'>
+					<propertyID>GRID_SIZE</propertyID>
+					<value xmi:value='7.0'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>USE_GRID_FOR_PATHS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>USE_GRID_FOR_SHAPES</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_MESSAGE_NUMBERS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>USE_ADVANCED_NUMBERING</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ACTIVATIONS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_DIAGRAM_INFO</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_DIAGRAM_OWNER</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_DIAGRAM_FRAME</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ABBREVIATED_DIAGRAM_TYPE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_DIAGRAM_NAME</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_DIAGRAM_TYPE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_PARAMETERS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_CONTEXT_NAME</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_CONTEXT_TYPE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_FRAME_OWNER</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>AUTOSIZE</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>ASPECT_RATIO</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>USE_ROUNDED_CORNERS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>STEREOTYPES_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>DSL_STEREOTYPE_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>USE_STEREOTYPE</propertyID>
+					<index xmi:value='1'/>
+				</mdElement>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>STEREOTYPE_COLOR</propertyID>
+					<value xmi:value='-16777216'/>
+				</mdElement>
+				<mdElement elementClass='FontProperty'>
+					<propertyID>STEREOTYPE_FONT</propertyID>
+					<fontName>Arial</fontName>
+					<size xmi:value='11'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>DIAGRAM_ORIENTATION</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>LINE_JUMP_PLACE</propertyID>
+					<index xmi:value='1'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SUSPEND_SHAPES_AUTO_RESIZE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SUSPEND_LABELS_AUTO_DISPLAY</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>SUSPEND_SHAPE_AUTO_RESIZE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_SYSML_INTERNAL_PROPERTIES_COMPARTMENTS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<hiddenProperties xmi:value='USE_FILL_COLOR^FILL_COLOR'/>
+			</mdElement>
+			<mdElement elementClass='ExtendableManager'>
+				<name>Extend</name>
+				<propertyManagerID>_18_5_10ba0377_1484676734840_546413_105</propertyManagerID>
+				<parentPropertyManager>_18_5_10ba0377_1484676734821_332269_3</parentPropertyManager>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>LINK_LINE_STYLE</propertyID>
+					<index xmi:value='1'/>
+				</mdElement>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>STEREOTYPE_COLOR</propertyID>
+					<value xmi:value='-16777216'/>
+				</mdElement>
+				<mdElement elementClass='FontProperty'>
+					<propertyID>STEREOTYPE_FONT</propertyID>
+					<fontName>Arial</fontName>
+					<size xmi:value='11'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>WRAP_WORDS</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_NAME</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>STEREOTYPES_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>DSL_STEREOTYPE_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_TAGGED_VALUES</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ELEMENT_PROPERTIES</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ICONS_IN_COMPARTMENTS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ELEMENT_TYPE_IN_COMPARTMENTS</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_DERIVED_SIGN</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_CONVEYED_A</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_CONVEYED_B</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_CONSTRAINTS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_EXTENSION_POINT</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+			</mdElement>
+			<mdElement elementClass='ExtendableManager'>
+				<name>Generalization</name>
+				<propertyManagerID>_18_5_10ba0377_1484676734840_150120_103</propertyManagerID>
+				<parentPropertyManager>_18_5_10ba0377_1484676734821_332269_3</parentPropertyManager>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>STEREOTYPE_COLOR</propertyID>
+					<value xmi:value='-16777216'/>
+				</mdElement>
+				<mdElement elementClass='FontProperty'>
+					<propertyID>STEREOTYPE_FONT</propertyID>
+					<fontName>Arial</fontName>
+					<size xmi:value='11'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>WRAP_WORDS</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>STEREOTYPES_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>DSL_STEREOTYPE_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_TAGGED_VALUES</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ELEMENT_PROPERTIES</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ICONS_IN_COMPARTMENTS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ELEMENT_TYPE_IN_COMPARTMENTS</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_DERIVED_SIGN</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_CONVEYED_A</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_CONVEYED_B</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_CONSTRAINTS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_GENERALIZATION_SET</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+			</mdElement>
+			<mdElement elementClass='ExtendableManager'>
+				<name>Package</name>
+				<propertyManagerID>_18_5_10ba0377_1484676734826_960674_24</propertyManagerID>
+				<parentPropertyManager>_18_5_10ba0377_1484676734821_607711_2</parentPropertyManager>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>FILL_COLOR</propertyID>
+					<value xmi:value='-2826753'/>
+				</mdElement>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>PEN_COLOR</propertyID>
+					<value xmi:value='-9734759'/>
+				</mdElement>
+				<mdElement elementClass='FontProperty'>
+					<propertyID>FONT</propertyID>
+					<fontName>Arial</fontName>
+					<size xmi:value='13'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>PACKAGE_HEADER_POSITION</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_URI</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ELEMENTS_LIST</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_RAKE_SYMBOL</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>PACKAGE_INNER_ELEMENTS_SORT_MODE</propertyID>
+					<index xmi:value='1'/>
+				</mdElement>
+				<hiddenProperties xmi:value='SUSPEND_LABEL_AUTO_DISPLAY^LABEL_ORIENTATION'/>
+			</mdElement>
+			<mdElement elementClass='ExtendableManager'>
+				<name>Paths</name>
+				<propertyManagerID>_18_5_10ba0377_1484676734821_332269_3</propertyManagerID>
+				<parentPropertyManager>_18_5_10ba0377_1484676734821_953768_1</parentPropertyManager>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>USE_FILL_COLOR</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>LINK_LINE_STYLE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>IS_ROUNDED</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>CONSTRAINT_TEXT_MODE</propertyID>
+					<index xmi:value='1'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>SUSPEND_SHAPE_AUTO_RESIZE</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>SUSPEND_LABEL_AUTO_DISPLAY</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>LABEL_ORIENTATION</propertyID>
+				</mdElement>
+			</mdElement>
+			<mdElement elementClass='ExtendableManager'>
+				<name>Role</name>
+				<propertyManagerID>_18_5_10ba0377_1484676734824_780945_18</propertyManagerID>
+				<parentPropertyManager>_18_5_10ba0377_1484676734821_607711_2</parentPropertyManager>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>STEREOTYPES_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ROLE_NAME</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ROLE_NAVIGABILITY</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ROLE_VISIBILITY</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ROLE_MULTIPLICITY</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ROLE_PROPERTY_STRING</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<hiddenProperties xmi:value='SHOW_HEADER_IN_BOLD^USE_FILL_COLOR^AUTOSIZE^PEN_COLOR^FILL_COLOR^QNAME_DISPLAY_MODE^USE_FIXED_CONNECTION_POINTS'/>
+			</mdElement>
+			<mdElement elementClass='ExtendableManager'>
+				<name>Shapes</name>
+				<propertyManagerID>_18_5_10ba0377_1484676734821_607711_2</propertyManagerID>
+				<parentPropertyManager>_18_5_10ba0377_1484676734821_953768_1</parentPropertyManager>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>AUTOSIZE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>USE_FIXED_CONNECTION_POINTS</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>SUSPEND_SHAPE_AUTO_RESIZE</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>SUSPEND_LABEL_AUTO_DISPLAY</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>LABEL_ORIENTATION</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_HEADER_IN_BOLD</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>TEXT_VERTICAL_POSITION</propertyID>
+				</mdElement>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>STEREOTYPE_COLOR</propertyID>
+					<value xmi:value='-16777216'/>
+				</mdElement>
+				<mdElement elementClass='FontProperty'>
+					<propertyID>STEREOTYPE_FONT</propertyID>
+					<fontName>Arial</fontName>
+					<size xmi:value='11'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>STEREOTYPES_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>DSL_STEREOTYPE_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_CONSTRAINTS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>QNAME_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>WRAP_WORDS</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_TAGGED_VALUES</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>TAGGED_VALUE_HORIZONTAL_POSITION</propertyID>
+					<index xmi:value='2'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>CONSTRAINT_TEXT_MODE</propertyID>
+					<index xmi:value='1'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ELEMENT_PROPERTIES</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ICONS_IN_COMPARTMENTS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ELEMENT_TYPE_IN_COMPARTMENTS</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_DERIVED_SIGN</propertyID>
+				</mdElement>
+			</mdElement>
+			<mdElement elementClass='ExtendableManager'>
+				<name>Symbol</name>
+				<propertyManagerID>_18_5_10ba0377_1484676734821_953768_1</propertyManagerID>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>FILL_COLOR</propertyID>
+					<value xmi:value='-52'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>USE_FILL_COLOR</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>PEN_COLOR</propertyID>
+					<value xmi:value='-12434878'/>
+				</mdElement>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>TEXT_COLOR</propertyID>
+					<value xmi:value='-16777216'/>
+				</mdElement>
+				<mdElement elementClass='NumberProperty'>
+					<propertyID>LINE_WIDTH</propertyID>
+					<value xmi:value='1.0'/>
+				</mdElement>
+				<mdElement elementClass='FontProperty'>
+					<propertyID>FONT</propertyID>
+					<fontName>Arial</fontName>
+					<size xmi:value='11'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_NUMBER_TAG_NAME</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>ELEMENT_NUMBER_DISPLAY_MODE</propertyID>
+					<index xmi:value='2'/>
+				</mdElement>
+			</mdElement>
+			<mdElement elementClass='ExtendableManager'>
+				<name>TextBox</name>
+				<propertyManagerID>_18_5_10ba0377_1484676734822_957732_8</propertyManagerID>
+				<parentPropertyManager>_18_5_10ba0377_1484676734821_607711_2</parentPropertyManager>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>USE_FILL_COLOR</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>WRAP_WORDS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>HTML_TEXT</propertyID>
+				</mdElement>
+				<hiddenProperties xmi:value='SHOW_CONSTRAINTS^TAGGED_VALUE_HORIZONTAL_POSITION^CONSTRAINT_TEXT_MODE^STEREOTYPE_FONT^SUSPEND_LABEL_AUTO_DISPLAY^STEREOTYPE_COLOR^STEREOTYPES_DISPLAY_MODE^SHOW_DERIVED_SIGN^LABEL_ORIENTATION^SHOW_ICONS_IN_COMPARTMENTS^SHOW_HEADER_IN_BOLD^PEN_COLOR^SHOW_TAGGED_VALUES^SHOW_ELEMENT_TYPE_IN_COMPARTMENTS^DSL_STEREOTYPE_DISPLAY_MODE^SHOW_ELEMENT_PROPERTIES^QNAME_DISPLAY_MODE'/>
+			</mdElement>
+			<mdElement elementClass='PropertyManagerByDiagram'>
+				<name>Use Case Diagram</name>
+				<propertyManagerID>_9_5_be00301_1123081756555_231111_479</propertyManagerID>
+				<parentPropertyManager>_18_5_10ba0377_1484676734842_565206_117</parentPropertyManager>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>PEN_COLOR</propertyID>
+					<value xmi:value='-16777216'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>LINK_LINE_STYLE</propertyID>
+					<index xmi:value='1'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>IS_ROUNDED</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='FontProperty'>
+					<propertyID>STEREOTYPE_FONT</propertyID>
+					<fontName>Arial</fontName>
+					<size xmi:value='12'/>
+				</mdElement>
+			</mdElement>
+			<mdElement elementClass='PropertyManagerByDiagram'>
+				<name>Use Case Diagram</name>
+				<propertyManagerID>_12_1_8f90291_1171295786375_225373_292</propertyManagerID>
+				<parentPropertyManager>_18_5_10ba0377_1484676734840_177082_110</parentPropertyManager>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>PEN_COLOR</propertyID>
+					<value xmi:value='-16777216'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>IS_ROUNDED</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='FontProperty'>
+					<propertyID>STEREOTYPE_FONT</propertyID>
+					<fontName>Arial</fontName>
+					<size xmi:value='12'/>
+				</mdElement>
+			</mdElement>
+			<mdElement elementClass='PropertyManagerByDiagram'>
+				<name>Use Case Diagram</name>
+				<propertyManagerID>_12_1_8f90291_1171296308031_235209_1539</propertyManagerID>
+				<parentPropertyManager>_18_5_10ba0377_1484676734840_546413_105</parentPropertyManager>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>PEN_COLOR</propertyID>
+					<value xmi:value='-16777216'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>IS_ROUNDED</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='FontProperty'>
+					<propertyID>STEREOTYPE_FONT</propertyID>
+					<fontName>Arial</fontName>
+					<size xmi:value='12'/>
+				</mdElement>
+			</mdElement>
+			<mdElement elementClass='PropertyManagerByDiagram'>
+				<name>Use Case Diagram</name>
+				<propertyManagerID>_17_0_3beta_f980370_1347883981500_725884_2846</propertyManagerID>
+				<parentPropertyManager>_18_5_10ba0377_1484676734840_150120_103</parentPropertyManager>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>PEN_COLOR</propertyID>
+					<value xmi:value='-16777216'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>LINK_LINE_STYLE</propertyID>
+					<index xmi:value='1'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>IS_ROUNDED</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='FontProperty'>
+					<propertyID>STEREOTYPE_FONT</propertyID>
+					<fontName>Arial</fontName>
+					<size xmi:value='12'/>
+				</mdElement>
+			</mdElement>
+			<mdElement elementClass='ExtendableManager'>
+				<name>UseCase</name>
+				<propertyManagerID>_18_5_10ba0377_1484676734822_173226_6</propertyManagerID>
+				<parentPropertyManager>_18_5_10ba0377_1484676734821_607711_2</parentPropertyManager>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>PEN_COLOR</propertyID>
+					<value xmi:value='-10066361'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>TEXT_VERTICAL_POSITION</propertyID>
+					<index xmi:value='1'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>WRAP_WORDS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SUPPRESS_BEHAVIORS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>BEHAVIORS_COLOR</propertyID>
+					<value xmi:value='-14155776'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_BEHAVIORS_INHERITED_SIGN</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_MORE_SIGN_FOR_BEHAVIORS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_BEHAVIORS_PROPERTIES</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_BEHAVIORS_TAGGED_VALUES</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_BEHAVIORS_CONSTRAINTS</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>BEHAVIORS_CONSTRAINT_TEXT_MODE</propertyID>
+					<index xmi:value='1'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_BEHAVIORS_SIGNATURE</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_BEHAVIORS_PARAMETERS_DIRECTION_KIND</propertyID>
+				</mdElement>
+				<mdElement elementClass='FontProperty'>
+					<propertyID>BEHAVIORS_FONT</propertyID>
+					<fontName>Arial</fontName>
+					<size xmi:value='11'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_BEHAVIORS_STEREOTYPE</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_INHERITED</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SUPPRESS_EXTENSIONS</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_EXTENSION_POINTS_COMPARTMENT_NAME</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_RAKE_SYMBOL</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>EXT_POINT_COLOR</propertyID>
+					<value xmi:value='-14155776'/>
+				</mdElement>
+				<mdElement elementClass='FontProperty'>
+					<propertyID>EXT_POINT_FONT</propertyID>
+					<fontName>Arial</fontName>
+					<size xmi:value='11'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_EXTENSION_POINTS_INHERITED_SIGN</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<hiddenProperties xmi:value='SUSPEND_LABEL_AUTO_DISPLAY^LABEL_ORIENTATION'/>
+			</mdElement>
+		</mdElement>
+	</symbolStyles>
+</mdOwnedViews>

@@ -1,0 +1,76 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mdOwnedViews>
+	<mdElement elementClass='DiagramFrame' xmi:id='_2024x_3_90d0202_1778609270718_793593_1546_frame_pkgdetail'>
+		<elementID xmi:idref='_2024x_3_90d0202_1778609270718_793593_1546'/>
+		<geometry>5, 5, 1400, 560</geometry>
+		<mdOwnedViews/>
+		<symbolStyleID>_18_5_10ba0377_1484676734842_968677_119</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Package' xmi:id='_bb_cls_pkg_models_view_pkgdetail'>
+		<elementID xmi:idref='_bb_cls_pkg_models'/>
+		<geometry>25, 35, 1345, 495</geometry>
+		<mdOwnedViews>
+			<mdElement elementClass='Class' xmi:id='_bb_cls_user_view_pkgdetail'>
+				<elementID xmi:idref='_bb_cls_user'/>
+				<geometry>55, 95, 170, 130</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Class' xmi:id='_bb_cls_tournament_view_pkgdetail'>
+				<elementID xmi:idref='_bb_cls_tournament'/>
+				<geometry>260, 95, 210, 170</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Class' xmi:id='_bb_cls_team_view_pkgdetail'>
+				<elementID xmi:idref='_bb_cls_team'/>
+				<geometry>510, 95, 170, 130</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Class' xmi:id='_bb_cls_player_view_pkgdetail'>
+				<elementID xmi:idref='_bb_cls_player'/>
+				<geometry>720, 95, 170, 120</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Class' xmi:id='_bb_cls_game_view_pkgdetail'>
+				<elementID xmi:idref='_bb_cls_game'/>
+				<geometry>55, 320, 210, 160</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Class' xmi:id='_bb_cls_tournament_team_view_pkgdetail'>
+				<elementID xmi:idref='_bb_cls_tournament_team'/>
+				<geometry>305, 330, 220, 150</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Class' xmi:id='_bb_cls_tournament_team_player_view_pkgdetail'>
+				<elementID xmi:idref='_bb_cls_tournament_team_player'/>
+				<geometry>565, 330, 230, 130</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Class' xmi:id='_bb_cls_request_view_pkgdetail'>
+				<elementID xmi:idref='_bb_cls_request'/>
+				<geometry>830, 330, 260, 150</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Class' xmi:id='_bb_cls_stat_view_pkgdetail'>
+				<elementID xmi:idref='_bb_cls_stat'/>
+				<geometry>930, 95, 190, 130</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Class' xmi:id='_bb_cls_venue_view_pkgdetail'>
+				<elementID xmi:idref='_bb_cls_venue'/>
+				<geometry>1145, 95, 170, 110</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<symbolStyleID>_18_5_10ba0377_1484676734826_960674_24</symbolStyleID>
+	</mdElement>
+</mdOwnedViews>

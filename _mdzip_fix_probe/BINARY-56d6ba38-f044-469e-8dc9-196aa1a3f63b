@@ -1,0 +1,250 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mdOwnedViews>
+	<mdElement elementClass='DiagramFrame' xmi:id='_2024x_3_90d0202_1778609248779_234786_1492_frame_two_major'>
+		<elementID xmi:idref='_2024x_3_90d0202_1778609248779_234786_1492'/>
+		<geometry>5, 5, 1600, 1100</geometry>
+		<mdOwnedViews/>
+		<symbolStyleID>_18_5_10ba0377_1484676734842_968677_119</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Package' xmi:id='_bb_detail_backend_pkg_view_two_major'>
+		<elementID xmi:idref='_bb_detail_backend_pkg'/>
+		<geometry>15, 35, 1560, 1035</geometry>
+		<mdOwnedViews>
+		<mdElement elementClass='Package' xmi:id='_bb_detail_be_routes_pkg_view_two_major'>
+			<elementID xmi:idref='_bb_detail_be_routes_pkg'/>
+			<geometry>30, 70, 260, 130</geometry>
+			<mdOwnedViews>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_api_routes_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_api_routes'/>
+					<geometry>55, 125, 150, 90</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+			</mdOwnedViews>
+			<symbolStyleID>_18_5_10ba0377_1484676734826_960674_24</symbolStyleID>
+		</mdElement>
+		<mdElement elementClass='Package' xmi:id='_bb_detail_be_middleware_pkg_view_two_major'>
+			<elementID xmi:idref='_bb_detail_be_middleware_pkg'/>
+			<geometry>30, 240, 260, 130</geometry>
+			<mdOwnedViews>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_role_middleware_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_role_middleware'/>
+					<geometry>55, 295, 150, 72</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+			</mdOwnedViews>
+			<symbolStyleID>_18_5_10ba0377_1484676734826_960674_24</symbolStyleID>
+		</mdElement>
+		<mdElement elementClass='Package' xmi:id='_bb_detail_be_controllers_pkg_view_two_major'>
+			<elementID xmi:idref='_bb_detail_be_controllers_pkg'/>
+			<geometry>330, 70, 620, 470</geometry>
+			<mdOwnedViews>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_auth_controller_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_auth_controller'/>
+					<geometry>355, 125, 175, 90</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_tournament_controller_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_tournament_controller'/>
+					<geometry>555, 125, 175, 125</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_team_controller_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_team_controller'/>
+					<geometry>755, 125, 175, 125</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_player_controller_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_player_controller'/>
+					<geometry>355, 232, 175, 118</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_match_controller_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_match_controller'/>
+					<geometry>555, 232, 175, 125</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_match_stat_controller_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_match_stat_controller'/>
+					<geometry>755, 232, 175, 76</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_schedule_controller_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_schedule_controller'/>
+					<geometry>355, 339, 175, 76</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_standings_controller_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_standings_controller'/>
+					<geometry>555, 339, 175, 72</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_participation_controller_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_participation_controller'/>
+					<geometry>755, 339, 175, 118</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_tournament_team_controller_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_tournament_team_controller'/>
+					<geometry>355, 446, 175, 90</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_tournament_roster_controller_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_tournament_roster_controller'/>
+					<geometry>555, 446, 175, 90</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+			</mdOwnedViews>
+			<symbolStyleID>_18_5_10ba0377_1484676734826_960674_24</symbolStyleID>
+		</mdElement>
+		<mdElement elementClass='Package' xmi:id='_bb_detail_be_support_pkg_view_two_major'>
+			<elementID xmi:idref='_bb_detail_be_support_pkg'/>
+			<geometry>990, 70, 520, 310</geometry>
+			<mdOwnedViews>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_schedule_planner_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_schedule_planner'/>
+					<geometry>1015, 125, 175, 90</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_feasibility_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_feasibility'/>
+					<geometry>1215, 125, 175, 76</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_progression_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_progression'/>
+					<geometry>1415, 125, 175, 76</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_standings_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_standings'/>
+					<geometry>1015, 232, 175, 90</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_pdf_builder_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_pdf_builder'/>
+					<geometry>1215, 232, 175, 76</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_simple_pdf_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_simple_pdf'/>
+					<geometry>1415, 232, 175, 90</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+			</mdOwnedViews>
+			<symbolStyleID>_18_5_10ba0377_1484676734826_960674_24</symbolStyleID>
+		</mdElement>
+		<mdElement elementClass='Package' xmi:id='_bb_detail_be_models_pkg_view_two_major'>
+			<elementID xmi:idref='_bb_detail_be_models_pkg'/>
+			<geometry>30, 590, 930, 420</geometry>
+			<mdOwnedViews>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_user_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_user'/>
+					<geometry>55, 645, 175, 76</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_tournament_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_tournament'/>
+					<geometry>255, 645, 175, 90</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_team_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_team'/>
+					<geometry>455, 645, 175, 90</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_player_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_player'/>
+					<geometry>55, 752, 175, 76</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_game_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_game'/>
+					<geometry>255, 752, 175, 104</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_venue_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_venue'/>
+					<geometry>455, 752, 175, 72</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_tournament_team_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_tournament_team'/>
+					<geometry>55, 859, 175, 76</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_tournament_team_player_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_tournament_team_player'/>
+					<geometry>255, 859, 175, 90</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_request_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_request'/>
+					<geometry>455, 859, 175, 104</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_stat_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_stat'/>
+					<geometry>55, 966, 175, 76</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+			</mdOwnedViews>
+			<symbolStyleID>_18_5_10ba0377_1484676734826_960674_24</symbolStyleID>
+		</mdElement>
+		<mdElement elementClass='Package' xmi:id='_bb_detail_be_database_pkg_view_two_major'>
+			<elementID xmi:idref='_bb_detail_be_database_pkg'/>
+			<geometry>990, 430, 520, 260</geometry>
+			<mdOwnedViews>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_migrations_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_migrations'/>
+					<geometry>1015, 485, 175, 90</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_seeders_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_seeders'/>
+					<geometry>1215, 485, 175, 72</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+				<mdElement elementClass='Class' xmi:id='_bb_detail_be_factories_view_two_major'>
+					<elementID xmi:idref='_bb_detail_be_factories'/>
+					<geometry>1415, 485, 175, 72</geometry>
+					<mdOwnedViews/>
+					<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+				</mdElement>
+			</mdOwnedViews>
+			<symbolStyleID>_18_5_10ba0377_1484676734826_960674_24</symbolStyleID>
+		</mdElement>
+		</mdOwnedViews>
+		<symbolStyleID>_18_5_10ba0377_1484676734826_960674_24</symbolStyleID>
+	</mdElement>
+</mdOwnedViews>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="ASCII"?>
+<snapshot:SnapshotInfoContainer xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:snapshot="http://www.nomagic.com/ns/cameo/client/snapshot/1.0" xmi:id="_w_oCgJnOEeG5IL63JP9cFw">
+  <snaphotDescriptors xmi:id="_xwW74JnOEeG5IL63JP9cFw" originalResourceURI="local:/PROJECT-5d6756d4ab7fcc1b9be2b6b7ce3f4f23?resource=com.nomagic.magicdraw.uml_umodel.model"/>
+  <snaphotDescriptors xmi:id="_xwW74ZnOEeG5IL63JP9cFw" originalResourceURI="local:/PROJECT-877558e9224f114d50dea1f39a1c119?resource=com.nomagic.magicdraw.uml_umodel.shared_umodel">
+    <sharePointObjects>magicdraw_uml_standard_profile_v_0001</sharePointObjects>
+  </snaphotDescriptors>
+  <snaphotDescriptors xmi:id="__9wQ4CfMEfG7FLUIdjaZsg" originalResourceURI="local:/PROJECT-e0fff5e5-192e-4a13-bdae-c442b39e8135?resource=com.nomagic.magicdraw.uml_umodel.model">
+    <roots>eee_1045467100313_135436_1</roots>
+  </snaphotDescriptors>
+</snapshot:SnapshotInfoContainer>

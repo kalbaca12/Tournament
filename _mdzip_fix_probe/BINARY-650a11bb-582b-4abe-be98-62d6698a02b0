@@ -1,0 +1,52 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mdOwnedViews>
+	<mdElement elementClass='DiagramFrame' xmi:id='_2024x_3_90d0202_1778609232530_634468_1465_frame_pkgdetail'>
+		<elementID xmi:idref='_2024x_3_90d0202_1778609232530_634468_1465'/>
+		<geometry>5, 5, 790, 390</geometry>
+		<mdOwnedViews/>
+		<symbolStyleID>_18_5_10ba0377_1484676734842_968677_119</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Package' xmi:id='_bb_cls_pkg_components_view_pkgdetail'>
+		<elementID xmi:idref='_bb_cls_pkg_components'/>
+		<geometry>25, 35, 735, 330</geometry>
+		<mdOwnedViews>
+			<mdElement elementClass='Class' xmi:id='_bb_cls_pdf_export_modal_view_pkgdetail'>
+				<elementID xmi:idref='_bb_cls_pdf_export_modal'/>
+				<geometry>55, 95, 190, 80</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Class' xmi:id='_bb_cls_bracket_simulator_modal_view_pkgdetail'>
+				<elementID xmi:idref='_bb_cls_bracket_simulator_modal'/>
+				<geometry>285, 95, 230, 80</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Class' xmi:id='_bb_cls_groups_playoffs_simulator_modal_view_pkgdetail'>
+				<elementID xmi:idref='_bb_cls_groups_playoffs_simulator_modal'/>
+				<geometry>55, 235, 270, 80</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Class' xmi:id='_bb_cls_playoff_bracket_view_pkgdetail'>
+				<elementID xmi:idref='_bb_cls_playoff_bracket'/>
+				<geometry>365, 235, 170, 80</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Class' xmi:id='_bb_cls_nav_view_pkgdetail'>
+				<elementID xmi:idref='_bb_cls_nav'/>
+				<geometry>575, 95, 130, 70</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Class' xmi:id='_bb_cls_card_view_pkgdetail'>
+				<elementID xmi:idref='_bb_cls_card'/>
+				<geometry>575, 205, 130, 70</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<symbolStyleID>_18_5_10ba0377_1484676734826_960674_24</symbolStyleID>
+	</mdElement>
+</mdOwnedViews>

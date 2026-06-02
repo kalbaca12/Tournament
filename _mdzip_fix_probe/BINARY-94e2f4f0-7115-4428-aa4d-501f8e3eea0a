@@ -1,0 +1,794 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mdOwnedViews>
+	<mdElement elementClass='DiagramFrame' xmi:id='_bb_seq_submit_request_frame'>
+		<elementID xmi:idref='_bb_seq_submit_request_diagram'/>
+		<geometry>5, 5, 1330, 855</geometry>
+		<mdOwnedViews/>
+		<symbolStyleID>_18_5_10ba0377_1484676734842_968677_119</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='SequenceLifeline' xmi:id='_bb_seq_submit_request_actor_lifeline_view'>
+		<elementID xmi:idref='_bb_seq_submit_request_actor_lifeline'/>
+		<geometry>56, 75, 144, 21</geometry>
+		<mdOwnedViews>
+			<mdElement elementClass='LifeLineLine' xmi:id='_bb_seq_submit_request_actor_lifeline_line'>
+				<elementID xmi:idref='_bb_seq_submit_request_actor_lifeline'/>
+				<geometry>128, 96, 0, 744</geometry>
+				<mdOwnedViews>
+					<mdElement elementClass='Activation' xmi:id='_bb_seq_submit_request_actor_lifeline_activation'>
+						<elementID xmi:idref='_bb_seq_submit_request_actor_lifeline'/>
+						<geometry>123, 150, 10, 665</geometry>
+						<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='SeqMessage' xmi:id='_bb_seq_submit_request_msg_1_view'>
+						<elementID xmi:idref='_bb_seq_submit_request_msg_1'/>
+						<linkFirstEndID xmi:idref='_bb_seq_submit_request_page_lifeline_activation'/>
+						<linkSecondEndID xmi:idref='_bb_seq_submit_request_actor_lifeline_activation'/>
+						<geometry>315, 150; 133, 150; </geometry>
+						<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+						<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+						<linkNameID xmi:idref='_bb_seq_submit_request_msg_1_label'/>
+						<nameVisible xmi:value='true'/>
+						<mdOwnedViews>
+							<mdElement elementClass='MessageSignature' xmi:id='_bb_seq_submit_request_msg_1_label'>
+								<geometry>190, 135, 108, 12</geometry>
+								<mdOwnedViews/>
+								<text>selectTournament()</text>
+								<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+							</mdElement>
+						</mdOwnedViews>
+						<symbolStyleID>_18_5_10ba0377_1484676734827_591907_32</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='SeqMessage' xmi:id='_bb_seq_submit_request_msg_3_view'>
+						<elementID xmi:idref='_bb_seq_submit_request_msg_3'/>
+						<linkFirstEndID xmi:idref='_bb_seq_submit_request_page_lifeline_activation'/>
+						<linkSecondEndID xmi:idref='_bb_seq_submit_request_actor_lifeline_activation'/>
+						<geometry>315, 220; 133, 220; </geometry>
+						<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+						<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+						<linkNameID xmi:idref='_bb_seq_submit_request_msg_3_label'/>
+						<nameVisible xmi:value='true'/>
+						<mdOwnedViews>
+							<mdElement elementClass='MessageSignature' xmi:id='_bb_seq_submit_request_msg_3_label'>
+								<geometry>189, 205, 111, 12</geometry>
+								<mdOwnedViews/>
+								<text>submitParticipation()</text>
+								<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+							</mdElement>
+						</mdOwnedViews>
+						<symbolStyleID>_18_5_10ba0377_1484676734827_591907_32</symbolStyleID>
+					</mdElement>
+				</mdOwnedViews>
+				<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<symbolStyleID>_18_5_10ba0377_1484676734828_283890_36</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='SequenceLifeline' xmi:id='_bb_seq_submit_request_page_lifeline_view'>
+		<elementID xmi:idref='_bb_seq_submit_request_page_lifeline'/>
+		<geometry>252, 75, 137, 36</geometry>
+		<mdOwnedViews>
+			<mdElement elementClass='LifeLineLine' xmi:id='_bb_seq_submit_request_page_lifeline_line'>
+				<elementID xmi:idref='_bb_seq_submit_request_page_lifeline'/>
+				<geometry>320, 111, 0, 729</geometry>
+				<mdOwnedViews>
+					<mdElement elementClass='Activation' xmi:id='_bb_seq_submit_request_page_lifeline_activation'>
+						<elementID xmi:idref='_bb_seq_submit_request_page_lifeline'/>
+						<geometry>315, 150, 10, 615</geometry>
+						<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='SeqMessage' xmi:id='_bb_seq_submit_request_msg_14_view'>
+						<elementID xmi:idref='_bb_seq_submit_request_msg_14'/>
+						<linkFirstEndID xmi:idref='_bb_seq_submit_request_actor_lifeline_activation'/>
+						<linkSecondEndID xmi:idref='_bb_seq_submit_request_page_lifeline_activation'/>
+						<geometry>133, 645; 315, 645; </geometry>
+						<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+						<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+						<linkNameID xmi:idref='_bb_seq_submit_request_msg_14_label'/>
+						<nameVisible xmi:value='true'/>
+						<mdOwnedViews>
+							<mdElement elementClass='MessageSignature' xmi:id='_bb_seq_submit_request_msg_14_label'>
+								<geometry>181, 630, 127, 12</geometry>
+								<mdOwnedViews/>
+								<text>request status shown</text>
+								<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+							</mdElement>
+						</mdOwnedViews>
+						<symbolStyleID>_18_5_10ba0377_1484676734827_591907_32</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='SeqMessage' xmi:id='_bb_seq_submit_request_msg_16_view'>
+						<elementID xmi:idref='_bb_seq_submit_request_msg_16'/>
+						<linkFirstEndID xmi:idref='_bb_seq_submit_request_actor_lifeline_activation'/>
+						<linkSecondEndID xmi:idref='_bb_seq_submit_request_page_lifeline_activation'/>
+						<geometry>133, 765; 315, 765; </geometry>
+						<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+						<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+						<linkNameID xmi:idref='_bb_seq_submit_request_msg_16_label'/>
+						<nameVisible xmi:value='true'/>
+						<mdOwnedViews>
+							<mdElement elementClass='MessageSignature' xmi:id='_bb_seq_submit_request_msg_16_label'>
+								<geometry>199, 750, 91, 12</geometry>
+								<mdOwnedViews/>
+								<text>error message</text>
+								<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+							</mdElement>
+						</mdOwnedViews>
+						<symbolStyleID>_18_5_10ba0377_1484676734827_591907_32</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='SeqMessage' xmi:id='_bb_seq_submit_request_msg_2_view'>
+						<elementID xmi:idref='_bb_seq_submit_request_msg_2'/>
+						<linkFirstEndID xmi:idref='_bb_seq_submit_request_actor_lifeline_activation'/>
+						<linkSecondEndID xmi:idref='_bb_seq_submit_request_page_lifeline_activation'/>
+						<geometry>133, 180; 315, 180; </geometry>
+						<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+						<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+						<linkNameID xmi:idref='_bb_seq_submit_request_msg_2_label'/>
+						<nameVisible xmi:value='true'/>
+						<mdOwnedViews>
+							<mdElement elementClass='MessageSignature' xmi:id='_bb_seq_submit_request_msg_2_label'>
+								<geometry>196, 165, 97, 12</geometry>
+								<mdOwnedViews/>
+								<text>participation form</text>
+								<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+							</mdElement>
+						</mdOwnedViews>
+						<symbolStyleID>_18_5_10ba0377_1484676734827_591907_32</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='SeqMessage' xmi:id='_bb_seq_submit_request_msg_4_view'>
+						<elementID xmi:idref='_bb_seq_submit_request_msg_4'/>
+						<linkFirstEndID xmi:idref='_bb_seq_submit_request_controller_lifeline_activation'/>
+						<linkSecondEndID xmi:idref='_bb_seq_submit_request_page_lifeline_activation'/>
+						<geometry>588, 260; 325, 260; </geometry>
+						<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+						<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+						<linkNameID xmi:idref='_bb_seq_submit_request_msg_4_label'/>
+						<nameVisible xmi:value='true'/>
+						<mdOwnedViews>
+							<mdElement elementClass='MessageSignature' xmi:id='_bb_seq_submit_request_msg_4_label'>
+								<geometry>378, 245, 196, 12</geometry>
+								<mdOwnedViews/>
+								<text>tournamentsApi.requestParticipation()</text>
+								<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+							</mdElement>
+						</mdOwnedViews>
+						<symbolStyleID>_18_5_10ba0377_1484676734827_591907_32</symbolStyleID>
+					</mdElement>
+				</mdOwnedViews>
+				<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<symbolStyleID>_18_5_10ba0377_1484676734828_283890_36</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='SequenceLifeline' xmi:id='_bb_seq_submit_request_controller_lifeline_view'>
+		<elementID xmi:idref='_bb_seq_submit_request_controller_lifeline'/>
+		<geometry>497, 75, 192, 21</geometry>
+		<mdOwnedViews>
+			<mdElement elementClass='LifeLineLine' xmi:id='_bb_seq_submit_request_controller_lifeline_line'>
+				<elementID xmi:idref='_bb_seq_submit_request_controller_lifeline'/>
+				<geometry>593, 96, 0, 744</geometry>
+				<mdOwnedViews>
+					<mdElement elementClass='Activation' xmi:id='_bb_seq_submit_request_controller_lifeline_activation'>
+						<elementID xmi:idref='_bb_seq_submit_request_controller_lifeline'/>
+						<geometry>588, 260, 10, 475</geometry>
+						<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='SeqMessage' xmi:id='_bb_seq_submit_request_msg_11_view'>
+						<elementID xmi:idref='_bb_seq_submit_request_msg_11'/>
+						<linkFirstEndID xmi:idref='_bb_seq_submit_request_request_lifeline_activation'/>
+						<linkSecondEndID xmi:idref='_bb_seq_submit_request_controller_lifeline_activation'/>
+						<geometry>1198, 550; 598, 550; </geometry>
+						<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+						<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+						<linkNameID xmi:idref='_bb_seq_submit_request_msg_11_label'/>
+						<nameVisible xmi:value='true'/>
+						<mdOwnedViews>
+							<mdElement elementClass='MessageSignature' xmi:id='_bb_seq_submit_request_msg_11_label'>
+								<geometry>853, 535, 130, 12</geometry>
+								<mdOwnedViews/>
+								<text>savePendingRequest()</text>
+								<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+							</mdElement>
+						</mdOwnedViews>
+						<symbolStyleID>_18_5_10ba0377_1484676734827_591907_32</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='SeqMessage' xmi:id='_bb_seq_submit_request_msg_13_view'>
+						<elementID xmi:idref='_bb_seq_submit_request_msg_13'/>
+						<linkFirstEndID xmi:idref='_bb_seq_submit_request_page_lifeline_activation'/>
+						<linkSecondEndID xmi:idref='_bb_seq_submit_request_controller_lifeline_activation'/>
+						<geometry>325, 615; 588, 615; </geometry>
+						<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+						<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+						<linkNameID xmi:idref='_bb_seq_submit_request_msg_13_label'/>
+						<nameVisible xmi:value='true'/>
+						<mdOwnedViews>
+							<mdElement elementClass='MessageSignature' xmi:id='_bb_seq_submit_request_msg_13_label'>
+								<geometry>415, 600, 123, 12</geometry>
+								<mdOwnedViews/>
+								<text>201/200 request data</text>
+								<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+							</mdElement>
+						</mdOwnedViews>
+						<symbolStyleID>_18_5_10ba0377_1484676734827_591907_32</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='SeqMessage' xmi:id='_bb_seq_submit_request_msg_15_view'>
+						<elementID xmi:idref='_bb_seq_submit_request_msg_15'/>
+						<linkFirstEndID xmi:idref='_bb_seq_submit_request_page_lifeline_activation'/>
+						<linkSecondEndID xmi:idref='_bb_seq_submit_request_controller_lifeline_activation'/>
+						<geometry>325, 735; 588, 735; </geometry>
+						<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+						<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+						<linkNameID xmi:idref='_bb_seq_submit_request_msg_15_label'/>
+						<nameVisible xmi:value='true'/>
+						<mdOwnedViews>
+							<mdElement elementClass='MessageSignature' xmi:id='_bb_seq_submit_request_msg_15_label'>
+								<geometry>411, 720, 130, 12</geometry>
+								<mdOwnedViews/>
+								<text>validation/conflict error</text>
+								<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+							</mdElement>
+						</mdOwnedViews>
+						<symbolStyleID>_18_5_10ba0377_1484676734827_591907_32</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='SeqMessage' xmi:id='_bb_seq_submit_request_msg_5_view'>
+						<elementID xmi:idref='_bb_seq_submit_request_msg_5'/>
+						<linkFirstEndID xmi:idref='_bb_seq_submit_request_tournament_lifeline_activation'/>
+						<linkSecondEndID xmi:idref='_bb_seq_submit_request_controller_lifeline_activation'/>
+						<geometry>811, 305; 598, 305; </geometry>
+						<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+						<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+						<linkNameID xmi:idref='_bb_seq_submit_request_msg_5_label'/>
+						<nameVisible xmi:value='true'/>
+						<mdOwnedViews>
+							<mdElement elementClass='MessageSignature' xmi:id='_bb_seq_submit_request_msg_5_label'>
+								<geometry>667, 290, 115, 12</geometry>
+								<mdOwnedViews/>
+								<text>resolveTournament()</text>
+								<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+							</mdElement>
+						</mdOwnedViews>
+						<symbolStyleID>_18_5_10ba0377_1484676734827_591907_32</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='SeqMessage' xmi:id='_bb_seq_submit_request_msg_7_view'>
+						<elementID xmi:idref='_bb_seq_submit_request_msg_7'/>
+						<linkFirstEndID xmi:idref='_bb_seq_submit_request_team_lifeline_activation'/>
+						<linkSecondEndID xmi:idref='_bb_seq_submit_request_controller_lifeline_activation'/>
+						<geometry>973, 375; 598, 375; </geometry>
+						<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+						<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+						<linkNameID xmi:idref='_bb_seq_submit_request_msg_7_label'/>
+						<nameVisible xmi:value='true'/>
+						<mdOwnedViews>
+							<mdElement elementClass='MessageSignature' xmi:id='_bb_seq_submit_request_msg_7_label'>
+								<geometry>751, 360, 108, 12</geometry>
+								<mdOwnedViews/>
+								<text>findManagerTeam()</text>
+								<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+							</mdElement>
+						</mdOwnedViews>
+						<symbolStyleID>_18_5_10ba0377_1484676734827_591907_32</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='SeqMessage' xmi:id='_bb_seq_submit_request_msg_9_view'>
+						<elementID xmi:idref='_bb_seq_submit_request_msg_9'/>
+						<linkFirstEndID xmi:idref='_bb_seq_submit_request_request_lifeline_activation'/>
+						<linkSecondEndID xmi:idref='_bb_seq_submit_request_controller_lifeline_activation'/>
+						<geometry>1198, 455; 598, 455; </geometry>
+						<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+						<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+						<linkNameID xmi:idref='_bb_seq_submit_request_msg_9_label'/>
+						<nameVisible xmi:value='true'/>
+						<mdOwnedViews>
+							<mdElement elementClass='MessageSignature' xmi:id='_bb_seq_submit_request_msg_9_label'>
+								<geometry>860, 440, 117, 12</geometry>
+								<mdOwnedViews/>
+								<text>findExistingRequest()</text>
+								<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+							</mdElement>
+						</mdOwnedViews>
+						<symbolStyleID>_18_5_10ba0377_1484676734827_591907_32</symbolStyleID>
+					</mdElement>
+				</mdOwnedViews>
+				<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<symbolStyleID>_18_5_10ba0377_1484676734828_283890_36</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='SequenceLifeline' xmi:id='_bb_seq_submit_request_tournament_lifeline_view'>
+		<elementID xmi:idref='_bb_seq_submit_request_tournament_lifeline'/>
+		<geometry>756, 75, 120, 36</geometry>
+		<mdOwnedViews>
+			<mdElement elementClass='LifeLineLine' xmi:id='_bb_seq_submit_request_tournament_lifeline_line'>
+				<elementID xmi:idref='_bb_seq_submit_request_tournament_lifeline'/>
+				<geometry>816, 111, 0, 729</geometry>
+				<mdOwnedViews>
+					<mdElement elementClass='Activation' xmi:id='_bb_seq_submit_request_tournament_lifeline_activation'>
+						<elementID xmi:idref='_bb_seq_submit_request_tournament_lifeline'/>
+						<geometry>811, 305, 10, 30</geometry>
+						<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='SeqMessage' xmi:id='_bb_seq_submit_request_msg_6_view'>
+						<elementID xmi:idref='_bb_seq_submit_request_msg_6'/>
+						<linkFirstEndID xmi:idref='_bb_seq_submit_request_controller_lifeline_activation'/>
+						<linkSecondEndID xmi:idref='_bb_seq_submit_request_tournament_lifeline_activation'/>
+						<geometry>598, 335; 811, 335; </geometry>
+						<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+						<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+						<linkNameID xmi:idref='_bb_seq_submit_request_msg_6_label'/>
+						<nameVisible xmi:value='true'/>
+						<mdOwnedViews>
+							<mdElement elementClass='MessageSignature' xmi:id='_bb_seq_submit_request_msg_6_label'>
+								<geometry>690, 320, 68, 12</geometry>
+								<mdOwnedViews/>
+								<text>tournament</text>
+								<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+							</mdElement>
+						</mdOwnedViews>
+						<symbolStyleID>_18_5_10ba0377_1484676734827_591907_32</symbolStyleID>
+					</mdElement>
+				</mdOwnedViews>
+				<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<symbolStyleID>_18_5_10ba0377_1484676734828_283890_36</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='SequenceLifeline' xmi:id='_bb_seq_submit_request_team_lifeline_view'>
+		<elementID xmi:idref='_bb_seq_submit_request_team_lifeline'/>
+		<geometry>931, 75, 95, 36</geometry>
+		<mdOwnedViews>
+			<mdElement elementClass='LifeLineLine' xmi:id='_bb_seq_submit_request_team_lifeline_line'>
+				<elementID xmi:idref='_bb_seq_submit_request_team_lifeline'/>
+				<geometry>978, 111, 0, 729</geometry>
+				<mdOwnedViews>
+					<mdElement elementClass='Activation' xmi:id='_bb_seq_submit_request_team_lifeline_activation'>
+						<elementID xmi:idref='_bb_seq_submit_request_team_lifeline'/>
+						<geometry>973, 375, 10, 30</geometry>
+						<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='SeqMessage' xmi:id='_bb_seq_submit_request_msg_8_view'>
+						<elementID xmi:idref='_bb_seq_submit_request_msg_8'/>
+						<linkFirstEndID xmi:idref='_bb_seq_submit_request_controller_lifeline_activation'/>
+						<linkSecondEndID xmi:idref='_bb_seq_submit_request_team_lifeline_activation'/>
+						<geometry>598, 405; 973, 405; </geometry>
+						<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+						<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+						<linkNameID xmi:idref='_bb_seq_submit_request_msg_8_label'/>
+						<nameVisible xmi:value='true'/>
+						<mdOwnedViews>
+							<mdElement elementClass='MessageSignature' xmi:id='_bb_seq_submit_request_msg_8_label'>
+								<geometry>787, 390, 37, 12</geometry>
+								<mdOwnedViews/>
+								<text>team</text>
+								<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+							</mdElement>
+						</mdOwnedViews>
+						<symbolStyleID>_18_5_10ba0377_1484676734827_591907_32</symbolStyleID>
+					</mdElement>
+				</mdOwnedViews>
+				<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<symbolStyleID>_18_5_10ba0377_1484676734828_283890_36</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='SequenceLifeline' xmi:id='_bb_seq_submit_request_request_lifeline_view'>
+		<elementID xmi:idref='_bb_seq_submit_request_request_lifeline'/>
+		<geometry>1092, 75, 223, 36</geometry>
+		<mdOwnedViews>
+			<mdElement elementClass='LifeLineLine' xmi:id='_bb_seq_submit_request_request_lifeline_line'>
+				<elementID xmi:idref='_bb_seq_submit_request_request_lifeline'/>
+				<geometry>1203, 111, 0, 729</geometry>
+				<mdOwnedViews>
+					<mdElement elementClass='Activation' xmi:id='_bb_seq_submit_request_request_lifeline_activation'>
+						<elementID xmi:idref='_bb_seq_submit_request_request_lifeline'/>
+						<geometry>1198, 455, 10, 125</geometry>
+						<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='SeqMessage' xmi:id='_bb_seq_submit_request_msg_10_view'>
+						<elementID xmi:idref='_bb_seq_submit_request_msg_10'/>
+						<linkFirstEndID xmi:idref='_bb_seq_submit_request_controller_lifeline_activation'/>
+						<linkSecondEndID xmi:idref='_bb_seq_submit_request_request_lifeline_activation'/>
+						<geometry>598, 485; 1198, 485; </geometry>
+						<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+						<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+						<linkNameID xmi:idref='_bb_seq_submit_request_msg_10_label'/>
+						<nameVisible xmi:value='true'/>
+						<mdOwnedViews>
+							<mdElement elementClass='MessageSignature' xmi:id='_bb_seq_submit_request_msg_10_label'>
+								<geometry>880, 470, 76, 12</geometry>
+								<mdOwnedViews/>
+								<text>existing/null</text>
+								<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+							</mdElement>
+						</mdOwnedViews>
+						<symbolStyleID>_18_5_10ba0377_1484676734827_591907_32</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='SeqMessage' xmi:id='_bb_seq_submit_request_msg_12_view'>
+						<elementID xmi:idref='_bb_seq_submit_request_msg_12'/>
+						<linkFirstEndID xmi:idref='_bb_seq_submit_request_controller_lifeline_activation'/>
+						<linkSecondEndID xmi:idref='_bb_seq_submit_request_request_lifeline_activation'/>
+						<geometry>598, 580; 1198, 580; </geometry>
+						<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+						<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+						<linkNameID xmi:idref='_bb_seq_submit_request_msg_12_label'/>
+						<nameVisible xmi:value='true'/>
+						<mdOwnedViews>
+							<mdElement elementClass='MessageSignature' xmi:id='_bb_seq_submit_request_msg_12_label'>
+								<geometry>873, 565, 90, 12</geometry>
+								<mdOwnedViews/>
+								<text>saved request</text>
+								<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+							</mdElement>
+						</mdOwnedViews>
+						<symbolStyleID>_18_5_10ba0377_1484676734827_591907_32</symbolStyleID>
+					</mdElement>
+				</mdOwnedViews>
+				<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<symbolStyleID>_18_5_10ba0377_1484676734828_283890_36</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='CombinedFragment' xmi:id='_bb_seq_submit_request_fragment_1_view'>
+		<elementID xmi:idref='_bb_seq_submit_request_fragment_1'/>
+		<geometry>102, 520, 1124, 290</geometry>
+		<mdOwnedViews/>
+		<operands>
+			<mdElement elementClass='InteractionOperand' xmi:id='_bb_seq_submit_request_fragment_1_operand_1_view'>
+				<elementID xmi:idref='_bb_seq_submit_request_fragment_1_operand_1'/>
+				<geometry>102, 540, 1124, 155</geometry>
+				<mdOwnedViews/>
+				<text>[[request can be submitted]]</text>
+				<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Split' xmi:id='_2024x_3_90d0202_1777400281813_488641_1415'>
+				<type xmi:value='1'/>
+				<lineStyle xmi:value='1'/>
+				<geometry>102, 695, 1124, 6</geometry>
+				<firstShapeID xmi:idref='_bb_seq_submit_request_fragment_1_operand_1_view'/>
+				<secondShapeID xmi:idref='_bb_seq_submit_request_fragment_1_operand_2_view'/>
+				<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='InteractionOperand' xmi:id='_bb_seq_submit_request_fragment_1_operand_2_view'>
+				<elementID xmi:idref='_bb_seq_submit_request_fragment_1_operand_2'/>
+				<geometry>102, 701, 1124, 109</geometry>
+				<mdOwnedViews/>
+				<text>[[else]]</text>
+				<symbolStyleID>_18_5_10ba0377_1484676734821_607711_2</symbolStyleID>
+			</mdElement>
+		</operands>
+		<symbolStyleID>_18_5_10ba0377_1484676734835_926808_70</symbolStyleID>
+	</mdElement>
+	<symbolStyles>
+		<mdElement elementClass='SimpleStyle'>
+			<mdElement elementClass='ExtendableManager'>
+				<name>CombinedFragment</name>
+				<propertyManagerID>_18_5_10ba0377_1484676734835_926808_70</propertyManagerID>
+				<parentPropertyManager>_18_5_10ba0377_1484676734821_607711_2</parentPropertyManager>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>USE_FILL_COLOR</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>STEREOTYPES_DISPLAY_MODE</propertyID>
+					<index xmi:value='3'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>OWNER_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<hiddenProperties xmi:value='SUSPEND_LABEL_AUTO_DISPLAY^QNAME_DISPLAY_MODE^LABEL_ORIENTATION^TEXT_VERTICAL_POSITION'/>
+			</mdElement>
+			<mdElement elementClass='ExtendableManager'>
+				<name>Diagram</name>
+				<propertyManagerID>_18_5_10ba0377_1484676734842_968677_119</propertyManagerID>
+				<parentPropertyManager>_18_5_10ba0377_1484676734821_953768_1</parentPropertyManager>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>DIAGRAM_BACKGROUND_COLOR</propertyID>
+					<value xmi:value='-1'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>USE_GRADIENT_FOR_FILL</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>USE_SHADOW_FOR_SHAPES</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_GRID</propertyID>
+				</mdElement>
+				<mdElement elementClass='NumberProperty'>
+					<propertyID>GRID_SIZE</propertyID>
+					<value xmi:value='7.0'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>USE_GRID_FOR_PATHS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>USE_GRID_FOR_SHAPES</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_MESSAGE_NUMBERS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>USE_ADVANCED_NUMBERING</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ACTIVATIONS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_DIAGRAM_INFO</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_DIAGRAM_OWNER</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_DIAGRAM_FRAME</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ABBREVIATED_DIAGRAM_TYPE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_DIAGRAM_NAME</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_DIAGRAM_TYPE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_PARAMETERS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_CONTEXT_NAME</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_CONTEXT_TYPE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_FRAME_OWNER</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>AUTOSIZE</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>ASPECT_RATIO</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>USE_ROUNDED_CORNERS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>STEREOTYPES_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>DSL_STEREOTYPE_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>USE_STEREOTYPE</propertyID>
+					<index xmi:value='1'/>
+				</mdElement>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>STEREOTYPE_COLOR</propertyID>
+					<value xmi:value='-16777216'/>
+				</mdElement>
+				<mdElement elementClass='FontProperty'>
+					<propertyID>STEREOTYPE_FONT</propertyID>
+					<fontName>Arial</fontName>
+					<size xmi:value='11'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>DIAGRAM_ORIENTATION</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>LINE_JUMP_PLACE</propertyID>
+					<index xmi:value='1'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SUSPEND_SHAPES_AUTO_RESIZE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SUSPEND_LABELS_AUTO_DISPLAY</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>SUSPEND_SHAPE_AUTO_RESIZE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_SYSML_INTERNAL_PROPERTIES_COMPARTMENTS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<hiddenProperties xmi:value='USE_FILL_COLOR^FILL_COLOR'/>
+			</mdElement>
+			<mdElement elementClass='ExtendableManager'>
+				<name>Lifeline(in Sequence Diagram)</name>
+				<propertyManagerID>_18_5_10ba0377_1484676734828_283890_36</propertyManagerID>
+				<parentPropertyManager>_18_5_10ba0377_1484676734821_607711_2</parentPropertyManager>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>FILL_COLOR</propertyID>
+					<value xmi:value='-4004909'/>
+				</mdElement>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>PEN_COLOR</propertyID>
+					<value xmi:value='-12753326'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>OWNER_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_FULL_TYPE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_OBJECT_CLASS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>SECONDARY_IMAGE_AND_STEREOTYPE_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ENTIRE_ACTIVATION</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_SELECTOR</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<hiddenProperties xmi:value='SUSPEND_LABEL_AUTO_DISPLAY^QNAME_DISPLAY_MODE^LABEL_ORIENTATION^TEXT_VERTICAL_POSITION'/>
+			</mdElement>
+			<mdElement elementClass='ExtendableManager'>
+				<name>Message(in Sequence Diagram)</name>
+				<propertyManagerID>_18_5_10ba0377_1484676734827_591907_32</propertyManagerID>
+				<parentPropertyManager>_18_5_10ba0377_1484676734821_607711_2</parentPropertyManager>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>USE_FILL_COLOR</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>STEREOTYPES_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>IS_ROUNDED</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_NAME</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_CONVEYED_A</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_CONVEYED_B</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_PARAMETERS_NAMES</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ID_FOR_CONVEYED_ITEM</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ID_OF_INFORMATION_FLOW</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_NAME_OF_INFORMATION_FLOW</propertyID>
+				</mdElement>
+				<hiddenProperties xmi:value='TAGGED_VALUE_HORIZONTAL_POSITION^AUTOSIZE^TEXT_VERTICAL_POSITION^SHOW_HEADER_IN_BOLD^QNAME_DISPLAY_MODE^USE_FIXED_CONNECTION_POINTS'/>
+			</mdElement>
+			<mdElement elementClass='ExtendableManager'>
+				<name>Shapes</name>
+				<propertyManagerID>_18_5_10ba0377_1484676734821_607711_2</propertyManagerID>
+				<parentPropertyManager>_18_5_10ba0377_1484676734821_953768_1</parentPropertyManager>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>AUTOSIZE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>USE_FIXED_CONNECTION_POINTS</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>SUSPEND_SHAPE_AUTO_RESIZE</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>SUSPEND_LABEL_AUTO_DISPLAY</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>LABEL_ORIENTATION</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_HEADER_IN_BOLD</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>TEXT_VERTICAL_POSITION</propertyID>
+				</mdElement>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>STEREOTYPE_COLOR</propertyID>
+					<value xmi:value='-16777216'/>
+				</mdElement>
+				<mdElement elementClass='FontProperty'>
+					<propertyID>STEREOTYPE_FONT</propertyID>
+					<fontName>Arial</fontName>
+					<size xmi:value='11'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>STEREOTYPES_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>DSL_STEREOTYPE_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_CONSTRAINTS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>QNAME_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>WRAP_WORDS</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_TAGGED_VALUES</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>TAGGED_VALUE_HORIZONTAL_POSITION</propertyID>
+					<index xmi:value='2'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>CONSTRAINT_TEXT_MODE</propertyID>
+					<index xmi:value='1'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ELEMENT_PROPERTIES</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ICONS_IN_COMPARTMENTS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ELEMENT_TYPE_IN_COMPARTMENTS</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_DERIVED_SIGN</propertyID>
+				</mdElement>
+			</mdElement>
+			<mdElement elementClass='ExtendableManager'>
+				<name>Symbol</name>
+				<propertyManagerID>_18_5_10ba0377_1484676734821_953768_1</propertyManagerID>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>FILL_COLOR</propertyID>
+					<value xmi:value='-52'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>USE_FILL_COLOR</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>PEN_COLOR</propertyID>
+					<value xmi:value='-12434878'/>
+				</mdElement>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>TEXT_COLOR</propertyID>
+					<value xmi:value='-16777216'/>
+				</mdElement>
+				<mdElement elementClass='NumberProperty'>
+					<propertyID>LINE_WIDTH</propertyID>
+					<value xmi:value='1.0'/>
+				</mdElement>
+				<mdElement elementClass='FontProperty'>
+					<propertyID>FONT</propertyID>
+					<fontName>Arial</fontName>
+					<size xmi:value='11'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_NUMBER_TAG_NAME</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>ELEMENT_NUMBER_DISPLAY_MODE</propertyID>
+					<index xmi:value='2'/>
+				</mdElement>
+			</mdElement>
+		</mdElement>
+	</symbolStyles>
+</mdOwnedViews>

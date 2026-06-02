@@ -1,0 +1,628 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mdOwnedViews>
+	<mdElement elementClass='Package' xmi:id='_bb_pkg_frontend_view'>
+		<elementID xmi:idref='_bb_pkg_frontend'/>
+		<geometry>518, 42, 278, 312</geometry>
+		<mdOwnedViews>
+			<mdElement elementClass='Package' xmi:id='_bb_pkg_frontend_api_view'>
+				<elementID xmi:idref='_bb_pkg_frontend_api'/>
+				<geometry>651, 182, 100, 60</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734826_960674_24</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Package' xmi:id='_bb_pkg_frontend_auth_view'>
+				<elementID xmi:idref='_bb_pkg_frontend_auth'/>
+				<geometry>679, 273, 100, 60</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734826_960674_24</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Package' xmi:id='_bb_pkg_frontend_pages_view'>
+				<elementID xmi:idref='_bb_pkg_frontend_pages'/>
+				<geometry>553, 273, 100, 60</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734826_960674_24</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Package' xmi:id='_bb_pkg_frontend_components_view'>
+				<elementID xmi:idref='_bb_pkg_frontend_components'/>
+				<geometry>532, 182, 100, 60</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734826_960674_24</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Package' xmi:id='_bb_pkg_frontend_utils_view'>
+				<elementID xmi:idref='_bb_pkg_frontend_utils'/>
+				<geometry>532, 105, 100, 60</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734826_960674_24</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Dependency' xmi:id='_bb_pkg_dep_auth_api_view'>
+				<elementID xmi:idref='_bb_pkg_dep_auth_api'/>
+				<properties>
+					<mdElement elementClass='ChoiceProperty'>
+						<propertyID>LINK_LINE_STYLE</propertyID>
+					</mdElement>
+				</properties>
+				<linkFirstEndID xmi:idref='_bb_pkg_frontend_api_view'/>
+				<linkSecondEndID xmi:idref='_bb_pkg_frontend_auth_view'/>
+				<geometry>729, 242; 729, 288; </geometry>
+				<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+				<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+				<nameVisible xmi:value='true'/>
+				<symbolStyleID>_18_5_10ba0377_1484676734840_177082_110</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Dependency' xmi:id='_bb_pkg_dep_components_utils_view'>
+				<elementID xmi:idref='_bb_pkg_dep_components_utils'/>
+				<properties>
+					<mdElement elementClass='ChoiceProperty'>
+						<propertyID>LINK_LINE_STYLE</propertyID>
+					</mdElement>
+				</properties>
+				<linkFirstEndID xmi:idref='_bb_pkg_frontend_utils_view'/>
+				<linkSecondEndID xmi:idref='_bb_pkg_frontend_components_view'/>
+				<geometry>579, 165; 579, 197; </geometry>
+				<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+				<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+				<nameVisible xmi:value='true'/>
+				<symbolStyleID>_18_5_10ba0377_1484676734840_177082_110</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Dependency' xmi:id='_bb_pkg_dep_pages_api_view'>
+				<elementID xmi:idref='_bb_pkg_dep_pages_api'/>
+				<properties>
+					<mdElement elementClass='ChoiceProperty'>
+						<propertyID>LINK_LINE_STYLE</propertyID>
+					</mdElement>
+				</properties>
+				<linkFirstEndID xmi:idref='_bb_pkg_frontend_api_view'/>
+				<linkSecondEndID xmi:idref='_bb_pkg_frontend_pages_view'/>
+				<geometry>679, 242; 679, 257; 629, 257; 629, 288; </geometry>
+				<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+				<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+				<nameVisible xmi:value='true'/>
+				<symbolStyleID>_18_5_10ba0377_1484676734840_177082_110</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Dependency' xmi:id='_bb_pkg_dep_pages_components_view'>
+				<elementID xmi:idref='_bb_pkg_dep_pages_components'/>
+				<properties>
+					<mdElement elementClass='ChoiceProperty'>
+						<propertyID>LINK_LINE_STYLE</propertyID>
+					</mdElement>
+				</properties>
+				<linkFirstEndID xmi:idref='_bb_pkg_frontend_components_view'/>
+				<linkSecondEndID xmi:idref='_bb_pkg_frontend_pages_view'/>
+				<geometry>579, 242; 579, 273; </geometry>
+				<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+				<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+				<nameVisible xmi:value='true'/>
+				<symbolStyleID>_18_5_10ba0377_1484676734840_177082_110</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<symbolStyleID>_18_5_10ba0377_1484676734826_960674_24</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Package' xmi:id='_bb_pkg_backend_api_view'>
+		<elementID xmi:idref='_bb_pkg_backend_api'/>
+		<geometry>28, 21, 412, 398</geometry>
+		<mdOwnedViews>
+			<mdElement elementClass='Package' xmi:id='_bb_pkg_backend_routes_view'>
+				<elementID xmi:idref='_bb_pkg_backend_routes'/>
+				<geometry>322, 273, 100, 60</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734826_960674_24</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Dependency' xmi:id='_bb_pkg_dep_routes_controllers_view'>
+				<elementID xmi:idref='_bb_pkg_dep_routes_controllers'/>
+				<properties>
+					<mdElement elementClass='ChoiceProperty'>
+						<propertyID>LINK_LINE_STYLE</propertyID>
+					</mdElement>
+				</properties>
+				<linkFirstEndID xmi:idref='_bb_pkg_backend_controllers_view'/>
+				<linkSecondEndID xmi:idref='_bb_pkg_backend_routes_view'/>
+				<geometry>375, 256; 375, 288; </geometry>
+				<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+				<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+				<nameVisible xmi:value='true'/>
+				<symbolStyleID>_18_5_10ba0377_1484676734840_177082_110</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Package' xmi:id='_bb_pkg_database_view'>
+				<elementID xmi:idref='_bb_pkg_database'/>
+				<geometry>56, 59, 244, 239</geometry>
+				<mdOwnedViews>
+					<mdElement elementClass='Package' xmi:id='_bb_pkg_database_migrations_view'>
+						<elementID xmi:idref='_bb_pkg_database_migrations'/>
+						<geometry>70, 209, 100, 60</geometry>
+						<mdOwnedViews/>
+						<symbolStyleID>_18_5_10ba0377_1484676734826_960674_24</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='Package' xmi:id='_bb_pkg_database_schema_view'>
+						<elementID xmi:idref='_bb_pkg_database_schema'/>
+						<geometry>70, 132, 101, 60</geometry>
+						<mdOwnedViews/>
+						<symbolStyleID>_18_5_10ba0377_1484676734826_960674_24</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='Dependency' xmi:id='_bb_pkg_dep_migrations_database_view'>
+						<elementID xmi:idref='_bb_pkg_dep_migrations_database'/>
+						<properties>
+							<mdElement elementClass='ChoiceProperty'>
+								<propertyID>LINK_LINE_STYLE</propertyID>
+							</mdElement>
+						</properties>
+						<linkFirstEndID xmi:idref='_bb_pkg_database_schema_view'/>
+						<linkSecondEndID xmi:idref='_bb_pkg_database_migrations_view'/>
+						<geometry>116, 192; 116, 224; </geometry>
+						<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+						<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+						<nameVisible xmi:value='true'/>
+						<symbolStyleID>_18_5_10ba0377_1484676734840_177082_110</symbolStyleID>
+					</mdElement>
+					<mdElement elementClass='Package' xmi:id='_2024x_3_90d0202_1778607581379_395570_1443'>
+						<elementID xmi:idref='_2024x_3_90d0202_1778607581375_730309_1442'/>
+						<geometry>182, 132, 100, 60</geometry>
+						<mdOwnedViews/>
+						<symbolStyleID>_18_5_10ba0377_1484676734826_960674_24</symbolStyleID>
+					</mdElement>
+				</mdOwnedViews>
+				<symbolStyleID>_18_5_10ba0377_1484676734826_960674_24</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Dependency' xmi:id='_bb_pkg_dep_business_models_view'>
+				<elementID xmi:idref='_bb_pkg_dep_business_models'/>
+				<properties>
+					<mdElement elementClass='ChoiceProperty'>
+						<propertyID>LINK_LINE_STYLE</propertyID>
+					</mdElement>
+				</properties>
+				<linkFirstEndID xmi:idref='_bb_pkg_models_view'/>
+				<linkSecondEndID xmi:idref='_bb_pkg_business_view'/>
+				<geometry>177, 374; 231, 374; </geometry>
+				<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+				<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+				<nameVisible xmi:value='true'/>
+				<symbolStyleID>_18_5_10ba0377_1484676734840_177082_110</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Package' xmi:id='_bb_pkg_business_view'>
+				<elementID xmi:idref='_bb_pkg_business'/>
+				<geometry>231, 342, 100, 60</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734826_960674_24</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Dependency' xmi:id='_bb_pkg_dep_models_database_view'>
+				<elementID xmi:idref='_bb_pkg_dep_models_database'/>
+				<properties>
+					<mdElement elementClass='ChoiceProperty'>
+						<propertyID>LINK_LINE_STYLE</propertyID>
+					</mdElement>
+				</properties>
+				<linkFirstEndID xmi:idref='_bb_pkg_database_view'/>
+				<linkSecondEndID xmi:idref='_bb_pkg_models_view'/>
+				<geometry>158, 298; 158, 357; </geometry>
+				<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+				<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+				<nameVisible xmi:value='true'/>
+				<symbolStyleID>_18_5_10ba0377_1484676734840_177082_110</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Package' xmi:id='_bb_pkg_models_view'>
+				<elementID xmi:idref='_bb_pkg_models'/>
+				<geometry>77, 342, 100, 60</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734826_960674_24</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Dependency' xmi:id='_bb_pkg_dep_controllers_middleware_view'>
+				<elementID xmi:idref='_bb_pkg_dep_controllers_middleware'/>
+				<properties>
+					<mdElement elementClass='ChoiceProperty'>
+						<propertyID>LINK_LINE_STYLE</propertyID>
+					</mdElement>
+				</properties>
+				<linkFirstEndID xmi:idref='_bb_pkg_backend_middleware_view'/>
+				<linkSecondEndID xmi:idref='_bb_pkg_backend_controllers_view'/>
+				<geometry>375, 158; 375, 211; </geometry>
+				<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+				<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+				<nameVisible xmi:value='true'/>
+				<symbolStyleID>_18_5_10ba0377_1484676734840_177082_110</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Package' xmi:id='_bb_pkg_backend_controllers_view'>
+				<elementID xmi:idref='_bb_pkg_backend_controllers'/>
+				<geometry>322, 196, 100, 60</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734826_960674_24</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<symbolStyleID>_18_5_10ba0377_1484676734826_960674_24</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Dependency' xmi:id='_bb_pkg_dep_frontend_api_view'>
+		<elementID xmi:idref='_bb_pkg_dep_frontend_api'/>
+		<properties>
+			<mdElement elementClass='ChoiceProperty'>
+				<propertyID>LINK_LINE_STYLE</propertyID>
+			</mdElement>
+		</properties>
+		<linkFirstEndID xmi:idref='_bb_pkg_backend_api_view'/>
+		<linkSecondEndID xmi:idref='_bb_pkg_frontend_view'/>
+		<geometry>440, 179; 518, 179; </geometry>
+		<compartment compartmentID='CONVEYED_INFORMATION_A' isContentLocked='true'/>
+		<compartment compartmentID='CONVEYED_INFORMATION_B' isContentLocked='true'/>
+		<nameVisible xmi:value='true'/>
+		<symbolStyleID>_18_5_10ba0377_1484676734840_177082_110</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='DiagramFrame' xmi:id='_2024x_3_90d0202_1777321092139_513264_1415'>
+		<elementID xmi:idref='_2024x_3_90d0202_1777321092128_28785_1399'/>
+		<geometry>5, 5, 811, 434</geometry>
+		<mdOwnedViews/>
+		<symbolStyleID>_18_5_10ba0377_1484676734842_968677_119</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Package' xmi:id='_bb_pkg_backend_middleware_view'>
+		<elementID xmi:idref='_bb_pkg_backend_middleware'/>
+		<geometry>315, 98, 100, 60</geometry>
+		<mdOwnedViews/>
+		<symbolStyleID>_18_5_10ba0377_1484676734826_960674_24</symbolStyleID>
+	</mdElement>
+	<symbolStyles>
+		<mdElement elementClass='SimpleStyle'>
+			<mdElement elementClass='ExtendableManager'>
+				<name>Dependency</name>
+				<propertyManagerID>_18_5_10ba0377_1484676734840_177082_110</propertyManagerID>
+				<parentPropertyManager>_18_5_10ba0377_1484676734821_332269_3</parentPropertyManager>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>LINK_LINE_STYLE</propertyID>
+					<index xmi:value='1'/>
+				</mdElement>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>STEREOTYPE_COLOR</propertyID>
+					<value xmi:value='-16777216'/>
+				</mdElement>
+				<mdElement elementClass='FontProperty'>
+					<propertyID>STEREOTYPE_FONT</propertyID>
+					<fontName>Arial</fontName>
+					<size xmi:value='11'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>WRAP_WORDS</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_NAME</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>STEREOTYPES_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>DSL_STEREOTYPE_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_TAGGED_VALUES</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ELEMENT_PROPERTIES</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ICONS_IN_COMPARTMENTS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ELEMENT_TYPE_IN_COMPARTMENTS</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_DERIVED_SIGN</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_CONVEYED_A</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_CONVEYED_B</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_CONSTRAINTS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+			</mdElement>
+			<mdElement elementClass='ExtendableManager'>
+				<name>Diagram</name>
+				<propertyManagerID>_18_5_10ba0377_1484676734842_968677_119</propertyManagerID>
+				<parentPropertyManager>_18_5_10ba0377_1484676734821_953768_1</parentPropertyManager>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>DIAGRAM_BACKGROUND_COLOR</propertyID>
+					<value xmi:value='-1'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>USE_GRADIENT_FOR_FILL</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>USE_SHADOW_FOR_SHAPES</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_GRID</propertyID>
+				</mdElement>
+				<mdElement elementClass='NumberProperty'>
+					<propertyID>GRID_SIZE</propertyID>
+					<value xmi:value='7.0'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>USE_GRID_FOR_PATHS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>USE_GRID_FOR_SHAPES</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_MESSAGE_NUMBERS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>USE_ADVANCED_NUMBERING</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ACTIVATIONS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_DIAGRAM_INFO</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_DIAGRAM_OWNER</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_DIAGRAM_FRAME</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ABBREVIATED_DIAGRAM_TYPE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_DIAGRAM_NAME</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_DIAGRAM_TYPE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_PARAMETERS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_CONTEXT_NAME</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_CONTEXT_TYPE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_FRAME_OWNER</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>AUTOSIZE</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>ASPECT_RATIO</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>USE_ROUNDED_CORNERS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>STEREOTYPES_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>DSL_STEREOTYPE_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>USE_STEREOTYPE</propertyID>
+					<index xmi:value='1'/>
+				</mdElement>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>STEREOTYPE_COLOR</propertyID>
+					<value xmi:value='-16777216'/>
+				</mdElement>
+				<mdElement elementClass='FontProperty'>
+					<propertyID>STEREOTYPE_FONT</propertyID>
+					<fontName>Arial</fontName>
+					<size xmi:value='11'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>DIAGRAM_ORIENTATION</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>LINE_JUMP_PLACE</propertyID>
+					<index xmi:value='1'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SUSPEND_SHAPES_AUTO_RESIZE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SUSPEND_LABELS_AUTO_DISPLAY</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>SUSPEND_SHAPE_AUTO_RESIZE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_SYSML_INTERNAL_PROPERTIES_COMPARTMENTS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<hiddenProperties xmi:value='USE_FILL_COLOR^FILL_COLOR'/>
+			</mdElement>
+			<mdElement elementClass='ExtendableManager'>
+				<name>Package</name>
+				<propertyManagerID>_18_5_10ba0377_1484676734826_960674_24</propertyManagerID>
+				<parentPropertyManager>_18_5_10ba0377_1484676734821_607711_2</parentPropertyManager>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>FILL_COLOR</propertyID>
+					<value xmi:value='-2826753'/>
+				</mdElement>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>PEN_COLOR</propertyID>
+					<value xmi:value='-9734759'/>
+				</mdElement>
+				<mdElement elementClass='FontProperty'>
+					<propertyID>FONT</propertyID>
+					<fontName>Arial</fontName>
+					<size xmi:value='13'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>PACKAGE_HEADER_POSITION</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_URI</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ELEMENTS_LIST</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_RAKE_SYMBOL</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>PACKAGE_INNER_ELEMENTS_SORT_MODE</propertyID>
+					<index xmi:value='1'/>
+				</mdElement>
+				<hiddenProperties xmi:value='SUSPEND_LABEL_AUTO_DISPLAY^LABEL_ORIENTATION'/>
+			</mdElement>
+			<mdElement elementClass='ExtendableManager'>
+				<name>Paths</name>
+				<propertyManagerID>_18_5_10ba0377_1484676734821_332269_3</propertyManagerID>
+				<parentPropertyManager>_18_5_10ba0377_1484676734821_953768_1</parentPropertyManager>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>USE_FILL_COLOR</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>LINK_LINE_STYLE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>IS_ROUNDED</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>CONSTRAINT_TEXT_MODE</propertyID>
+					<index xmi:value='1'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>SUSPEND_SHAPE_AUTO_RESIZE</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>SUSPEND_LABEL_AUTO_DISPLAY</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>LABEL_ORIENTATION</propertyID>
+				</mdElement>
+			</mdElement>
+			<mdElement elementClass='ExtendableManager'>
+				<name>Shapes</name>
+				<propertyManagerID>_18_5_10ba0377_1484676734821_607711_2</propertyManagerID>
+				<parentPropertyManager>_18_5_10ba0377_1484676734821_953768_1</parentPropertyManager>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>AUTOSIZE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>USE_FIXED_CONNECTION_POINTS</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>SUSPEND_SHAPE_AUTO_RESIZE</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>SUSPEND_LABEL_AUTO_DISPLAY</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>LABEL_ORIENTATION</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_HEADER_IN_BOLD</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>TEXT_VERTICAL_POSITION</propertyID>
+				</mdElement>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>STEREOTYPE_COLOR</propertyID>
+					<value xmi:value='-16777216'/>
+				</mdElement>
+				<mdElement elementClass='FontProperty'>
+					<propertyID>STEREOTYPE_FONT</propertyID>
+					<fontName>Arial</fontName>
+					<size xmi:value='11'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>STEREOTYPES_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>DSL_STEREOTYPE_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_CONSTRAINTS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>QNAME_DISPLAY_MODE</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>WRAP_WORDS</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_TAGGED_VALUES</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>TAGGED_VALUE_HORIZONTAL_POSITION</propertyID>
+					<index xmi:value='2'/>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>CONSTRAINT_TEXT_MODE</propertyID>
+					<index xmi:value='1'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ELEMENT_PROPERTIES</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ICONS_IN_COMPARTMENTS</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_ELEMENT_TYPE_IN_COMPARTMENTS</propertyID>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_DERIVED_SIGN</propertyID>
+				</mdElement>
+			</mdElement>
+			<mdElement elementClass='ExtendableManager'>
+				<name>Symbol</name>
+				<propertyManagerID>_18_5_10ba0377_1484676734821_953768_1</propertyManagerID>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>FILL_COLOR</propertyID>
+					<value xmi:value='-52'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>USE_FILL_COLOR</propertyID>
+					<value xmi:value='true'/>
+				</mdElement>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>PEN_COLOR</propertyID>
+					<value xmi:value='-12434878'/>
+				</mdElement>
+				<mdElement elementClass='ColorProperty'>
+					<propertyID>TEXT_COLOR</propertyID>
+					<value xmi:value='-16777216'/>
+				</mdElement>
+				<mdElement elementClass='NumberProperty'>
+					<propertyID>LINE_WIDTH</propertyID>
+					<value xmi:value='1.0'/>
+				</mdElement>
+				<mdElement elementClass='FontProperty'>
+					<propertyID>FONT</propertyID>
+					<fontName>Arial</fontName>
+					<size xmi:value='11'/>
+				</mdElement>
+				<mdElement elementClass='BooleanProperty'>
+					<propertyID>SHOW_NUMBER_TAG_NAME</propertyID>
+				</mdElement>
+				<mdElement elementClass='ChoiceProperty'>
+					<propertyID>ELEMENT_NUMBER_DISPLAY_MODE</propertyID>
+					<index xmi:value='2'/>
+				</mdElement>
+			</mdElement>
+		</mdElement>
+	</symbolStyles>
+</mdOwnedViews>

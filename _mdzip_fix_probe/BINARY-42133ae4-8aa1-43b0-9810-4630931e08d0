@@ -1,0 +1,46 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mdOwnedViews>
+	<mdElement elementClass='DiagramFrame' xmi:id='_2024x_3_90d0202_1778609259010_283829_1519_frame_pkgdetail'>
+		<elementID xmi:idref='_2024x_3_90d0202_1778609259010_283829_1519'/>
+		<geometry>5, 5, 880, 430</geometry>
+		<mdOwnedViews/>
+		<symbolStyleID>_18_5_10ba0377_1484676734842_968677_119</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Package' xmi:id='_bb_cls_pkg_business_view_pkgdetail'>
+		<elementID xmi:idref='_bb_cls_pkg_business'/>
+		<geometry>25, 35, 825, 370</geometry>
+		<mdOwnedViews>
+			<mdElement elementClass='Class' xmi:id='_bb_cls_schedule_planner_view_pkgdetail'>
+				<elementID xmi:idref='_bb_cls_schedule_planner'/>
+				<geometry>55, 95, 230, 120</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Class' xmi:id='_bb_cls_feasibility_view_pkgdetail'>
+				<elementID xmi:idref='_bb_cls_feasibility'/>
+				<geometry>330, 95, 210, 100</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Class' xmi:id='_bb_cls_progression_view_pkgdetail'>
+				<elementID xmi:idref='_bb_cls_progression'/>
+				<geometry>55, 255, 230, 100</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Class' xmi:id='_bb_cls_standings_view_pkgdetail'>
+				<elementID xmi:idref='_bb_cls_standings'/>
+				<geometry>330, 255, 210, 100</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Class' xmi:id='_bb_cls_pdf_view_pkgdetail'>
+				<elementID xmi:idref='_bb_cls_pdf'/>
+				<geometry>585, 95, 210, 90</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<symbolStyleID>_18_5_10ba0377_1484676734826_960674_24</symbolStyleID>
+	</mdElement>
+</mdOwnedViews>

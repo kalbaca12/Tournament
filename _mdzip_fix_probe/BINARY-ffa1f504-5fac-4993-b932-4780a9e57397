@@ -1,0 +1,34 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mdOwnedViews>
+	<mdElement elementClass='DiagramFrame' xmi:id='_2024x_3_90d0202_1778609209699_197735_1438_frame_pkgdetail'>
+		<elementID xmi:idref='_2024x_3_90d0202_1778609209699_197735_1438'/>
+		<geometry>5, 5, 520, 360</geometry>
+		<mdOwnedViews/>
+		<symbolStyleID>_18_5_10ba0377_1484676734842_968677_119</symbolStyleID>
+	</mdElement>
+	<mdElement elementClass='Package' xmi:id='_bb_cls_pkg_auth_view_pkgdetail'>
+		<elementID xmi:idref='_bb_cls_pkg_auth'/>
+		<geometry>25, 35, 440, 330</geometry>
+		<mdOwnedViews>
+			<mdElement elementClass='Class' xmi:id='_bb_cls_auth_context_view_pkgdetail'>
+				<elementID xmi:idref='_bb_cls_auth_context'/>
+				<geometry>55, 95, 170, 90</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Class' xmi:id='_bb_cls_use_auth_view_pkgdetail'>
+				<elementID xmi:idref='_bb_cls_use_auth'/>
+				<geometry>260, 95, 150, 80</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+			</mdElement>
+			<mdElement elementClass='Class' xmi:id='_bb_cls_auth_context_value_view_pkgdetail'>
+				<elementID xmi:idref='_bb_cls_auth_context_value'/>
+				<geometry>55, 235, 200, 80</geometry>
+				<mdOwnedViews/>
+				<symbolStyleID>_18_5_10ba0377_1484676734836_215922_73</symbolStyleID>
+			</mdElement>
+		</mdOwnedViews>
+		<symbolStyleID>_18_5_10ba0377_1484676734826_960674_24</symbolStyleID>
+	</mdElement>
+</mdOwnedViews>
