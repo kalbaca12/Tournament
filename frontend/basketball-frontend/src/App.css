@@ -1159,7 +1159,6 @@ thead th {
   }
 }
 
-/* Operations-console redesign: compact, square, and list-first. */
 body,
 .app-shell {
   color: #1f242b;
@@ -2100,10 +2099,39 @@ tbody tr {
   height: 34px;
   flex: 0 0 auto;
   object-fit: contain;
-  border: 1px solid #d6dce6;
-  border-radius: 6px;
-  background: #ffffff;
-  padding: 0.18rem;
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.team-logo-tiny {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  object-fit: contain;
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.team-identity {
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+  align-items: center;
+  gap: 0.45rem;
+  vertical-align: middle;
+}
+
+.team-identity__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.team-identity--reverse {
+  flex-direction: row-reverse;
 }
 
 .team-detail-logo {
@@ -2505,7 +2533,6 @@ tbody tr {
   border-radius: 0 !important;
 }
 
-/* Simulator group rows. Kept here because App.css is loaded after index.css. */
 .gp-sim-modal {
   width: min(1380px, calc(100vw - 32px));
 }

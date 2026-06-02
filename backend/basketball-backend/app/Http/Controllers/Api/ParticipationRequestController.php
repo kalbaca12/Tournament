@@ -41,10 +41,25 @@ class ParticipationRequestController extends Controller
             ->get();
     }
 
+    public function adminAll(Request $request)
+    {
+        $query = TournamentParticipationRequest::query()
+            ->with(['team', 'manager', 'reviewer', 'tournament']);
+
+        if ($request->query('status')) {
+            $query->where('status', $request->query('status'));
+        }
+
+        return $query
+            ->orderByRaw("CASE WHEN status = 'pending' THEN 0 ELSE 1 END")
+            ->orderByDesc('id')
+            ->get();
+    }
+
     public function store(Tournament $tournament, Request $request)
     {
         $managerId = $request->user()->id;
-        $validated = $request->validate([
+        $data = $request->validate([
             'team_id' => ['nullable', 'integer', 'exists:teams,id'],
             'note' => ['nullable', 'string', 'max:2000'],
         ]);
@@ -58,8 +73,8 @@ class ParticipationRequestController extends Controller
         }
 
         $team = null;
-        if (!empty($validated['team_id'])) {
-            $team = Team::find($validated['team_id']);
+        if (!empty($data['team_id'])) {
+            $team = Team::find($data['team_id']);
             if (!$team || (int)$team->manager_id !== (int)$managerId) {
                 return response()->json(['message' => 'You can only request with your own team.'], 403);
             }
@@ -90,7 +105,7 @@ class ParticipationRequestController extends Controller
             $existing->update([
                 'manager_id' => $managerId,
                 'status' => 'pending',
-                'note' => $validated['note'] ?? null,
+                'note' => $data['note'] ?? null,
                 'reviewed_by' => null,
                 'reviewed_at' => null,
             ]);
@@ -103,7 +118,7 @@ class ParticipationRequestController extends Controller
             'team_id' => $team->id,
             'manager_id' => $managerId,
             'status' => 'pending',
-            'note' => $validated['note'] ?? null,
+            'note' => $data['note'] ?? null,
         ]);
 
         return response()->json($created->load('team'), 201);
@@ -150,13 +165,13 @@ class ParticipationRequestController extends Controller
             return response()->json(['message' => 'Only pending requests can be rejected.'], 409);
         }
 
-        $validated = $request->validate([
+        $data = $request->validate([
             'note' => ['nullable', 'string', 'max:2000'],
         ]);
 
         $requestRow->update([
             'status' => 'rejected',
-            'note' => $validated['note'] ?? $requestRow->note,
+            'note' => $data['note'] ?? $requestRow->note,
             'reviewed_by' => $request->user()->id,
             'reviewed_at' => now(),
         ]);

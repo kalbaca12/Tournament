@@ -372,9 +372,6 @@ class PdfExportBuilder
         return $doc->output();
     }
 
-    /**
-     * @return array{0: array<string, array<int, Game>>, 1: array<int, array<int, Game>>}
-     */
     private static function splitTournamentMatches(Tournament $tournament): array
     {
         $sorted = $tournament->matches->sort(function (Game $left, Game $right) {

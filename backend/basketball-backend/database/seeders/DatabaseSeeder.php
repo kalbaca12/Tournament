@@ -2,478 +2,290 @@
 
 namespace Database\Seeders;
 
+use App\Models\Tournament;
+use App\Support\TournamentProgression;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 
 class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
-    /**
-     * Seed the application's database.
-     */
+    private const ADMIN_EMAIL = 'admin@example.com';
+    private const MANAGER_EMAIL = 'manager@example.com';
+
     public function run(): void
     {
-        $now = now();
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        DB::table('match_player_stats')->truncate();
+        DB::table('tournament_team_players')->truncate();
+        DB::table('tournament_participation_requests')->truncate();
+        DB::table('tournament_teams')->truncate();
+        DB::table('matches')->truncate();
+        DB::table('players')->truncate();
+        DB::table('teams')->truncate();
+        DB::table('tournaments')->truncate();
+        DB::table('personal_access_tokens')->truncate();
+        DB::table('users')->truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
-        DB::table('users')->updateOrInsert(
-            ['email' => 'admin@example.com'],
-            [
-                'name' => 'Admin User',
-                'password' => Hash::make('admin123'),
-                'role' => 'admin',
-                'updated_at' => $now,
-                'created_at' => $now,
-            ],
-        );
+        $adminId = $this->createUser('Lukas Admin', self::ADMIN_EMAIL, 'admin');
+        $managerId = $this->createUser('Mantas Kazlauskas', self::MANAGER_EMAIL, 'manager');
+        $teamIds = $this->createTeams($managerId);
 
-        DB::table('users')->updateOrInsert(
-            ['email' => 'manager@example.com'],
-            [
-                'name' => 'Manager User',
-                'password' => Hash::make('manager123'),
-                'role' => 'manager',
-                'updated_at' => $now,
-                'created_at' => $now,
-            ],
-        );
-
-        $adminId = DB::table('users')->where('email', 'admin@example.com')->value('id');
-        $teamIds = $this->seedDemoTeams();
-        $playoffTeamIds = $this->seedPlayoffDemoTeams();
-
-        $this->seedFinishedTournament($adminId, array_slice($teamIds, 0, 4));
-        $this->seedScheduleTestTournament($adminId, $teamIds);
-        $this->seedLiveGroupsPlayoffsTournament($adminId, $playoffTeamIds);
-        $this->seedQualificationRaceTournament($adminId, array_slice($playoffTeamIds, 8, 8));
-        $this->backfillTournamentBanners();
+        $this->createFinishedTournament($adminId, $teamIds);
+        $this->createFutureTournamentWithRequests($adminId, $managerId, $teamIds);
     }
 
-    private function backfillTournamentBanners(): void
+    private function createUser(string $name, string $email, string $role): int
     {
-        $banners = [
-            'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=1200&q=80',
-            'https://images.unsplash.com/photo-1519861531473-9200262188bf?auto=format&fit=crop&w=1200&q=80',
-            'https://images.unsplash.com/photo-1504450758481-7338eba7524a?auto=format&fit=crop&w=1200&q=80',
-            'https://images.unsplash.com/photo-1518063319789-7217e6706b04?auto=format&fit=crop&w=1200&q=80',
+        $row = [
+            'name' => $name,
+            'email' => $email,
+            'password' => Hash::make('example123'),
+            'role' => $role,
+            'created_at' => now(),
+            'updated_at' => now(),
         ];
 
-        DB::table('tournaments')
-            ->whereNull('banner_url')
-            ->orderBy('id')
-            ->get(['id'])
-            ->values()
-            ->each(function ($tournament, $index) use ($banners): void {
-                DB::table('tournaments')->where('id', $tournament->id)->update([
-                    'banner_url' => $banners[$index % count($banners)],
-                    'updated_at' => now(),
-                ]);
-            });
+        if (Schema::hasColumn('users', 'email_verified_at')) {
+            $row['email_verified_at'] = now();
+        }
+
+        if (Schema::hasColumn('users', 'remember_token')) {
+            $row['remember_token'] = null;
+        }
+
+        return DB::table('users')->insertGetId($row);
     }
 
-    private function seedDemoTeams(): array
+    private function createTeams(int $managerId): array
     {
         $teams = [
-            ['name' => 'Kauno Tornadai', 'city' => 'Kaunas', 'logo_url' => 'https://api.dicebear.com/9.x/shapes/svg?seed=KaunoTornadai'],
-            ['name' => 'Vilniaus Perkunas', 'city' => 'Vilnius', 'logo_url' => 'https://api.dicebear.com/9.x/shapes/svg?seed=VilniausPerkunas'],
-            ['name' => 'Klaipedos Bangos', 'city' => 'Klaipeda', 'logo_url' => 'https://api.dicebear.com/9.x/shapes/svg?seed=KlaipedosBangos'],
-            ['name' => 'Siauliu Sauliai', 'city' => 'Siauliai', 'logo_url' => 'https://api.dicebear.com/9.x/shapes/svg?seed=SiauliuSauliai'],
-            ['name' => 'Panevezio Ezerai', 'city' => 'Panevezys', 'logo_url' => 'https://api.dicebear.com/9.x/shapes/svg?seed=PanevezioEzerai'],
-            ['name' => 'Alytaus Vilkai', 'city' => 'Alytus', 'logo_url' => 'https://api.dicebear.com/9.x/shapes/svg?seed=AlytausVilkai'],
-            ['name' => 'Marijampoles Stumbras', 'city' => 'Marijampole', 'logo_url' => 'https://api.dicebear.com/9.x/shapes/svg?seed=MarijampolesStumbras'],
-            ['name' => 'Utenos Auksas', 'city' => 'Utena', 'logo_url' => 'https://api.dicebear.com/9.x/shapes/svg?seed=UtenosAuksas'],
+            [
+                'name' => 'Kauno Tornadai',
+                'city' => 'Kaunas',
+                'logo' => $this->logoUrl('Kauno Tornadai', '0f172a', 'f8fafc'),
+                'players' => [
+                    ['Mantas', 'Jankunas', 4], ['Rokas', 'Vaitkus', 7], ['Tomas', 'Petraitis', 9], ['Arnas', 'Balciunas', 11],
+                    ['Domantas', 'Zukauskas', 13], ['Paulius', 'Stankus', 15], ['Lukas', 'Kazlauskas', 21], ['Justas', 'Urbonas', 23],
+                    ['Karolis', 'Mockevicius', 31], ['Aistis', 'Sakalauskas', 33],
+                ],
+            ],
+            [
+                'name' => 'Vilniaus Perkunas',
+                'city' => 'Vilnius',
+                'logo' => $this->logoUrl('Vilniaus Perkunas', 'b91c1c', 'ffffff'),
+                'players' => [
+                    ['Dovydas', 'Giedraitis', 3], ['Mindaugas', 'Kairys', 5], ['Nojus', 'Sirvydis', 8], ['Edvinas', 'Brazdeikis', 10],
+                    ['Titas', 'Lekavicius', 12], ['Laurynas', 'Butkus', 16], ['Matas', 'Normantas', 18], ['Simas', 'Jasaitis', 22],
+                    ['Gytis', 'Radzevicius', 24], ['Benas', 'Valinskas', 30],
+                ],
+            ],
+            [
+                'name' => 'Klaipedos Bangos',
+                'city' => 'Klaipeda',
+                'logo' => $this->logoUrl('Klaipedos Bangos', '0369a1', 'ffffff'),
+                'players' => [
+                    ['Tauras', 'Sleza', 2], ['Ernestas', 'Seskus', 6], ['Jonas', 'Macijauskas', 8], ['Arminas', 'Bendzius', 14],
+                    ['Pijus', 'Galdikas', 17], ['Vytenis', 'Cizauskas', 19], ['Saulius', 'Kuzminskas', 20], ['Ignas', 'Ramanauskas', 25],
+                    ['Deividas', 'Anuzis', 32], ['Martynas', 'Mazeika', 41],
+                ],
+            ],
+            [
+                'name' => 'Siauliu Sauliai',
+                'city' => 'Siauliai',
+                'logo' => $this->logoUrl('Siauliu Sauliai', 'ca8a04', '111827'),
+                'players' => [
+                    ['Aurimas', 'Grigonis', 1], ['Eimantas', 'Bendorius', 4], ['Rytis', 'Pipiras', 9], ['Vilius', 'Serapinas', 12],
+                    ['Giedrius', 'Rutkauskas', 15], ['Dainius', 'Adomaitis', 18], ['Tadas', 'Pacevicius', 21], ['Joris', 'Mikalauskas', 27],
+                    ['Nerijus', 'Jucikas', 35], ['Evaldas', 'Saulys', 44],
+                ],
+            ],
+            [
+                'name' => 'Panevezio Lietkabelis II',
+                'city' => 'Panevezys',
+                'logo' => $this->logoUrl('Panevezio Lietkabelis II', '7f1d1d', 'ffffff'),
+                'players' => [
+                    ['Gabrielius', 'Maldunas', 5], ['Kristupas', 'Zemaitis', 7], ['Julius', 'Paukste', 10], ['Marius', 'Valinskas', 13],
+                    ['Adomas', 'Drungilas', 17], ['Vaidotas', 'Peciukas', 20], ['Tautvydas', 'Kupsas', 23], ['Sarunas', 'Beniusis', 29],
+                    ['Erikas', 'Venskus', 34], ['Rimantas', 'Daunys', 45],
+                ],
+            ],
+            [
+                'name' => 'Alytaus Dzuku Vilkai',
+                'city' => 'Alytus',
+                'logo' => $this->logoUrl('Alytaus Dzuku Vilkai', '166534', 'ffffff'),
+                'players' => [
+                    ['Zygimantas', 'Janavicius', 2], ['Ovidijus', 'Varanauskas', 6], ['Arvydas', 'Eitutavicius', 8], ['Tomas', 'Pauliukenas', 11],
+                    ['Marius', 'Runkauskas', 14], ['Donatas', 'Tarolis', 19], ['Jokubas', 'Rubinas', 23], ['Povilas', 'Cukinas', 31],
+                    ['Vytautas', 'Kaciulis', 33], ['Linas', 'Kvedaravicius', 55],
+                ],
+            ],
+            [
+                'name' => 'Marijampoles Suduva',
+                'city' => 'Marijampole',
+                'logo' => $this->logoUrl('Marijampoles Suduva', '991b1b', 'ffffff'),
+                'players' => [
+                    ['Kajus', 'Kubilinskas', 3], ['Rokas', 'Stipcevic', 6], ['Mantas', 'Ruikis', 9], ['Tomas', 'Zdanavicius', 13],
+                    ['Gvidas', 'Galinauskas', 16], ['Edgaras', 'Stanionis', 22], ['Ignas', 'Labutis', 24], ['Dominykas', 'Milka', 28],
+                    ['Justinas', 'Marcinkevicius', 32], ['Paulius', 'Petrilevicius', 40],
+                ],
+            ],
+            [
+                'name' => 'Utenos Juventus Academy',
+                'city' => 'Utena',
+                'logo' => $this->logoUrl('Utenos Juventus Academy', '065f46', 'ffffff'),
+                'players' => [
+                    ['Darius', 'Tarvydas', 1], ['Tautvydas', 'Kupstas', 4], ['Martynas', 'Gecevicius', 8], ['Laurynas', 'Mikalauskas', 12],
+                    ['Arnas', 'Berucka', 15], ['Mantas', 'Sernius', 18], ['Gediminas', 'Navickas', 21], ['Tadas', 'Rinkunas', 25],
+                    ['Justas', 'Tamulis', 30], ['Vilius', 'Sumskis', 42],
+                ],
+            ],
+            [
+                'name' => 'Rygos Daugava',
+                'city' => 'Riga',
+                'logo' => $this->logoUrl('Rygos Daugava', '1d4ed8', 'ffffff'),
+                'players' => [
+                    ['Arturs', 'Ozols', 2], ['Janis', 'Berzins', 5], ['Roberts', 'Kalnins', 7], ['Kristaps', 'Liepa', 11],
+                    ['Edgars', 'Vitolins', 14], ['Raimonds', 'Abols', 18], ['Martins', 'Eglitis', 22], ['Gustavs', 'Balodis', 25],
+                    ['Niks', 'Stradins', 34], ['Valters', 'Skuja', 41],
+                ],
+            ],
+            [
+                'name' => 'Tartu Kalev',
+                'city' => 'Tartu',
+                'logo' => $this->logoUrl('Tartu Kalev', '0e7490', 'ffffff'),
+                'players' => [
+                    ['Karl', 'Tamm', 1], ['Mihkel', 'Saar', 4], ['Rasmus', 'Kask', 6], ['Henri', 'Laane', 9],
+                    ['Markus', 'Koppel', 12], ['Oliver', 'Rebane', 17], ['Siim', 'Mets', 20], ['Kristjan', 'Pold', 24],
+                    ['Andres', 'Vaher', 32], ['Taavi', 'Nurme', 45],
+                ],
+            ],
+            [
+                'name' => 'Druskininku Aidas',
+                'city' => 'Druskininkai',
+                'logo' => $this->logoUrl('Druskininku Aidas', '4338ca', 'ffffff'),
+                'players' => [
+                    ['Arvydas', 'Maciulis', 3], ['Matas', 'Venslovas', 6], ['Tomas', 'Bieliauskas', 8], ['Rokas', 'Jokubaitis', 10],
+                    ['Deividas', 'Pocius', 13], ['Lukas', 'Klimavicius', 16], ['Mindaugas', 'Navickas', 21], ['Aurimas', 'Jakstys', 27],
+                    ['Domas', 'Rimkus', 35], ['Vytis', 'Grabauskas', 50],
+                ],
+            ],
+            [
+                'name' => 'Taurages Taurai',
+                'city' => 'Taurage',
+                'logo' => $this->logoUrl('Taurages Taurai', '92400e', 'ffffff'),
+                'players' => [
+                    ['Vaidotas', 'Grinius', 2], ['Edvinas', 'Mikutis', 5], ['Tautas', 'Sadauskas', 7], ['Jokubas', 'Kalvaitis', 12],
+                    ['Karolis', 'Dauksa', 15], ['Giedrius', 'Simkus', 18], ['Rytis', 'Vainauskas', 23], ['Paulius', 'Rimsa', 28],
+                    ['Justas', 'Vasiliauskas', 33], ['Aivaras', 'Butrimas', 44],
+                ],
+            ],
+            [
+                'name' => 'Palangos Kursiai',
+                'city' => 'Palanga',
+                'logo' => $this->logoUrl('Palangos Kursiai', '0f766e', 'ffffff'),
+                'players' => [
+                    ['Nerijus', 'Misevicius', 1], ['Ignas', 'Sutkus', 4], ['Tadas', 'Pociunas', 8], ['Simonas', 'Kvedaras', 11],
+                    ['Arnas', 'Savickas', 14], ['Marius', 'Jurgaitis', 19], ['Laurynas', 'Morkunas', 22], ['Vytautas', 'Grigaitis', 26],
+                    ['Eimantas', 'Seskus', 31], ['Dainius', 'Kavaliauskas', 43],
+                ],
+            ],
+            [
+                'name' => 'Mazeikiu Nafta',
+                'city' => 'Mazeikiai',
+                'logo' => $this->logoUrl('Mazeikiu Nafta', '111827', 'facc15'),
+                'players' => [
+                    ['Modestas', 'Paulauskas', 3], ['Rimvydas', 'Milius', 6], ['Titas', 'Rupkus', 9], ['Linas', 'Valenta', 13],
+                    ['Sarunas', 'Kavolis', 17], ['Evaldas', 'Bickauskis', 20], ['Mantas', 'Juska', 24], ['Dovydas', 'Petkus', 29],
+                    ['Gintaras', 'Rimkus', 36], ['Algirdas', 'Vaitiekus', 52],
+                ],
+            ],
+            [
+                'name' => 'Joniskio Delikatesas',
+                'city' => 'Joniskis',
+                'logo' => $this->logoUrl('Joniskio Delikatesas', 'be123c', 'ffffff'),
+                'players' => [
+                    ['Kipras', 'Petronis', 2], ['Nojus', 'Vasiliauskas', 5], ['Mantas', 'Kvedaras', 8], ['Tomas', 'Stonkus', 10],
+                    ['Arminas', 'Miksys', 16], ['Julius', 'Rakauskas', 19], ['Rokas', 'Lapinskas', 23], ['Dominykas', 'Uosis', 30],
+                    ['Martynas', 'Zilinskas', 34], ['Gytis', 'Petrulis', 40],
+                ],
+            ],
+            [
+                'name' => 'Kedainiu Nevezis B',
+                'city' => 'Kedainiai',
+                'logo' => $this->logoUrl('Kedainiu Nevezis B', '4d7c0f', 'ffffff'),
+                'players' => [
+                    ['Aistis', 'Matulionis', 1], ['Benas', 'Sakalauskas', 4], ['Lukas', 'Ambrazevicius', 7], ['Justinas', 'Banevicius', 12],
+                    ['Tomas', 'Zvirblis', 15], ['Karolis', 'Pukelis', 18], ['Gvidas', 'Siaulys', 21], ['Paulius', 'Kisielius', 25],
+                    ['Erikas', 'Masiulis', 32], ['Mindaugas', 'Lukosevicius', 44],
+                ],
+            ],
         ];
 
         $teamIds = [];
-
-        foreach ($teams as $index => $team) {
-            $existingId = DB::table('teams')->where('name', $team['name'])->value('id');
-            $teamId = $existingId ?: DB::table('teams')->insertGetId([
+        foreach ($teams as $teamIndex => $team) {
+            $teamId = DB::table('teams')->insertGetId([
                 'name' => $team['name'],
                 'city' => $team['city'],
-                'logo_url' => $team['logo_url'],
-                'manager_id' => null,
+                'logo_url' => $team['logo'],
+                'manager_id' => $managerId,
                 'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-            DB::table('teams')->where('id', $teamId)->update([
-                'logo_url' => $team['logo_url'],
                 'updated_at' => now(),
             ]);
 
             $teamIds[] = $teamId;
-            $this->seedPlayersForTeam($teamId, $index);
-        }
-
-        return $teamIds;
-    }
-
-    private function seedPlayersForTeam(int $teamId, int $teamIndex): void
-    {
-        $firstNames = ['Mantas', 'Jonas', 'Tomas', 'Rokas', 'Lukas', 'Paulius', 'Domantas', 'Arnas'];
-        $lastNames = ['Kazlauskas', 'Petraitis', 'Jankauskas', 'Stankus', 'Balciunas', 'Vaitkus', 'Urbonas', 'Zukauskas'];
-
-        for ($i = 0; $i < 5; $i++) {
-            $jersey = ($teamIndex + 1) * 10 + $i;
-            $exists = DB::table('players')
-                ->where('team_id', $teamId)
-                ->where('jersey_number', $jersey)
-                ->exists();
-
-            if ($exists) {
-                continue;
-            }
-
-            DB::table('players')->insert([
-                'team_id' => $teamId,
-                'first_name' => $firstNames[($teamIndex + $i) % count($firstNames)],
-                'last_name' => $lastNames[($teamIndex * 2 + $i) % count($lastNames)],
-                'photo_url' => 'https://randomuser.me/api/portraits/men/' . ((($teamIndex * 5 + $i) % 90) + 1) . '.jpg',
-                'jersey_number' => $jersey,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-
-        DB::table('players')
-            ->where('team_id', $teamId)
-            ->whereNull('photo_url')
-            ->orderBy('id')
-            ->get(['id'])
-            ->values()
-            ->each(function ($player, $index) use ($teamIndex): void {
-                DB::table('players')->where('id', $player->id)->update([
-                    'photo_url' => 'https://randomuser.me/api/portraits/men/' . ((($teamIndex * 5 + $index) % 90) + 1) . '.jpg',
-                    'updated_at' => now(),
-                ]);
-            });
-    }
-
-    private function seedPlayoffDemoTeams(): array
-    {
-        $teamIds = [];
-
-        for ($teamNumber = 1; $teamNumber <= 16; $teamNumber++) {
-            $name = 'Playoff Team ' . str_pad((string) $teamNumber, 2, '0', STR_PAD_LEFT);
-            $existingId = DB::table('teams')->where('name', $name)->value('id');
-            $teamId = $existingId ?: DB::table('teams')->insertGetId([
-                'name' => $name,
-                'city' => 'Demo City',
-                'logo_url' => 'https://api.dicebear.com/9.x/shapes/svg?seed=' . rawurlencode($name),
-                'manager_id' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            DB::table('teams')->where('id', $teamId)->update([
-                'city' => 'Demo City',
-                'logo_url' => 'https://api.dicebear.com/9.x/shapes/svg?seed=' . rawurlencode($name),
-                'updated_at' => now(),
-            ]);
-
-            $teamIds[] = $teamId;
-            $this->seedPlayoffPlayersForTeam($teamId, $teamNumber);
-        }
-
-        return $teamIds;
-    }
-
-    private function seedPlayoffPlayersForTeam(int $teamId, int $teamNumber): void
-    {
-        $firstNames = ['Arnas', 'Justas', 'Karolis', 'Aistis', 'Martynas', 'Lukas', 'Mantas', 'Jonas', 'Dovydas', 'Tomas', 'Nojus'];
-        $lastNames = ['Kazlauskas', 'Jankunas', 'Petraitis', 'Valiulis', 'Grigonis', 'Sabonis', 'Mockevicius', 'Butkus', 'Misiunas', 'Brazdeikis', 'Lekavicius'];
-
-        for ($index = 0; $index < 8; $index++) {
-            $jersey = $index + 4;
-            $exists = DB::table('players')
-                ->where('team_id', $teamId)
-                ->where('jersey_number', $jersey)
-                ->exists();
-
-            if ($exists) {
-                continue;
-            }
-
-            DB::table('players')->insert([
-                'team_id' => $teamId,
-                'first_name' => $firstNames[($teamNumber + $index - 1) % count($firstNames)],
-                'last_name' => $lastNames[($teamNumber + $index + 2) % count($lastNames)],
-                'photo_url' => 'https://randomuser.me/api/portraits/men/' . (((($teamNumber - 1) * 8 + $index) % 90) + 1) . '.jpg',
-                'jersey_number' => $jersey,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-    }
-
-    private function seedFinishedTournament(?int $adminId, array $teamIds): void
-    {
-        $name = 'Demo: Finished Spring Cup';
-        if (DB::table('tournaments')->where('name', $name)->exists()) {
-            DB::table('tournaments')->where('name', $name)->update([
-                'banner_url' => 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=1200&q=80',
-                'updated_at' => now(),
-            ]);
-            return;
-        }
-
-        $tournamentId = DB::table('tournaments')->insertGetId([
-            'name' => $name,
-            'banner_url' => 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=1200&q=80',
-            'start_date' => now()->subWeeks(3)->toDateString(),
-            'end_date' => now()->subWeek()->toDateString(),
-            'format' => 'round_robin',
-            'status' => 'finished',
-            'created_by' => $adminId,
-            'max_teams' => 4,
-            'duration_weeks' => 2,
-            'allowed_days' => json_encode([1, 2, 3, 4, 5, 6, 7]),
-            'time_slots' => json_encode(['12:00', '14:00', '16:00', '18:00']),
-            'venues_count' => 2,
-            'venue_names' => json_encode(['Main Court', 'Second Court']),
-            'playoff_round_gap_days' => 1,
-            'groups_to_playoffs_gap_days' => 1,
-            'group_games_per_day' => 4,
-            'stage_day_gap_days' => 0,
-            'registration_deadline' => now()->subWeeks(4)->toDateString(),
-            'participants_locked' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        foreach ($teamIds as $index => $teamId) {
-            DB::table('tournament_teams')->insert([
-                'tournament_id' => $tournamentId,
-                'team_id' => $teamId,
-                'group_code' => null,
-                'seed' => $index + 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-
-        $scores = [
-            [0, 1, 88, 74],
-            [2, 3, 69, 76],
-            [0, 2, 91, 84],
-            [1, 3, 80, 77],
-            [0, 3, 73, 79],
-            [1, 2, 82, 75],
-        ];
-
-        foreach ($scores as $index => [$home, $away, $homeScore, $awayScore]) {
-            DB::table('matches')->insert([
-                'tournament_id' => $tournamentId,
-                'home_team_id' => $teamIds[$home],
-                'away_team_id' => $teamIds[$away],
-                'venue_id' => null,
-                'venue_slot' => ($index % 2) + 1,
-                'stage' => 'group',
-                'group_code' => null,
-                'round_number' => intdiv($index, 2) + 1,
-                'scheduled_at' => now()->subWeeks(3)->addDays($index * 2)->setTime(18, 0)->toDateTimeString(),
-                'home_score' => $homeScore,
-                'away_score' => $awayScore,
-                'status' => 'finished',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-    }
-
-    private function seedScheduleTestTournament(?int $adminId, array $teamIds): void
-    {
-        $name = 'Demo: Ready for Schedule Generation';
-        if (DB::table('tournaments')->where('name', $name)->exists()) {
-            DB::table('tournaments')->where('name', $name)->update([
-                'banner_url' => 'https://images.unsplash.com/photo-1519861531473-9200262188bf?auto=format&fit=crop&w=1200&q=80',
-                'updated_at' => now(),
-            ]);
-            return;
-        }
-
-        $tournamentId = DB::table('tournaments')->insertGetId([
-            'name' => $name,
-            'banner_url' => 'https://images.unsplash.com/photo-1519861531473-9200262188bf?auto=format&fit=crop&w=1200&q=80',
-            'start_date' => now()->addWeek()->toDateString(),
-            'end_date' => now()->addWeeks(4)->toDateString(),
-            'format' => 'groups_playoffs',
-            'status' => 'draft',
-            'created_by' => $adminId,
-            'max_teams' => 8,
-            'duration_weeks' => 4,
-            'allowed_days' => json_encode([1, 3, 5, 6]),
-            'time_slots' => json_encode(['18:00', '20:00']),
-            'venues_count' => 2,
-            'venue_names' => json_encode(['Arena A', 'Arena B']),
-            'playoff_round_gap_days' => 1,
-            'groups_to_playoffs_gap_days' => 2,
-            'group_games_per_day' => 4,
-            'stage_day_gap_days' => 1,
-            'registration_deadline' => now()->addDays(3)->toDateString(),
-            'participants_locked' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        foreach ($teamIds as $index => $teamId) {
-            DB::table('tournament_teams')->insert([
-                'tournament_id' => $tournamentId,
-                'team_id' => $teamId,
-                'group_code' => $index < 4 ? 'A' : 'B',
-                'seed' => $index + 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-    }
-
-    private function seedLiveGroupsPlayoffsTournament(?int $adminId, array $teamIds): void
-    {
-        if (count($teamIds) < 16) {
-            return;
-        }
-
-        $name = 'Demo: 16 Team Groups Playoffs Live';
-        $tournamentId = DB::table('tournaments')->where('name', $name)->value('id');
-        $payload = [
-            'name' => $name,
-            'banner_url' => 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=1200&q=80',
-            'start_date' => '2026-05-05',
-            'end_date' => '2026-05-15',
-            'format' => 'groups_playoffs',
-            'status' => 'draft',
-            'created_by' => $adminId,
-            'max_teams' => 16,
-            'duration_weeks' => 2,
-            'allowed_days' => json_encode([1, 2, 3, 4, 5, 6, 7]),
-            'time_slots' => json_encode(['12:00', '14:00', '16:00', '18:00']),
-            'venues_count' => 1,
-            'venue_names' => json_encode(['Main Court']),
-            'playoff_round_gap_days' => 1,
-            'groups_to_playoffs_gap_days' => 0,
-            'group_games_per_day' => 4,
-            'stage_day_gap_days' => 0,
-            'registration_deadline' => null,
-            'participants_locked' => true,
-            'updated_at' => now(),
-        ];
-
-        if ($tournamentId) {
-            DB::table('tournaments')->where('id', $tournamentId)->update($payload);
-        } else {
-            $payload['created_at'] = now();
-            $tournamentId = DB::table('tournaments')->insertGetId($payload);
-        }
-
-        $matchIds = DB::table('matches')->where('tournament_id', $tournamentId)->pluck('id');
-        DB::table('match_player_stats')->whereIn('match_id', $matchIds)->delete();
-        DB::table('matches')->where('tournament_id', $tournamentId)->delete();
-        DB::table('tournament_team_players')->where('tournament_id', $tournamentId)->delete();
-        DB::table('tournament_teams')->where('tournament_id', $tournamentId)->delete();
-
-        $groups = array_chunk(array_slice($teamIds, 0, 16), 4);
-        foreach ($groups as $groupIndex => $groupTeamIds) {
-            $groupCode = chr(ord('A') + $groupIndex);
-            foreach ($groupTeamIds as $seedIndex => $teamId) {
-                DB::table('tournament_teams')->insert([
-                    'tournament_id' => $tournamentId,
+            foreach ($team['players'] as $playerIndex => [$firstName, $lastName, $jersey]) {
+                DB::table('players')->insert([
                     'team_id' => $teamId,
-                    'group_code' => $groupCode,
-                    'seed' => ($groupIndex * 4) + $seedIndex + 1,
+                    'first_name' => $firstName,
+                    'last_name' => $lastName,
+                    'photo_url' => $this->photoUrl($teamIndex, $playerIndex),
+                    'jersey_number' => $jersey,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
-
-                DB::table('players')
-                    ->where('team_id', $teamId)
-                    ->orderBy('jersey_number')
-                    ->limit(8)
-                    ->pluck('id')
-                    ->each(function ($playerId) use ($tournamentId, $teamId): void {
-                        DB::table('tournament_team_players')->insert([
-                            'tournament_id' => $tournamentId,
-                            'team_id' => $teamId,
-                            'player_id' => $playerId,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
-                    });
             }
         }
 
-        $firstMatchId = DB::table('matches')->insertGetId([
-            'tournament_id' => $tournamentId,
-            'home_team_id' => $groups[0][0],
-            'away_team_id' => $groups[0][3],
-            'venue_id' => null,
-            'venue_slot' => 1,
-            'venue_name' => 'Main Court',
-            'stage' => 'group',
-            'group_code' => 'A',
-            'round_number' => 1,
-            'scheduled_at' => '2026-05-05 12:00:00',
-            'home_score' => 86,
-            'away_score' => 80,
+        return $teamIds;
+    }
+
+    private function createFinishedTournament(int $adminId, array $teamIds): void
+    {
+        $tournamentId = DB::table('tournaments')->insertGetId([
+            'name' => 'Baltic Hoops Spring Invitational 2026',
+            'banner_url' => 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=1600&q=80',
+            'start_date' => '2026-04-17',
+            'end_date' => '2026-05-02',
+            'format' => 'groups_playoffs',
             'status' => 'finished',
-            'live_events' => json_encode($this->liveDemoEvents($groups[0][0], $groups[0][3], '2026-05-05 12:00:00')),
+            'created_by' => $adminId,
+            'max_teams' => 8,
+            'group_size' => 4,
+            'group_advance_count' => 2,
+            'duration_weeks' => 3,
+            'allowed_days' => json_encode([1, 3, 5, 6, 7]),
+            'time_slots' => json_encode(['18:00', '20:00']),
+            'venue_name' => 'Kauno Sporto Hale',
+            'venues_count' => 2,
+            'venue_names' => json_encode(['Kauno Sporto Hale', 'VDU Prezidento Valdo Adamkaus Sporto Centras']),
+            'playoff_round_gap_days' => 2,
+            'groups_to_playoffs_gap_days' => 3,
+            'group_games_per_day' => 2,
+            'stage_day_gap_days' => 1,
+            'registration_deadline' => '2026-04-10',
+            'participants_locked' => true,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        $this->seedLiveDemoBoxScore($firstMatchId, $groups[0][0], $groups[0][3]);
-        $this->seedRemainingLiveDemoMatches($tournamentId, $groups);
-    }
-
-    private function seedQualificationRaceTournament(?int $adminId, array $teamIds): void
-    {
-        $teamIds = array_values($teamIds);
-
-        if (count($teamIds) < 8) {
-            return;
-        }
-
-        $name = 'Demo: Qualification Race';
-        $tournamentId = DB::table('tournaments')->where('name', $name)->value('id');
-        $payload = [
-            'name' => $name,
-            'banner_url' => 'https://images.unsplash.com/photo-1519861531473-9200262188bf?auto=format&fit=crop&w=1200&q=80',
-            'start_date' => '2026-05-20',
-            'end_date' => '2026-05-31',
-            'format' => 'groups_playoffs',
-            'status' => 'draft',
-            'created_by' => $adminId,
-            'max_teams' => 8,
-            'duration_weeks' => 2,
-            'allowed_days' => json_encode([1, 2, 3, 4, 5, 6, 7]),
-            'time_slots' => json_encode(['12:00', '14:00', '16:00', '18:00']),
-            'venues_count' => 1,
-            'venue_names' => json_encode(['Main Court']),
-            'playoff_round_gap_days' => 1,
-            'groups_to_playoffs_gap_days' => 1,
-            'group_games_per_day' => 4,
-            'stage_day_gap_days' => 0,
-            'registration_deadline' => null,
-            'participants_locked' => true,
-            'updated_at' => now(),
-        ];
-
-        if ($tournamentId) {
-            DB::table('tournaments')->where('id', $tournamentId)->update($payload);
-        } else {
-            $payload['created_at'] = now();
-            $tournamentId = DB::table('tournaments')->insertGetId($payload);
-        }
-
-        $matchIds = DB::table('matches')->where('tournament_id', $tournamentId)->pluck('id');
-        DB::table('match_player_stats')->whereIn('match_id', $matchIds)->delete();
-        DB::table('matches')->where('tournament_id', $tournamentId)->delete();
-        DB::table('tournament_team_players')->where('tournament_id', $tournamentId)->delete();
-        DB::table('tournament_teams')->where('tournament_id', $tournamentId)->delete();
-
-        foreach (array_values($teamIds) as $index => $teamId) {
+        foreach (array_slice($teamIds, 0, 8) as $index => $teamId) {
             $groupCode = $index < 4 ? 'A' : 'B';
             DB::table('tournament_teams')->insert([
                 'tournament_id' => $tournamentId,
@@ -484,356 +296,516 @@ class DatabaseSeeder extends Seeder
                 'updated_at' => now(),
             ]);
 
-            DB::table('players')
-                ->where('team_id', $teamId)
-                ->orderBy('jersey_number')
-                ->limit(8)
-                ->pluck('id')
-                ->each(function ($playerId) use ($tournamentId, $teamId): void {
-                    DB::table('tournament_team_players')->insert([
-                        'tournament_id' => $tournamentId,
-                        'team_id' => $teamId,
-                        'player_id' => $playerId,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                });
+            $this->attachTournamentRoster($tournamentId, $teamId);
         }
 
-        $matches = [
-            ['A', 1, 0, 1, '2026-05-20 12:00:00', 78, 72, 'finished'],
-            ['A', 1, 2, 3, '2026-05-20 14:00:00', 77, 75, 'finished'],
-            ['A', 2, 0, 2, '2026-05-21 12:00:00', 81, 76, 'finished'],
-            ['A', 2, 1, 3, '2026-05-21 14:00:00', 74, 70, 'finished'],
-            ['A', 3, 0, 3, '2026-05-22 12:00:00', 68, 70, 'finished'],
-            ['A', 3, 1, 2, '2026-05-28 12:00:00', null, null, 'scheduled'],
-            ['B', 1, 4, 5, '2026-05-20 16:00:00', 74, 70, 'finished'],
-            ['B', 1, 6, 7, '2026-05-20 18:00:00', 79, 73, 'finished'],
-            ['B', 2, 4, 6, '2026-05-21 16:00:00', 69, 67, 'finished'],
-            ['B', 2, 5, 7, '2026-05-21 18:00:00', 83, 75, 'finished'],
-            ['B', 3, 4, 7, '2026-05-22 14:00:00', 81, 88, 'finished'],
-            ['B', 3, 5, 6, '2026-05-28 14:00:00', null, null, 'scheduled'],
+        $groupMatches = [
+            ['A', 1, 0, 1, '2026-04-17 18:00:00', 84, 76],
+            ['A', 1, 2, 3, '2026-04-17 20:00:00', 79, 71],
+            ['B', 1, 4, 5, '2026-04-18 18:00:00', 88, 82],
+            ['B', 1, 6, 7, '2026-04-18 20:00:00', 77, 69],
+            ['A', 2, 0, 2, '2026-04-20 18:00:00', 91, 83],
+            ['A', 2, 1, 3, '2026-04-20 20:00:00', 86, 72],
+            ['B', 2, 4, 6, '2026-04-22 18:00:00', 81, 74],
+            ['B', 2, 5, 7, '2026-04-22 20:00:00', 85, 78],
+            ['A', 3, 0, 3, '2026-04-24 18:00:00', 87, 75],
+            ['A', 3, 1, 2, '2026-04-24 20:00:00', 80, 74],
+            ['B', 3, 4, 7, '2026-04-25 18:00:00', 92, 79],
+            ['B', 3, 5, 6, '2026-04-25 20:00:00', 83, 76],
         ];
 
-        foreach ($matches as [$groupCode, $round, $homeIndex, $awayIndex, $scheduledAt, $homeScore, $awayScore, $status]) {
-            DB::table('matches')->insert([
-                'tournament_id' => $tournamentId,
-                'home_team_id' => $teamIds[$homeIndex],
-                'away_team_id' => $teamIds[$awayIndex],
-                'venue_id' => null,
-                'venue_slot' => 1,
-                'venue_name' => 'Main Court',
-                'stage' => 'group',
-                'group_code' => $groupCode,
-                'round_number' => $round,
-                'scheduled_at' => $scheduledAt,
-                'home_score' => $homeScore,
-                'away_score' => $awayScore,
-                'status' => $status,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+        foreach ($groupMatches as [$group, $round, $home, $away, $scheduledAt, $homeScore, $awayScore]) {
+            $this->createFinishedMatch($tournamentId, $teamIds[$home], $teamIds[$away], $scheduledAt, $homeScore, $awayScore, 'group', $group, $round);
         }
 
-        $playoffRows = [
-            [1, 'GP1-1', '2026-05-30 12:00:00'],
-            [1, 'GP1-2', '2026-05-30 14:00:00'],
-            [2, 'GP2-1', '2026-05-31 18:00:00'],
-        ];
-
-        foreach ($playoffRows as [$round, $groupCode, $scheduledAt]) {
+        foreach ([['GP1-1', '2026-04-29 18:00:00'], ['GP1-2', '2026-04-29 20:00:00'], ['GP2-1', '2026-05-02 19:00:00']] as $index => [$groupCode, $scheduledAt]) {
             DB::table('matches')->insert([
                 'tournament_id' => $tournamentId,
                 'home_team_id' => null,
                 'away_team_id' => null,
                 'venue_id' => null,
-                'venue_slot' => 1,
-                'venue_name' => 'Main Court',
+                'venue_slot' => ($index % 2) + 1,
+                'venue_name' => $index === 0 ? 'Kauno Sporto Hale' : 'VDU Prezidento Valdo Adamkaus Sporto Centras',
                 'stage' => 'playoffs',
                 'group_code' => $groupCode,
-                'round_number' => $round,
+                'round_number' => $index < 2 ? 1 : 2,
                 'scheduled_at' => $scheduledAt,
                 'home_score' => null,
                 'away_score' => null,
                 'status' => 'scheduled',
+                'quarter_length_seconds' => 600,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
         }
 
-        \App\Support\TournamentProgression::sync(\App\Models\Tournament::findOrFail($tournamentId));
+        TournamentProgression::sync(Tournament::findOrFail($tournamentId));
+
+        $semifinals = DB::table('matches')
+            ->where('tournament_id', $tournamentId)
+            ->where('stage', 'playoffs')
+            ->where('round_number', 1)
+            ->orderBy('id')
+            ->get();
+
+        $this->finishExistingMatch((int) $semifinals[0]->id, 89, 81);
+        $this->finishExistingMatch((int) $semifinals[1]->id, 78, 82);
+
+        TournamentProgression::sync(Tournament::findOrFail($tournamentId));
+
+        $final = DB::table('matches')
+            ->where('tournament_id', $tournamentId)
+            ->where('stage', 'playoffs')
+            ->where('round_number', 2)
+            ->first();
+
+        $this->finishExistingMatch((int) $final->id, 94, 88);
+        TournamentProgression::sync(Tournament::findOrFail($tournamentId));
     }
 
-    private function seedRemainingLiveDemoMatches(int $tournamentId, array $groups): void
+    private function createFutureTournamentWithRequests(int $adminId, int $managerId, array $teamIds): void
     {
-        $pairings = [[0, 1], [2, 3], [0, 2], [1, 3], [0, 3], [1, 2]];
-        $slotIndex = 1;
+        $tournamentId = DB::table('tournaments')->insertGetId([
+            'name' => 'Lithuanian Summer Cup 2026',
+            'banner_url' => 'https://images.unsplash.com/photo-1504450758481-7338eba7524a?auto=format&fit=crop&w=1600&q=80',
+            'start_date' => '2026-08-03',
+            'end_date' => '2026-08-17',
+            'format' => 'groups_playoffs',
+            'status' => 'draft',
+            'created_by' => $adminId,
+            'max_teams' => 8,
+            'group_size' => 4,
+            'group_advance_count' => 2,
+            'duration_weeks' => 3,
+            'allowed_days' => json_encode([1, 2, 4, 6]),
+            'time_slots' => json_encode(['18:30', '20:30']),
+            'venue_name' => 'Avia Solutions Group Arena',
+            'venues_count' => 2,
+            'venue_names' => json_encode(['Avia Solutions Group Arena', 'Jeep Arena']),
+            'playoff_round_gap_days' => 2,
+            'groups_to_playoffs_gap_days' => 2,
+            'group_games_per_day' => 2,
+            'stage_day_gap_days' => 1,
+            'registration_deadline' => '2026-07-24',
+            'participants_locked' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
-        foreach ($groups as $groupIndex => $teamIds) {
-            $groupCode = chr(ord('A') + $groupIndex);
-            foreach ($pairings as $roundIndex => [$homeIndex, $awayIndex]) {
-                if ($groupCode === 'A' && $homeIndex === 0 && $awayIndex === 3) {
-                    continue;
-                }
-
-                $scheduledAt = now()
-                    ->setDate(2026, 5, 5)
-                    ->startOfDay()
-                    ->addDays(intdiv($slotIndex, 4))
-                    ->addHours(12 + (($slotIndex % 4) * 2));
-
-                DB::table('matches')->insert([
-                    'tournament_id' => $tournamentId,
-                    'home_team_id' => $teamIds[$homeIndex],
-                    'away_team_id' => $teamIds[$awayIndex],
-                    'venue_id' => null,
-                    'venue_slot' => 1,
-                    'venue_name' => 'Main Court',
-                    'stage' => 'group',
-                    'group_code' => $groupCode,
-                    'round_number' => $roundIndex + 1,
-                    'scheduled_at' => $scheduledAt->toDateTimeString(),
-                    'home_score' => null,
-                    'away_score' => null,
-                    'status' => 'scheduled',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-
-                $slotIndex++;
-            }
+        foreach (array_slice($teamIds, 0, 8) as $index => $teamId) {
+            DB::table('tournament_participation_requests')->insert([
+                'tournament_id' => $tournamentId,
+                'team_id' => $teamId,
+                'manager_id' => $managerId,
+                'status' => 'pending',
+                'note' => $this->requestNote($index),
+                'reviewed_by' => null,
+                'reviewed_at' => null,
+                'created_at' => now()->subDays(7 - min($index, 6))->addMinutes($index * 17),
+                'updated_at' => now()->subDays(7 - min($index, 6))->addMinutes($index * 17),
+            ]);
         }
     }
 
-    private function liveDemoEvents(int $homeTeamId, int $awayTeamId, string $scheduledAt): array
-    {
-        $home = DB::table('players')->where('team_id', $homeTeamId)->orderBy('jersey_number')->limit(8)->pluck('id')->values();
-        $away = DB::table('players')->where('team_id', $awayTeamId)->orderBy('jersey_number')->limit(8)->pluck('id')->values();
-        $p = [
-            'h1' => $home[0], 'h2' => $home[1], 'h3' => $home[2], 'h4' => $home[3],
-            'h5' => $home[4], 'h6' => $home[5], 'h7' => $home[6], 'h8' => $home[7],
-            'a1' => $away[0], 'a2' => $away[1], 'a3' => $away[2], 'a4' => $away[3],
-            'a5' => $away[4], 'a6' => $away[5], 'a7' => $away[6], 'a8' => $away[7],
-        ];
+    private function createFinishedMatch(
+        int $tournamentId,
+        int $homeTeamId,
+        int $awayTeamId,
+        string $scheduledAt,
+        int $homeScore,
+        int $awayScore,
+        string $stage,
+        ?string $groupCode,
+        int $round
+    ): int {
+        $events = $this->generateEvents($homeTeamId, $awayTeamId, $homeScore, $awayScore, $scheduledAt);
+        $matchId = DB::table('matches')->insertGetId([
+            'tournament_id' => $tournamentId,
+            'home_team_id' => $homeTeamId,
+            'away_team_id' => $awayTeamId,
+            'venue_id' => null,
+            'venue_slot' => $round % 2 === 0 ? 2 : 1,
+            'venue_name' => $round % 2 === 0 ? 'VDU Prezidento Valdo Adamkaus Sporto Centras' : 'Kauno Sporto Hale',
+            'stage' => $stage,
+            'group_code' => $groupCode,
+            'round_number' => $round,
+            'scheduled_at' => $scheduledAt,
+            'home_score' => $homeScore,
+            'away_score' => $awayScore,
+            'status' => 'finished',
+            'live_events' => json_encode($events),
+            'quarter_length_seconds' => 600,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
-        $events = [];
-        $eventNo = 1;
-        $baseTime = \Illuminate\Support\Carbon::parse($scheduledAt);
-        $clock = fn (int $elapsed) => gmdate('i:s', max(0, 600 - $elapsed));
-        $add = function (array $event) use (&$events, &$eventNo, $baseTime): void {
-            $quarter = (int) $event['quarter'];
-            $elapsed = (int) $event['elapsed'];
-            $event['id'] = 'seed-live-' . str_pad((string) $eventNo, 3, '0', STR_PAD_LEFT);
-            $event['createdAt'] = $baseTime->copy()->addSeconds((($quarter - 1) * 600) + $elapsed)->toIso8601String();
-            $events[] = $event;
-            $eventNo++;
-        };
-        $shot = function (int $q, int $e, string $side, int $player, int $points, bool $made, ?int $assist = null, ?int $rebound = null) use ($add, $clock): void {
-            $add(array_filter([
-                'type' => 'shot',
-                'quarter' => $q,
-                'clock' => $clock($e),
-                'elapsed' => $e,
-                'teamSide' => $side,
-                'playerId' => $player,
-                'points' => $points,
-                'made' => $made,
-                'assistPlayerId' => $assist,
-                'reboundPlayerId' => $rebound,
-            ], fn ($value) => $value !== null));
-        };
-        $ft = function (int $q, int $e, string $side, int $player, bool $made, ?int $rebound = null) use ($add, $clock): void {
-            $add(array_filter([
-                'type' => 'free_throw',
-                'quarter' => $q,
-                'clock' => $clock($e),
-                'elapsed' => $e,
-                'teamSide' => $side,
-                'playerId' => $player,
-                'made' => $made,
-                'reboundPlayerId' => $rebound,
-            ], fn ($value) => $value !== null));
-        };
-        $simple = fn (string $type, int $q, int $e, ?string $side, array $extra = []) => $add(array_merge([
-            'type' => $type,
-            'quarter' => $q,
-            'clock' => $clock($e),
-            'elapsed' => $e,
-            'teamSide' => $side,
-        ], $extra));
+        $this->createBoxScore($matchId, $homeTeamId, $awayTeamId, $homeScore, $awayScore);
 
-        $shot(1, 18, 'away', $p['a2'], 3, true, $p['a1']);
-        $shot(1, 41, 'home', $p['h2'], 3, false, null, $p['a5']);
-        $simple('rebound', 1, 45, 'away', ['playerId' => $p['a5']]);
-        $shot(1, 70, 'away', $p['a1'], 3, true, $p['a3']);
-        $simple('steal', 1, 95, 'away', ['playerId' => $p['a3'], 'turnoverPlayerId' => $p['h1']]);
-        $shot(1, 101, 'away', $p['a3'], 2, true, $p['a3']);
-        $shot(1, 130, 'home', $p['h1'], 2, true, $p['h5']);
-        $shot(1, 156, 'away', $p['a4'], 2, true, $p['a2']);
-        $simple('turnover', 1, 184, 'home', ['playerId' => $p['h4']]);
-        $shot(1, 213, 'home', $p['h3'], 3, true, $p['h2']);
-        $simple('block', 1, 239, 'home', ['blockerId' => $p['h6'], 'shooterId' => $p['a1'], 'shotPoints' => 2]);
-        $shot(1, 263, 'home', $p['h5'], 2, true, $p['h1']);
-        $shot(1, 292, 'away', $p['a6'], 3, false, null, $p['h5']);
-        $shot(1, 318, 'home', $p['h2'], 2, true, $p['h3']);
-        $shot(1, 345, 'home', $p['h1'], 3, true, $p['h2']);
-        $simple('foul', 1, 372, 'away', ['playerId' => $p['a4']]);
-        $ft(1, 377, 'home', $p['h1'], true);
-        $ft(1, 381, 'home', $p['h1'], true);
-        $shot(1, 418, 'away', $p['a1'], 2, true, $p['a5']);
-        $simple('substitution', 1, 438, 'home', ['outPlayerId' => $p['h4'], 'inPlayerId' => $p['h7']]);
-        $shot(1, 464, 'home', $p['h7'], 3, true, $p['h3']);
-        $shot(1, 501, 'away', $p['a2'], 3, true, $p['a1']);
-        $shot(1, 533, 'home', $p['h6'], 2, true, $p['h1']);
-        $shot(1, 566, 'away', $p['a5'], 2, true, $p['a2']);
-        $shot(1, 591, 'home', $p['h2'], 2, true, $p['h7']);
-        $simple('quarter_end', 1, 600, null);
-
-        $shot(2, 24, 'home', $p['h1'], 3, false, null, $p['a5']);
-        $shot(2, 49, 'away', $p['a2'], 2, true, $p['a1']);
-        $simple('foul', 2, 71, 'home', ['playerId' => $p['h5']]);
-        $ft(2, 75, 'away', $p['a5'], false, $p['a5']);
-        $simple('rebound', 2, 77, 'away', ['playerId' => $p['a5']]);
-        $shot(2, 83, 'away', $p['a1'], 3, true, $p['a2']);
-        $shot(2, 120, 'home', $p['h3'], 2, false, null, $p['a3']);
-        $shot(2, 149, 'away', $p['a3'], 2, true, $p['a4']);
-        $simple('turnover', 2, 178, 'home', ['playerId' => $p['h2']]);
-        $shot(2, 206, 'away', $p['a6'], 2, true, $p['a1']);
-        $shot(2, 236, 'home', $p['h7'], 3, false, null, $p['a7']);
-        $shot(2, 261, 'away', $p['a4'], 3, true, $p['a2']);
-        $simple('substitution', 2, 288, 'away', ['outPlayerId' => $p['a4'], 'inPlayerId' => $p['a8']]);
-        $shot(2, 313, 'home', $p['h5'], 2, true, $p['h1']);
-        $shot(2, 339, 'home', $p['h1'], 2, true, $p['h3']);
-        $simple('steal', 2, 363, 'home', ['playerId' => $p['h2'], 'turnoverPlayerId' => $p['a8']]);
-        $shot(2, 370, 'home', $p['h2'], 3, true, $p['h1']);
-        $shot(2, 405, 'away', $p['a2'], 3, false, null, $p['h6']);
-        $shot(2, 431, 'home', $p['h6'], 2, true, $p['h5']);
-        $shot(2, 459, 'away', $p['a8'], 2, true, $p['a1']);
-        $shot(2, 486, 'home', $p['h4'], 2, true, $p['h2']);
-        $simple('block', 2, 516, 'away', ['blockerId' => $p['a5'], 'shooterId' => $p['h1'], 'shotPoints' => 2]);
-        $shot(2, 539, 'away', $p['a1'], 2, true, $p['a3']);
-        $ft(2, 561, 'home', $p['h3'], true);
-        $ft(2, 565, 'home', $p['h3'], true);
-        $shot(2, 589, 'away', $p['a3'], 2, true, $p['a2']);
-        $simple('quarter_end', 2, 600, null);
-
-        $simple('steal', 3, 20, 'home', ['playerId' => $p['h1'], 'turnoverPlayerId' => $p['a2']]);
-        $shot(3, 29, 'home', $p['h2'], 3, true, $p['h1']);
-        $shot(3, 58, 'away', $p['a1'], 3, false, null, $p['h5']);
-        $shot(3, 83, 'home', $p['h1'], 2, true, $p['h5']);
-        $shot(3, 112, 'away', $p['a2'], 2, false, null, $p['h6']);
-        $shot(3, 139, 'home', $p['h3'], 3, true, $p['h2']);
-        $shot(3, 170, 'away', $p['a4'], 3, false, null, $p['h3']);
-        $shot(3, 198, 'home', $p['h5'], 2, true, $p['h1']);
-        $shot(3, 226, 'home', $p['h1'], 3, true, $p['h2']);
-        $simple('foul', 3, 248, 'away', ['playerId' => $p['a5']]);
-        $ft(3, 253, 'home', $p['h6'], true);
-        $shot(3, 281, 'away', $p['a3'], 2, true, $p['a1']);
-        $shot(3, 308, 'home', $p['h4'], 2, true, $p['h3']);
-        $shot(3, 336, 'away', $p['a1'], 3, true, $p['a2']);
-        $shot(3, 365, 'home', $p['h7'], 2, false, null, $p['h7']);
-        $simple('rebound', 3, 367, 'home', ['playerId' => $p['h7']]);
-        $shot(3, 373, 'home', $p['h7'], 2, true, $p['h7']);
-        $shot(3, 402, 'away', $p['a6'], 2, true, $p['a3']);
-        $simple('turnover', 3, 427, 'home', ['playerId' => $p['h3']]);
-        $shot(3, 449, 'away', $p['a2'], 3, true, $p['a4']);
-        $shot(3, 482, 'home', $p['h1'], 2, true, $p['h5']);
-        $shot(3, 511, 'away', $p['a5'], 2, true, $p['a1']);
-        $shot(3, 540, 'home', $p['h2'], 2, true, $p['h1']);
-        $ft(3, 568, 'away', $p['a3'], true);
-        $ft(3, 572, 'away', $p['a3'], true);
-        $shot(3, 594, 'home', $p['h8'], 2, true, $p['h4']);
-        $simple('quarter_end', 3, 600, null);
-
-        $shot(4, 22, 'away', $p['a2'], 3, true, $p['a1']);
-        $shot(4, 51, 'home', $p['h5'], 2, false, null, $p['a5']);
-        $shot(4, 77, 'away', $p['a4'], 2, true, $p['a2']);
-        $shot(4, 108, 'home', $p['h1'], 3, true, $p['h2']);
-        $shot(4, 139, 'away', $p['a1'], 2, true, $p['a3']);
-        $simple('foul', 4, 166, 'home', ['playerId' => $p['h4']]);
-        $ft(4, 171, 'away', $p['a1'], true);
-        $ft(4, 175, 'away', $p['a1'], false, $p['h6']);
-        $shot(4, 204, 'home', $p['h3'], 2, true, $p['h1']);
-        $simple('block', 4, 232, 'home', ['blockerId' => $p['h6'], 'shooterId' => $p['a2'], 'shotPoints' => 3]);
-        $shot(4, 257, 'home', $p['h2'], 3, true, $p['h1']);
-        $shot(4, 285, 'away', $p['a3'], 2, true, $p['a2']);
-        $shot(4, 312, 'home', $p['h6'], 2, true, $p['h5']);
-        $shot(4, 340, 'away', $p['a5'], 2, true, $p['a1']);
-        $simple('steal', 4, 366, 'away', ['playerId' => $p['a2'], 'turnoverPlayerId' => $p['h2']]);
-        $shot(4, 374, 'away', $p['a2'], 3, true, $p['a2']);
-        $shot(4, 408, 'home', $p['h7'], 2, true, $p['h3']);
-        $shot(4, 438, 'away', $p['a1'], 2, false, null, $p['h5']);
-        $shot(4, 448, 'away', $p['a2'], 3, true, $p['a1']);
-        $shot(4, 456, 'away', $p['a1'], 2, true, $p['a3']);
-        $shot(4, 466, 'home', $p['h4'], 2, true, $p['h1']);
-        $shot(4, 472, 'home', $p['h1'], 2, true, $p['h2']);
-        $shot(4, 486, 'home', $p['h2'], 3, true, $p['h1']);
-        $shot(4, 496, 'away', $p['a8'], 2, true, $p['a3']);
-        $shot(4, 504, 'away', $p['a3'], 3, true, $p['a2']);
-        $simple('turnover', 4, 520, 'away', ['playerId' => $p['a4']]);
-        $shot(4, 532, 'home', $p['h5'], 2, true, $p['h1']);
-        $ft(4, 542, 'home', $p['h1'], true);
-        $ft(4, 546, 'home', $p['h1'], true);
-        $shot(4, 552, 'away', $p['a2'], 3, true, $p['a4']);
-        $shot(4, 562, 'away', $p['a3'], 3, false, null, $p['h5']);
-        $shot(4, 568, 'home', $p['h3'], 3, true, $p['h2']);
-        $shot(4, 570, 'away', $p['a1'], 3, true, $p['a2']);
-        $ft(4, 574, 'home', $p['h2'], true);
-        $ft(4, 578, 'home', $p['h2'], true);
-        $simple('quarter_end', 4, 600, null);
-
-        return $events;
+        return $matchId;
     }
 
-    private function seedLiveDemoBoxScore(int $matchId, int $homeTeamId, int $awayTeamId): void
+    private function finishExistingMatch(int $matchId, int $homeScore, int $awayScore): void
     {
-        $home = DB::table('players')->where('team_id', $homeTeamId)->orderBy('jersey_number')->limit(8)->pluck('id')->values();
-        $away = DB::table('players')->where('team_id', $awayTeamId)->orderBy('jersey_number')->limit(8)->pluck('id')->values();
-        $rows = [
-            [$home[0], $homeTeamId, 37, 2220, 22, 6, 8, 1, 0, 2, 8, 19, 2, 7, 4, 4, 3],
-            [$home[1], $homeTeamId, 35, 2100, 20, 4, 6, 2, 0, 3, 7, 16, 4, 8, 2, 2, 4],
-            [$home[2], $homeTeamId, 32, 1920, 13, 5, 5, 0, 0, 2, 4, 11, 2, 5, 3, 4, 3],
-            [$home[3], $homeTeamId, 28, 1680, 8, 3, 2, 0, 0, 4, 4, 8, 0, 1, 0, 0, 2],
-            [$home[4], $homeTeamId, 29, 1740, 8, 13, 4, 0, 0, 3, 4, 9, 0, 1, 0, 0, 1],
-            [$home[5], $homeTeamId, 24, 1440, 7, 10, 2, 0, 3, 2, 3, 7, 0, 1, 1, 2, 1],
-            [$home[6], $homeTeamId, 10, 600, 6, 4, 2, 0, 0, 1, 2, 6, 1, 3, 1, 2, 1],
-            [$home[7], $homeTeamId, 5, 300, 2, 1, 1, 0, 0, 1, 1, 2, 0, 0, 0, 0, 0],
-            [$away[0], $awayTeamId, 38, 2280, 21, 4, 8, 0, 0, 3, 8, 18, 3, 7, 2, 4, 2],
-            [$away[1], $awayTeamId, 36, 2160, 20, 5, 7, 2, 0, 2, 7, 17, 4, 9, 2, 2, 3],
-            [$away[2], $awayTeamId, 33, 1980, 13, 7, 4, 1, 0, 3, 5, 13, 0, 3, 3, 4, 2],
-            [$away[3], $awayTeamId, 29, 1740, 9, 4, 3, 0, 0, 4, 4, 11, 1, 4, 0, 0, 4],
-            [$away[4], $awayTeamId, 28, 1680, 7, 15, 2, 0, 1, 5, 3, 8, 0, 0, 1, 4, 2],
-            [$away[5], $awayTeamId, 21, 1260, 7, 3, 2, 0, 0, 2, 3, 7, 1, 3, 0, 0, 1],
-            [$away[6], $awayTeamId, 8, 480, 0, 3, 1, 0, 0, 1, 0, 3, 0, 2, 0, 0, 0],
-            [$away[7], $awayTeamId, 7, 420, 3, 2, 1, 0, 0, 1, 1, 4, 0, 0, 1, 2, 2],
+        $match = DB::table('matches')->where('id', $matchId)->first();
+        $events = $this->generateEvents((int) $match->home_team_id, (int) $match->away_team_id, $homeScore, $awayScore, (string) $match->scheduled_at);
+
+        DB::table('matches')->where('id', $matchId)->update([
+            'home_score' => $homeScore,
+            'away_score' => $awayScore,
+            'status' => 'finished',
+            'live_events' => json_encode($events),
+            'updated_at' => now(),
+        ]);
+
+        $this->createBoxScore($matchId, (int) $match->home_team_id, (int) $match->away_team_id, $homeScore, $awayScore);
+    }
+
+    private function attachTournamentRoster(int $tournamentId, int $teamId): void
+    {
+        DB::table('players')
+            ->where('team_id', $teamId)
+            ->orderBy('jersey_number')
+            ->pluck('id')
+            ->each(function ($playerId) use ($tournamentId, $teamId): void {
+                DB::table('tournament_team_players')->insert([
+                    'tournament_id' => $tournamentId,
+                    'team_id' => $teamId,
+                    'player_id' => $playerId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            });
+    }
+
+    private function generateEvents(int $homeTeamId, int $awayTeamId, int $homeScore, int $awayScore, string $scheduledAt): array
+    {
+        $homePlayers = DB::table('players')->where('team_id', $homeTeamId)->orderBy('jersey_number')->pluck('id')->values()->all();
+        $awayPlayers = DB::table('players')->where('team_id', $awayTeamId)->orderBy('jersey_number')->pluck('id')->values()->all();
+        $homeShots = $this->scoringPlays($homeScore, $homePlayers);
+        $awayShots = $this->scoringPlays($awayScore, $awayPlayers);
+        $events = [];
+        $base = Carbon::parse($scheduledAt);
+        $eventNo = 1;
+        $homeIndex = 0;
+        $awayIndex = 0;
+        $script = $this->gameScript($homeScore, $awayScore, $homeTeamId, $awayTeamId);
+        $totalMadeShots = count($homeShots) + count($awayShots);
+        $madeShotNo = 0;
+
+        foreach ($script as $phase) {
+            [$phaseSide, $madeCount, $startSecond, $endSecond] = $phase;
+            for ($i = 0; $i < $madeCount; $i++) {
+                $side = $phaseSide;
+                if ($side === 'home' && $homeIndex >= count($homeShots)) {
+                    $side = 'away';
+                }
+                if ($side === 'away' && $awayIndex >= count($awayShots)) {
+                    $side = 'home';
+                }
+                if (($side === 'home' && $homeIndex >= count($homeShots)) || ($side === 'away' && $awayIndex >= count($awayShots))) {
+                    continue;
+                }
+
+                $shot = $side === 'home' ? $homeShots[$homeIndex++] : $awayShots[$awayIndex++];
+                $madeShotNo++;
+                $window = max(1, $endSecond - $startSecond);
+                $absoluteSecond = $startSecond + (int) round((($i + 1) / ($madeCount + 1)) * $window);
+                $absoluteSecond += (($madeShotNo * 11) + $homeTeamId + $awayTeamId) % 19 - 9;
+                $absoluteSecond = max(8, min(2392, $absoluteSecond));
+                [$quarter, $elapsed] = $this->clockFromAbsoluteSecond($absoluteSecond);
+                $players = $side === 'home' ? $homePlayers : $awayPlayers;
+                $defenders = $side === 'home' ? $awayPlayers : $homePlayers;
+
+                if ($madeShotNo % 5 === 0) {
+                    $missSecond = max(5, $absoluteSecond - 16);
+                    [$missQuarter, $missElapsed] = $this->clockFromAbsoluteSecond($missSecond);
+                    $events[] = $this->eventRow($eventNo++, 'shot', $missQuarter, $missElapsed, $side, $base, [
+                        'playerId' => $players[($madeShotNo + 3) % count($players)],
+                        'points' => $shot['points'] === 3 ? 3 : 2,
+                        'made' => false,
+                    ]);
+                    $events[] = $this->eventRow($eventNo++, 'rebound', $missQuarter, min(599, $missElapsed + 4), $side === 'home' ? 'away' : 'home', $base, [
+                        'playerId' => $defenders[($madeShotNo + 1) % count($defenders)],
+                    ]);
+                }
+
+                if ($madeShotNo % 7 === 0) {
+                    $foulSecond = max(6, $absoluteSecond - 9);
+                    [$foulQuarter, $foulElapsed] = $this->clockFromAbsoluteSecond($foulSecond);
+                    $events[] = $this->eventRow($eventNo++, 'foul', $foulQuarter, $foulElapsed, $side === 'home' ? 'away' : 'home', $base, [
+                        'playerId' => $defenders[($madeShotNo + 4) % count($defenders)],
+                    ]);
+                }
+
+                if ($madeShotNo % 9 === 0) {
+                    $turnoverSecond = max(6, $absoluteSecond - 23);
+                    [$turnoverQuarter, $turnoverElapsed] = $this->clockFromAbsoluteSecond($turnoverSecond);
+                    $events[] = $this->eventRow($eventNo++, 'turnover', $turnoverQuarter, $turnoverElapsed, $side === 'home' ? 'away' : 'home', $base, [
+                        'playerId' => $defenders[($madeShotNo + 2) % count($defenders)],
+                    ]);
+                    $events[] = $this->eventRow($eventNo++, 'steal', $turnoverQuarter, min(599, $turnoverElapsed + 2), $side, $base, [
+                        'playerId' => $players[($madeShotNo + 5) % count($players)],
+                    ]);
+                }
+
+                $events[] = $this->eventRow($eventNo++, 'shot', $quarter, $elapsed, $side, $base, [
+                    'playerId' => $shot['player_id'],
+                    'points' => $shot['points'],
+                    'made' => true,
+                    'assistPlayerId' => $shot['assist_id'],
+                ]);
+            }
+        }
+
+        while ($homeIndex < count($homeShots) || $awayIndex < count($awayShots)) {
+            $side = $homeIndex < count($homeShots) ? 'home' : 'away';
+            $shot = $side === 'home' ? $homeShots[$homeIndex++] : $awayShots[$awayIndex++];
+            $madeShotNo++;
+            $absoluteSecond = min(2390, 2120 + (($madeShotNo * 17) % 240));
+            [$quarter, $elapsed] = $this->clockFromAbsoluteSecond($absoluteSecond);
+            $events[] = $this->eventRow($eventNo++, 'shot', $quarter, $elapsed, $side, $base, [
+                'playerId' => $shot['player_id'],
+                'points' => $shot['points'],
+                'made' => true,
+                'assistPlayerId' => $shot['assist_id'],
+            ]);
+        }
+
+        for ($quarter = 1; $quarter <= 4; $quarter++) {
+            $events[] = $this->eventRow($eventNo++, 'quarter_end', $quarter, 600, null, $base, []);
+        }
+
+        usort($events, fn (array $left, array $right) => [
+            $left['quarter'],
+            $left['elapsed'],
+            $left['id'],
+        ] <=> [
+            $right['quarter'],
+            $right['elapsed'],
+            $right['id'],
+        ]);
+
+        return array_values($events);
+    }
+
+    private function gameScript(int $homeScore, int $awayScore, int $homeTeamId, int $awayTeamId): array
+    {
+        $homePlays = count($this->scoringPlays($homeScore, range(1, 10)));
+        $awayPlays = count($this->scoringPlays($awayScore, range(1, 10)));
+        $homeLead = $homeScore > $awayScore;
+        $diff = abs($homeScore - $awayScore);
+        $winner = $homeLead ? 'home' : 'away';
+        $loser = $homeLead ? 'away' : 'home';
+        $homeChunks = $this->splitCounts($homePlays, $diff >= 12 ? [3, 2, 4, 4, 3, 5, 5, 3] : [3, 4, 3, 5, 4, 3, 4, 4]);
+        $awayChunks = $this->splitCounts($awayPlays, $diff >= 12 ? [2, 4, 2, 3, 2, 3, 2, 2] : [4, 2, 4, 2, 5, 4, 2, 3]);
+        $windows = [
+            [30, 260], [275, 545], [640, 870], [885, 1160],
+            [1240, 1460], [1480, 1735], [1820, 2070], [2095, 2360],
         ];
 
-        foreach ($rows as $row) {
-            [$playerId, $teamId, $minutes, $seconds, $points, $rebounds, $assists, $steals, $blocks, $fouls, $fgm, $fga, $tpm, $tpa, $ftm, $fta, $turnovers] = $row;
+        if (($homeTeamId + $awayTeamId) % 3 === 0 && $diff < 12) {
+            $order = [
+                ['home', $homeChunks[0], $windows[0][0], $windows[0][1]],
+                ['away', $awayChunks[0] + $awayChunks[1], $windows[1][0], $windows[1][1]],
+                ['home', $homeChunks[1] + $homeChunks[2], $windows[2][0], $windows[2][1]],
+                ['away', $awayChunks[2], $windows[3][0], $windows[3][1]],
+                ['away', $awayChunks[3] + $awayChunks[4], $windows[4][0], $windows[4][1]],
+                ['home', $homeChunks[3] + $homeChunks[4], $windows[5][0], $windows[5][1]],
+                [$winner, $winner === 'home' ? $homeChunks[5] : $awayChunks[5], $windows[6][0], $windows[6][1]],
+                [$winner, $winner === 'home' ? $homeChunks[6] + $homeChunks[7] : $awayChunks[6] + $awayChunks[7], $windows[7][0], $windows[7][1]],
+            ];
+        } elseif ($diff >= 12) {
+            $order = [
+                [$winner, $winner === 'home' ? $homeChunks[0] + $homeChunks[1] : $awayChunks[0] + $awayChunks[1], $windows[0][0], $windows[0][1]],
+                [$loser, $loser === 'home' ? $homeChunks[0] : $awayChunks[0], $windows[1][0], $windows[1][1]],
+                [$winner, $winner === 'home' ? $homeChunks[2] : $awayChunks[2], $windows[2][0], $windows[2][1]],
+                [$winner, $winner === 'home' ? $homeChunks[3] : $awayChunks[3], $windows[3][0], $windows[3][1]],
+                [$loser, $loser === 'home' ? $homeChunks[1] + $homeChunks[2] : $awayChunks[1] + $awayChunks[2], $windows[4][0], $windows[4][1]],
+                [$winner, $winner === 'home' ? $homeChunks[4] + $homeChunks[5] : $awayChunks[4] + $awayChunks[5], $windows[5][0], $windows[5][1]],
+                [$loser, $loser === 'home' ? $homeChunks[3] : $awayChunks[3], $windows[6][0], $windows[6][1]],
+                [$winner, $winner === 'home' ? $homeChunks[6] + $homeChunks[7] : $awayChunks[6] + $awayChunks[7], $windows[7][0], $windows[7][1]],
+            ];
+        } else {
+            $order = [
+                ['away', $awayChunks[0], $windows[0][0], $windows[0][1]],
+                ['home', $homeChunks[0] + $homeChunks[1], $windows[1][0], $windows[1][1]],
+                ['away', $awayChunks[1] + $awayChunks[2], $windows[2][0], $windows[2][1]],
+                ['home', $homeChunks[2], $windows[3][0], $windows[3][1]],
+                [$loser, $loser === 'home' ? $homeChunks[3] + $homeChunks[4] : $awayChunks[3] + $awayChunks[4], $windows[4][0], $windows[4][1]],
+                [$winner, $winner === 'home' ? $homeChunks[5] : $awayChunks[5], $windows[5][0], $windows[5][1]],
+                [$loser, $loser === 'home' ? $homeChunks[5] : $awayChunks[5], $windows[6][0], $windows[6][1]],
+                [$winner, $winner === 'home' ? $homeChunks[6] + $homeChunks[7] : $awayChunks[6] + $awayChunks[7], $windows[7][0], $windows[7][1]],
+            ];
+        }
+
+        return array_values(array_filter($order, fn (array $phase) => $phase[1] > 0));
+    }
+
+    private function splitCounts(int $total, array $weights): array
+    {
+        $sum = array_sum($weights);
+        $chunks = [];
+        $assigned = 0;
+
+        foreach ($weights as $weight) {
+            $value = (int) floor($total * $weight / $sum);
+            $chunks[] = $value;
+            $assigned += $value;
+        }
+
+        $index = 0;
+        while ($assigned < $total) {
+            $chunks[$index % count($chunks)]++;
+            $assigned++;
+            $index++;
+        }
+
+        return $chunks;
+    }
+
+    private function clockFromAbsoluteSecond(int $absoluteSecond): array
+    {
+        $absoluteSecond = max(0, min(2399, $absoluteSecond));
+        $quarter = intdiv($absoluteSecond, 600) + 1;
+        $elapsed = $absoluteSecond % 600;
+
+        return [$quarter, $elapsed];
+    }
+
+    private function scoringPlays(int $score, array $playerIds): array
+    {
+        $plays = [];
+        $remaining = $score;
+        $index = 0;
+
+        while ($remaining > 0) {
+            $points = $remaining >= 3 && ($index % 4 === 0 || $remaining === 3) ? 3 : 2;
+            if ($remaining === 1) {
+                $points = 1;
+            }
+            if ($remaining - $points < 0) {
+                $points = $remaining;
+            }
+
+            $plays[] = [
+                'points' => $points,
+                'player_id' => $playerIds[$index % count($playerIds)],
+                'assist_id' => $points > 1 ? $playerIds[($index + 2) % count($playerIds)] : null,
+            ];
+            $remaining -= $points;
+            $index++;
+        }
+
+        return $plays;
+    }
+
+    private function eventRow(int $id, string $type, int $quarter, int $elapsed, ?string $side, Carbon $base, array $extra): array
+    {
+        return array_filter(array_merge([
+            'id' => 'seed-' . str_pad((string) $id, 4, '0', STR_PAD_LEFT),
+            'type' => $type,
+            'quarter' => $quarter,
+            'clock' => gmdate('i:s', max(0, 600 - $elapsed)),
+            'elapsed' => $elapsed,
+            'teamSide' => $side,
+            'createdAt' => $base->copy()->addSeconds((($quarter - 1) * 600) + $elapsed)->toIso8601String(),
+        ], $extra), fn ($value) => $value !== null);
+    }
+
+    private function createBoxScore(int $matchId, int $homeTeamId, int $awayTeamId, int $homeScore, int $awayScore): void
+    {
+        DB::table('match_player_stats')->where('match_id', $matchId)->delete();
+        $this->createTeamBoxScore($matchId, $homeTeamId, $homeScore, true);
+        $this->createTeamBoxScore($matchId, $awayTeamId, $awayScore, false);
+    }
+
+    private function createTeamBoxScore(int $matchId, int $teamId, int $score, bool $home): void
+    {
+        $players = DB::table('players')->where('team_id', $teamId)->orderBy('jersey_number')->pluck('id')->values()->all();
+        $points = $this->pointDistribution($score, count($players));
+
+        foreach ($players as $index => $playerId) {
+            $playerPoints = $points[$index] ?? 0;
+            $madeTwos = intdiv(max(0, $playerPoints - ($index % 3 === 0 ? 3 : 0)), 2);
+            $madeThrees = $playerPoints >= 9 && $index % 3 === 0 ? 1 : 0;
+            $freeThrows = max(0, $playerPoints - ($madeTwos * 2) - ($madeThrees * 3));
+
             DB::table('match_player_stats')->insert([
                 'match_id' => $matchId,
                 'player_id' => $playerId,
                 'team_id' => $teamId,
-                'minutes' => $minutes,
-                'played_seconds' => $seconds,
+                'minutes' => max(8, 34 - ($index * 2)),
+                'played_seconds' => max(480, (34 - ($index * 2)) * 60),
                 'dnp' => false,
-                'fouled_out' => $fouls >= 5,
-                'points' => $points,
-                'rebounds' => $rebounds,
-                'assists' => $assists,
-                'steals' => $steals,
-                'blocks' => $blocks,
-                'fouls' => $fouls,
-                'turnovers' => $turnovers,
-                'fgm' => $fgm,
-                'fga' => $fga,
-                'tpm' => $tpm,
-                'tpa' => $tpa,
-                'ftm' => $ftm,
-                'fta' => $fta,
+                'fouled_out' => $index === 4 && !$home,
+                'points' => $playerPoints,
+                'rebounds' => 2 + (($index * 3 + ($home ? 1 : 2)) % 9),
+                'assists' => ($index * 2 + ($home ? 2 : 1)) % 8,
+                'steals' => $index % 4 === 0 ? 2 : ($index % 3 === 0 ? 1 : 0),
+                'blocks' => $index % 5 === 0 ? 1 : 0,
+                'fouls' => min(5, 1 + (($index + ($home ? 0 : 1)) % 4)),
+                'turnovers' => ($index + 1) % 4,
+                'fgm' => $madeTwos + $madeThrees,
+                'fga' => $madeTwos + $madeThrees + 2 + ($index % 3),
+                'tpm' => $madeThrees,
+                'tpa' => $madeThrees + ($index % 3),
+                'ftm' => $freeThrows,
+                'fta' => $freeThrows + ($index % 2),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
         }
+    }
+
+    private function pointDistribution(int $score, int $count): array
+    {
+        $weights = [18, 15, 13, 11, 10, 9, 8, 7, 5, 4];
+        $sum = array_sum(array_slice($weights, 0, $count));
+        $points = [];
+        $assigned = 0;
+
+        for ($i = 0; $i < $count; $i++) {
+            $value = (int) floor($score * $weights[$i] / $sum);
+            $points[] = $value;
+            $assigned += $value;
+        }
+
+        $i = 0;
+        while ($assigned < $score) {
+            $points[$i % $count]++;
+            $assigned++;
+            $i++;
+        }
+
+        return $points;
+    }
+
+    private function requestNote(int $index): string
+    {
+        $notes = [
+            'Komanda pasirengusi dalyvauti, sudetis suformuota.',
+            'Norime dalyvauti vasaros turnyre ir zaisti Vilniuje.',
+            'Registruojame komanda, zaideju sarasas bus patikslintas iki termino.',
+            'Komanda turi pilna sudeti ir gali zaisti vakarais.',
+            'Prasome patvirtinti dalyvavima, arena ir laikai tinka.',
+            'Dalyvautume abiejuose savaitiniuose turuose.',
+            'Komanda grizta po pavasario turnyro ir nori testis sezona.',
+            'Patvirtiname susidomejima, laukiame administratoriaus sprendimo.',
+        ];
+
+        return $notes[$index % count($notes)];
+    }
+
+    private function logoUrl(string $name, string $background, string $color): string
+    {
+        return 'https://ui-avatars.com/api/?name=' . rawurlencode($name)
+            . '&background=' . $background
+            . '&color=' . $color
+            . '&bold=true&format=svg&size=256';
+    }
+
+    private function photoUrl(int $teamIndex, int $playerIndex): string
+    {
+        return 'https://randomuser.me/api/portraits/men/' . (((($teamIndex * 10) + $playerIndex + 12) % 90) + 1) . '.jpg';
     }
 }

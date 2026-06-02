@@ -15,6 +15,8 @@ class Tournament extends Model
         'status',
         'created_by',
         'max_teams',
+        'group_size',
+        'group_advance_count',
         'duration_weeks',
         'allowed_days',
         'time_slots',

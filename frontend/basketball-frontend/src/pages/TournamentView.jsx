@@ -14,7 +14,7 @@ import { useConfirm } from "../components/useConfirm";
 import { useToast } from "../components/useToast";
 import { downloadBlobResponse } from "../utils/downloadFile";
 
-const defaultTournamentPdfSections = {
+const defaultPdfSections = {
   teams: true,
   standings: true,
   schedule: true,
@@ -71,8 +71,9 @@ function stagePlanningCopy(format) {
 }
 
 const TIME_SLOT_COUNTS = [2, 4, 6, 8];
-const GROUPS_PLAYOFFS_TEAM_COUNTS = [4, 8, 16];
+const GROUPS_PLAYOFFS_TEAM_COUNTS = [4, 8, 16, 32];
 const SINGLE_ELIMINATION_TEAM_COUNTS = [4, 8, 16, 32];
+const ROUND_ROBIN_ADVANCE_COUNTS = [2, 4, 8, 16, 32];
 const RULE_LABEL_CLASS = "flex min-h-[2.75rem] items-end text-sm font-medium text-slate-700";
 const DEFAULT_TIME_SLOTS = ["12:00", "14:00", "16:00", "18:00", "20:00", "22:00", "09:00", "11:00"];
 
@@ -99,6 +100,41 @@ function normalizeGroupPlayoffTeamCount(value) {
 function normalizeSingleEliminationTeamCount(value) {
   const count = Number(value) || 8;
   return SINGLE_ELIMINATION_TEAM_COUNTS.includes(count) ? count : 8;
+}
+
+function isPowerOfTwo(value) {
+  return value >= 2 && (value & (value - 1)) === 0;
+}
+
+function groupRuleOptions(teamCount) {
+  const total = Number(teamCount) || 8;
+  const options = [];
+  [4, 8].forEach((groupSize) => {
+    if (groupSize > total || total % groupSize !== 0) return;
+    for (let advance = 1; advance < groupSize; advance += 1) {
+      const playoffTeams = (total / groupSize) * advance;
+      if (isPowerOfTwo(playoffTeams)) {
+        options.push({ groupSize, advance, playoffTeams });
+      }
+    }
+  });
+  return options;
+}
+
+function normalizeGroupRules(teamCount, groupSize, advance) {
+  const options = groupRuleOptions(teamCount);
+  return options.find((opt) => opt.groupSize === Number(groupSize) && opt.advance === Number(advance)) || options[0];
+}
+
+function roundRobinAdvanceOptions(teamCount) {
+  const total = Math.max(2, Number(teamCount) || 8);
+  return ROUND_ROBIN_ADVANCE_COUNTS.filter((count) => count <= total);
+}
+
+function normalizeRoundRobinAdvance(teamCount, advance) {
+  const options = roundRobinAdvanceOptions(teamCount);
+  const selected = Number(advance);
+  return options.includes(selected) ? selected : options[0];
 }
 
 function OverviewAccordion({ title, subtitle, isOpen, onToggle, children, actions = null }) {
@@ -129,6 +165,28 @@ function OverviewAccordion({ title, subtitle, isOpen, onToggle, children, action
   );
 }
 
+function TeamLogo({ logoUrl, name, className = "team-logo-tiny" }) {
+  if (!logoUrl) return null;
+
+  return (
+    <img
+      className={className}
+      src={logoUrl}
+      alt={`${name || "Team"} logo`}
+      loading="lazy"
+    />
+  );
+}
+
+function TeamIdentity({ name, logoUrl, className = "" }) {
+  return (
+    <span className={`team-identity ${className}`}>
+      <TeamLogo logoUrl={logoUrl} name={name} />
+      <span className="team-identity__name">{name}</span>
+    </span>
+  );
+}
+
 export default function TournamentView() {
   const { id } = useParams();
   const nav = useNavigate();
@@ -141,13 +199,13 @@ export default function TournamentView() {
   const [allTeams, setAllTeams] = useState([]);
   const [matches, setMatches] = useState([]);
   const [feasibility, setFeasibility] = useState(null);
-  const [standingsRows, setStandingsRows] = useState([]);
-  const [groupStandings, setGroupStandings] = useState([]);
+  const [standings, setStandings] = useState([]);
+  const [groupTables, setGroupTables] = useState([]);
   const [myTeam, setMyTeam] = useState(null);
   const [myRequests, setMyRequests] = useState([]);
   const [adminRequests, setAdminRequests] = useState([]);
 
-  const [selectedTeamIdsToAdd, setSelectedTeamIdsToAdd] = useState([]);
+  const [teamIdsToAdd, setTeamIdsToAdd] = useState([]);
   const [editForm, setEditForm] = useState({
     name: "",
     banner_url: "",
@@ -159,21 +217,16 @@ export default function TournamentView() {
     time_slots: ["12:00", "14:00", "16:00", "18:00"],
     playoff_round_gap_days: 1,
     groups_to_playoffs_gap_days: 1,
+    group_size: 4,
+    group_advance_count: 2,
     stage_day_gap_days: 0,
     group_games_per_day: 4,
-  });
-  const [newMatch, setNewMatch] = useState({
-    home_team_id: "",
-    away_team_id: "",
-    round_number: 1,
-    scheduled_at: "",
-    venue_name: "",
   });
   const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
   const [isGroupsSimulatorOpen, setIsGroupsSimulatorOpen] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
-  const [pdfSections, setPdfSections] = useState(defaultTournamentPdfSections);
+  const [pdfSections, setPdfSections] = useState(defaultPdfSections);
   const [activeTab, setActiveTab] = useState("overview");
   const [isTeamPickerOpen, setIsTeamPickerOpen] = useState(false);
   const [matchQuery, setMatchQuery] = useState("");
@@ -182,6 +235,7 @@ export default function TournamentView() {
   const [matchVenueFilter, setMatchVenueFilter] = useState("all");
   const [participationNote, setParticipationNote] = useState("");
   const [rejectNotes, setRejectNotes] = useState({});
+  const [busyRequestIds, setBusyRequestIds] = useState(() => new Set());
   const [matchEdits, setMatchEdits] = useState({});
   const [overviewOpen, setOverviewOpen] = useState({
     teams: false,
@@ -203,56 +257,95 @@ export default function TournamentView() {
     [teams],
   );
 
+  const teamLogoById = useMemo(
+    () =>
+      teams.reduce((acc, tm) => {
+        if (tm?.team_id && tm?.team?.logo_url) {
+          acc[tm.team_id] = tm.team.logo_url;
+        }
+        return acc;
+      }, {}),
+    [teams],
+  );
+
   const approvedTeamIds = useMemo(
     () => new Set(teams.map((tm) => Number(tm.team_id)).filter(Number.isFinite)),
     [teams],
   );
 
-  const availableTeamsToAdd = useMemo(
+  const freeTeams = useMemo(
     () => allTeams.filter((tm) => !approvedTeamIds.has(Number(tm.id))),
     [allTeams, approvedTeamIds],
   );
 
-  const remainingTeamSlots = useMemo(() => {
+  const slotsLeft = useMemo(() => {
     const maxTeams = Number(t?.max_teams);
     if (!Number.isFinite(maxTeams) || maxTeams <= 0) return null;
     return Math.max(0, maxTeams - teams.length);
   }, [t?.max_teams, teams.length]);
 
-  const canSelectMoreTeams = remainingTeamSlots === null || selectedTeamIdsToAdd.length < remainingTeamSlots;
+  const canPickMore = slotsLeft === null || teamIdsToAdd.length < slotsLeft;
 
   useEffect(() => {
-    const availableIds = new Set(availableTeamsToAdd.map((tm) => Number(tm.id)));
-    setSelectedTeamIdsToAdd((current) => {
+    const availableIds = new Set(freeTeams.map((tm) => Number(tm.id)));
+    setTeamIdsToAdd((current) => {
       const filtered = current.filter((teamId) => availableIds.has(Number(teamId)));
-      return remainingTeamSlots === null ? filtered : filtered.slice(0, remainingTeamSlots);
+      return slotsLeft === null ? filtered : filtered.slice(0, slotsLeft);
     });
-  }, [availableTeamsToAdd, remainingTeamSlots]);
+  }, [freeTeams, slotsLeft]);
 
-  const toggleTeamToAdd = (teamId) => {
+  const toggleAddTeam = (teamId) => {
     const normalizedId = Number(teamId);
     if (!Number.isFinite(normalizedId)) return;
 
-    setSelectedTeamIdsToAdd((current) => {
+    setTeamIdsToAdd((current) => {
       if (current.includes(normalizedId)) {
         return current.filter((idValue) => idValue !== normalizedId);
       }
-      if (remainingTeamSlots !== null && current.length >= remainingTeamSlots) {
+      if (slotsLeft !== null && current.length >= slotsLeft) {
         return current;
       }
       return [...current, normalizedId];
     });
   };
 
-  const selectAllAvailableTeams = () => {
-    const limit = remainingTeamSlots === null ? availableTeamsToAdd.length : remainingTeamSlots;
-    setSelectedTeamIdsToAdd(availableTeamsToAdd.slice(0, limit).map((tm) => Number(tm.id)));
+  const selectAllTeams = () => {
+    const limit = slotsLeft === null ? freeTeams.length : slotsLeft;
+    setTeamIdsToAdd(freeTeams.slice(0, limit).map((tm) => Number(tm.id)));
   };
 
-  const selectedTeamNamesToAdd = useMemo(() => {
+  const pickedTeamNames = useMemo(() => {
     const namesById = new Map(allTeams.map((tm) => [Number(tm.id), tm.name]));
-    return selectedTeamIdsToAdd.map((teamId) => namesById.get(Number(teamId))).filter(Boolean);
-  }, [allTeams, selectedTeamIdsToAdd]);
+    return teamIdsToAdd.map((teamId) => namesById.get(Number(teamId))).filter(Boolean);
+  }, [allTeams, teamIdsToAdd]);
+
+  const seedOptions = useMemo(() => {
+    const maxTeams = Number(t?.max_teams) || teams.length || 0;
+    return Array.from({ length: maxTeams }, (_, index) => index + 1);
+  }, [t?.max_teams, teams.length]);
+
+  const usedSeedsByTeamId = useMemo(
+    () =>
+      teams.reduce((acc, tm) => {
+        const seed = Number(tm.seed);
+        if (Number.isFinite(seed) && seed > 0) {
+          acc[Number(tm.team_id)] = seed;
+        }
+        return acc;
+      }, {}),
+    [teams],
+  );
+
+  const approvedTeamsByAddedDate = useMemo(
+    () =>
+      [...teams].sort((left, right) => {
+        const leftTime = left.created_at ? new Date(left.created_at).getTime() : Number.MAX_SAFE_INTEGER;
+        const rightTime = right.created_at ? new Date(right.created_at).getTime() : Number.MAX_SAFE_INTEGER;
+        if (leftTime !== rightTime) return leftTime - rightTime;
+        return Number(left.id || 0) - Number(right.id || 0);
+      }),
+    [teams],
+  );
 
   const defaultVenueName = useMemo(() => {
     const directName = String(t?.venue_name || editForm.venue_name || "").trim();
@@ -279,6 +372,17 @@ export default function TournamentView() {
   }, [defaultVenueName, matches]);
 
   const planningCopy = useMemo(() => stagePlanningCopy(editForm.format), [editForm.format]);
+  const groupAdvanceLimit = Math.max(1, Number(t?.group_advance_count || editForm.group_advance_count || 2));
+  const groupOptions = useMemo(() => groupRuleOptions(editForm.max_teams), [editForm.max_teams]);
+  const selectedGroupRule = useMemo(
+    () => normalizeGroupRules(editForm.max_teams, editForm.group_size, editForm.group_advance_count),
+    [editForm.group_advance_count, editForm.group_size, editForm.max_teams],
+  );
+  const roundRobinOptions = useMemo(() => roundRobinAdvanceOptions(editForm.max_teams), [editForm.max_teams]);
+  const selectedRoundRobinAdvance = useMemo(
+    () => normalizeRoundRobinAdvance(editForm.max_teams, editForm.group_advance_count),
+    [editForm.group_advance_count, editForm.max_teams],
+  );
 
   const resolveTeamName = useCallback((matchRow, side) => {
     const idKey = side === "home" ? "home_team_id" : "away_team_id";
@@ -293,6 +397,22 @@ export default function TournamentView() {
       null
     );
   }, [teamNameById]);
+
+  const resolveTeamLogo = useCallback((matchRow, side) => {
+    const idKey = side === "home" ? "home_team_id" : "away_team_id";
+    const camelRelation = side === "home" ? "homeTeam" : "awayTeam";
+    const snakeRelation = side === "home" ? "home_team" : "away_team";
+    const teamId = matchRow?.[idKey];
+
+    return (
+      matchRow?.[camelRelation]?.logo_url ||
+      matchRow?.[snakeRelation]?.logo_url ||
+      teamLogoById[teamId] ||
+      null
+    );
+  }, [teamLogoById]);
+
+  const standingsTeamLogo = useCallback((row) => row?.logo_url || teamLogoById[row?.team_id] || null, [teamLogoById]);
 
   const hasScore = (value) => value !== null && value !== undefined && value !== "";
 
@@ -336,6 +456,8 @@ export default function TournamentView() {
         : ["12:00", "14:00", "16:00", "18:00"],
       playoff_round_gap_days: tRes.data?.playoff_round_gap_days ?? 1,
       groups_to_playoffs_gap_days: tRes.data?.groups_to_playoffs_gap_days ?? 1,
+      group_size: tRes.data?.group_size ?? 4,
+      group_advance_count: tRes.data?.group_advance_count ?? 2,
       stage_day_gap_days: tRes.data?.stage_day_gap_days ?? 0,
       group_games_per_day: normalizeGamesPerDay(tRes.data?.group_games_per_day, 4),
     });
@@ -350,14 +472,14 @@ export default function TournamentView() {
       return acc;
     }, {}));
     setFeasibility(feasibilityRes.data);
-    setStandingsRows(
+    setStandings(
       Array.isArray(standingsRes.data)
         ? standingsRes.data
         : Array.isArray(standingsRes.data?.rows)
           ? standingsRes.data.rows
           : [],
     );
-    setGroupStandings(Array.isArray(standingsRes.data?.groups) ? standingsRes.data.groups : []);
+    setGroupTables(Array.isArray(standingsRes.data?.groups) ? standingsRes.data.groups : []);
 
     let index = 5;
     if (isAdmin) {
@@ -384,6 +506,46 @@ export default function TournamentView() {
     load().catch((e) => setErr(e?.response?.data?.message || e.message));
   }, [load]);
 
+  const reloadParticipationContext = useCallback(async () => {
+    const calls = [
+      tournamentsApi.teams(id),
+      tournamentsApi.feasibility(id),
+    ];
+
+    if (isAdmin) {
+      calls.push(tournamentsApi.participationRequests(id));
+    }
+
+    if (isManager) {
+      calls.push(tournamentsApi.myParticipationRequests(id));
+    }
+
+    const responses = await Promise.all(calls);
+    setTeams(responses[0].data);
+    setFeasibility(responses[1].data);
+
+    let index = 2;
+    if (isAdmin) {
+      setAdminRequests(responses[index].data);
+      index += 1;
+    }
+    if (isManager) {
+      setMyRequests(responses[index].data || []);
+    }
+  }, [id, isAdmin, isManager]);
+
+  const setRequestBusy = (requestId, busy) => {
+    setBusyRequestIds((current) => {
+      const next = new Set(current);
+      if (busy) {
+        next.add(requestId);
+      } else {
+        next.delete(requestId);
+      }
+      return next;
+    });
+  };
+
   const handleActionError = (e, fallback) => {
     const message = e?.response?.data?.message || JSON.stringify(e?.response?.data) || e.message || fallback;
     setErr(message);
@@ -405,6 +567,8 @@ export default function TournamentView() {
     time_slots: resizeTimeSlots(editForm.time_slots, Number(editForm.group_games_per_day) || 4),
     playoff_round_gap_days: Math.max(0, Number(editForm.playoff_round_gap_days) || 0),
     groups_to_playoffs_gap_days: planningCopy.usesStagePlanning ? Math.max(0, Number(editForm.groups_to_playoffs_gap_days) || 0) : 0,
+    group_size: editForm.format === "groups_playoffs" ? selectedGroupRule?.groupSize : 4,
+    group_advance_count: editForm.format === "groups_playoffs" ? selectedGroupRule?.advance : editForm.format === "round_robin" ? selectedRoundRobinAdvance : 2,
     stage_day_gap_days: planningCopy.usesStagePlanning ? Math.max(0, Number(editForm.stage_day_gap_days) || 0) : 0,
     group_games_per_day: planningCopy.usesStagePlanning ? Math.max(1, Number(editForm.group_games_per_day) || 1) : null,
   });
@@ -423,8 +587,14 @@ export default function TournamentView() {
       if (!silent) showToast(message, "error");
       return null;
     }
-    if (editForm.format === "groups_playoffs" && !GROUPS_PLAYOFFS_TEAM_COUNTS.includes(Number(editForm.max_teams))) {
-      const message = "Groups + playoffs supports 4, 8, or 16 teams.";
+    if (editForm.format === "groups_playoffs" && (!GROUPS_PLAYOFFS_TEAM_COUNTS.includes(Number(editForm.max_teams)) || !selectedGroupRule)) {
+      const message = "Choose a team count and group setup that creates a clean playoff bracket.";
+      setErr(message);
+      if (!silent) showToast(message, "error");
+      return null;
+    }
+    if (editForm.format === "round_robin" && !roundRobinAdvanceOptions(editForm.max_teams).includes(selectedRoundRobinAdvance)) {
+      const message = "Choose how many teams advance to the playoff bracket.";
       setErr(message);
       if (!silent) showToast(message, "error");
       return null;
@@ -527,17 +697,23 @@ export default function TournamentView() {
 
   const approveRequest = async (requestId) => {
     if (!isAdmin) return;
+    if (busyRequestIds.has(requestId)) return;
+    setRequestBusy(requestId, true);
     try {
       await tournamentsApi.approveRequest(requestId);
-      await load();
+      await reloadParticipationContext();
       showToast("Request approved.");
     } catch (e) {
       handleActionError(e, "Failed to approve request.");
+    } finally {
+      setRequestBusy(requestId, false);
     }
   };
 
   const rejectRequest = async (requestId) => {
     if (!isAdmin) return;
+    if (busyRequestIds.has(requestId)) return;
+    setRequestBusy(requestId, true);
     try {
       await tournamentsApi.rejectRequest(requestId, { note: rejectNotes[requestId]?.trim() || null });
       setRejectNotes((current) => {
@@ -545,10 +721,12 @@ export default function TournamentView() {
         delete next[requestId];
         return next;
       });
-      await load();
+      await reloadParticipationContext();
       showToast("Request rejected.");
     } catch (e) {
       handleActionError(e, "Failed to reject request.");
+    } finally {
+      setRequestBusy(requestId, false);
     }
   };
 
@@ -560,23 +738,27 @@ export default function TournamentView() {
       confirmLabel: "Remove request",
     });
     if (!ok) return;
+    if (busyRequestIds.has(requestId)) return;
+    setRequestBusy(requestId, true);
     try {
       await tournamentsApi.removeRequest(requestId);
-      await load();
+      await reloadParticipationContext();
       showToast("Request removed.");
     } catch (e) {
       handleActionError(e, "Failed to remove request.");
+    } finally {
+      setRequestBusy(requestId, false);
     }
   };
 
   const addTeam = async () => {
-    if (!isAdmin || selectedTeamIdsToAdd.length === 0) return;
+    if (!isAdmin || teamIdsToAdd.length === 0) return;
     setErr("");
-    const availableIds = new Set(availableTeamsToAdd.map((tm) => Number(tm.id)));
-    const teamIds = selectedTeamIdsToAdd
+    const availableIds = new Set(freeTeams.map((tm) => Number(tm.id)));
+    const teamIds = teamIdsToAdd
       .map(Number)
       .filter((teamId) => Number.isFinite(teamId) && availableIds.has(teamId))
-      .slice(0, remainingTeamSlots === null ? undefined : remainingTeamSlots);
+      .slice(0, slotsLeft === null ? undefined : slotsLeft);
 
     if (teamIds.length === 0) return;
 
@@ -592,7 +774,7 @@ export default function TournamentView() {
       }
     }
 
-    setSelectedTeamIdsToAdd([]);
+    setTeamIdsToAdd([]);
     setIsTeamPickerOpen(false);
     await load();
 
@@ -622,6 +804,23 @@ export default function TournamentView() {
       showToast("Team removed from tournament.");
     } catch (e) {
       handleActionError(e, "Failed to remove team.");
+    }
+  };
+
+  const updateTeamSeed = async (teamId, value) => {
+    if (!isAdmin || t?.participants_locked) return;
+    const seed = value === "" ? null : Number(value);
+    if (seed !== null && (!Number.isFinite(seed) || seed < 1)) return;
+
+    setErr("");
+    try {
+      const response = await tournamentsApi.updateTeam(id, teamId, { seed });
+      setTeams((current) =>
+        current.map((tm) => (Number(tm.team_id) === Number(teamId) ? response.data : tm)),
+      );
+      showToast(seed ? `Seed ${seed} saved.` : "Seed cleared.");
+    } catch (e) {
+      handleActionError(e, "Failed to update seed.");
     }
   };
 
@@ -684,37 +883,6 @@ export default function TournamentView() {
       showToast("Schedule cleared.");
     } catch (e) {
       handleActionError(e, "Failed to clear schedule.");
-    }
-  };
-
-  const createMatch = async () => {
-    if (!isAdmin) return;
-    setErr("");
-    if (!newMatch.home_team_id || !newMatch.away_team_id) {
-      const message = "Select both teams before creating a match.";
-      setErr(message);
-      showToast(message, "error");
-      return;
-    }
-    if (newMatch.home_team_id === newMatch.away_team_id) {
-      const message = "Home and away teams must be different.";
-      setErr(message);
-      showToast(message, "error");
-      return;
-    }
-    try {
-      await tournamentsApi.createMatch(id, {
-        home_team_id: Number(newMatch.home_team_id),
-        away_team_id: Number(newMatch.away_team_id),
-        round_number: Number(newMatch.round_number) || 1,
-        scheduled_at: newMatch.scheduled_at || null,
-        venue_name: newMatch.venue_name?.trim() || null,
-      });
-      setNewMatch({ home_team_id: "", away_team_id: "", round_number: 1, scheduled_at: "", venue_name: "" });
-      await load();
-      showToast("Match created.");
-    } catch (e) {
-      handleActionError(e, "Failed to create match.");
     }
   };
 
@@ -934,7 +1102,7 @@ export default function TournamentView() {
           <div>
             <p className="section-heading__eyebrow">Tournament Hub</p>
             <h1 className="section-heading__title">{t.name || `Tournament #${t.id}`}</h1>
-            <p className="section-heading__copy">Tournament #{t.id} · {t.format} · {t.status}</p>
+            <p className="section-heading__copy">Tournament #{t.id} - {t.format} - {t.status}</p>
           </div>
           <div className="list-card__meta">
             <button type="button" onClick={() => setIsPdfModalOpen(true)} disabled={isExportingPdf} className="btn-secondary">
@@ -1041,6 +1209,17 @@ export default function TournamentView() {
                         : nextFormat === "single_elimination"
                           ? normalizeSingleEliminationTeamCount(editForm.max_teams)
                           : editForm.max_teams,
+                      ...(nextFormat === "groups_playoffs"
+                        ? {
+                            group_size: normalizeGroupRules(normalizeGroupPlayoffTeamCount(editForm.max_teams), editForm.group_size, editForm.group_advance_count)?.groupSize || 4,
+                            group_advance_count: normalizeGroupRules(normalizeGroupPlayoffTeamCount(editForm.max_teams), editForm.group_size, editForm.group_advance_count)?.advance || 2,
+                          }
+                        : nextFormat === "round_robin"
+                          ? {
+                              group_size: 4,
+                              group_advance_count: normalizeRoundRobinAdvance(editForm.max_teams, editForm.group_advance_count),
+                            }
+                          : { group_size: 4, group_advance_count: 2 }),
                     });
                   }}
                 >
@@ -1052,20 +1231,43 @@ export default function TournamentView() {
               <div className="space-y-1">
                 <label className="text-sm font-medium text-slate-700">Max teams</label>
                 {editForm.format === "groups_playoffs" || editForm.format === "single_elimination" ? (
-                  <div key={`${editForm.format}-max-teams`} className={`grid gap-2 ${editForm.format === "groups_playoffs" ? "grid-cols-3" : "grid-cols-4"}`}>
+                  <div key={`${editForm.format}-max-teams`} className="grid gap-2 grid-cols-4">
                     {(editForm.format === "groups_playoffs" ? GROUPS_PLAYOFFS_TEAM_COUNTS : SINGLE_ELIMINATION_TEAM_COUNTS).map((count) => (
                       <button
                         key={count}
                         type="button"
                         className={Number(editForm.max_teams) === count ? "btn-primary" : "btn-secondary"}
-                        onClick={() => setEditForm({ ...editForm, max_teams: count })}
+                        onClick={() => {
+                          const rule = normalizeGroupRules(count, editForm.group_size, editForm.group_advance_count);
+                          setEditForm({
+                            ...editForm,
+                            max_teams: count,
+                            ...(editForm.format === "groups_playoffs" && rule ? { group_size: rule.groupSize, group_advance_count: rule.advance } : {}),
+                          });
+                        }}
                       >
                         {count}
                       </button>
                     ))}
                   </div>
                 ) : (
-                  <input key="open-max-teams" className="input" type="number" min={2} placeholder="Max teams" value={editForm.max_teams} onChange={(e) => setEditForm({ ...editForm, max_teams: e.target.value })} />
+                  <input
+                    key="open-max-teams"
+                    className="input"
+                    type="number"
+                    min={2}
+                    max={512}
+                    placeholder="Max teams"
+                    value={editForm.max_teams}
+                    onChange={(e) => {
+                      const maxTeams = e.target.value;
+                      setEditForm({
+                        ...editForm,
+                        max_teams: maxTeams,
+                        group_advance_count: normalizeRoundRobinAdvance(maxTeams, editForm.group_advance_count),
+                      });
+                    }}
+                  />
                 )}
               </div>
               <div className="space-y-1">
@@ -1075,6 +1277,38 @@ export default function TournamentView() {
                 </div>
               </div>
             </div>
+            {editForm.format === "round_robin" ? (
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-slate-700">Teams advancing to playoffs</label>
+                <select
+                  className="input"
+                  value={selectedRoundRobinAdvance}
+                  onChange={(e) => setEditForm({ ...editForm, group_advance_count: Number(e.target.value) })}
+                >
+                  {roundRobinOptions.map((count) => (
+                    <option key={count} value={count}>Top {count} teams</option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
+
+            {editForm.format === "groups_playoffs" && selectedGroupRule ? (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <div className="mb-2 text-sm font-semibold text-slate-700">Group setup</div>
+                <div className="grid gap-2 md:grid-cols-2">
+                  {groupOptions.map((option) => (
+                    <button
+                      key={`${option.groupSize}-${option.advance}`}
+                      type="button"
+                      className={selectedGroupRule.groupSize === option.groupSize && selectedGroupRule.advance === option.advance ? "btn-primary" : "btn-secondary"}
+                      onClick={() => setEditForm({ ...editForm, group_size: option.groupSize, group_advance_count: option.advance })}
+                    >
+                      Groups of {option.groupSize}, top {option.advance} advance ({option.playoffTeams} playoff teams)
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
             {editForm.end_date && (
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
                 The scheduler will treat <span className="font-semibold">{editForm.end_date}</span> as the last tournament day and automatically place earlier rounds before it.
@@ -1186,7 +1420,14 @@ export default function TournamentView() {
               {!t.participants_locked ? (
                 <button onClick={lockParticipants} className="btn-secondary">Lock participants</button>
               ) : (
-                <button onClick={unlockParticipants} className="btn-secondary">Unlock participants</button>
+                <button
+                  onClick={unlockParticipants}
+                  disabled={matches.length > 0}
+                  title={matches.length > 0 ? "Clear the schedule before unlocking participants." : undefined}
+                  className="btn-secondary"
+                >
+                  {matches.length > 0 ? "Clear schedule to unlock" : "Unlock participants"}
+                </button>
               )}
             </div>
           </div>
@@ -1217,19 +1458,27 @@ export default function TournamentView() {
                       onChange={(event) => setRejectNotes({ ...rejectNotes, [r.id]: event.target.value })}
                     />
                     <div className="flex flex-wrap gap-2">
-                      <button onClick={() => approveRequest(r.id)} className="btn-primary">Approve</button>
-                      <button onClick={() => rejectRequest(r.id)} className="btn-danger">Reject</button>
+                      <button onClick={() => approveRequest(r.id)} disabled={busyRequestIds.has(r.id)} className="btn-primary">
+                        {busyRequestIds.has(r.id) ? "Working..." : "Approve"}
+                      </button>
+                      <button onClick={() => rejectRequest(r.id)} disabled={busyRequestIds.has(r.id)} className="btn-danger">
+                        Reject
+                      </button>
                     </div>
                   </div>
                 )}
                 {r.status !== "pending" && (
                   <div className="mt-2">
-                    <button onClick={() => removeRequest(r.id)} className="btn-danger">Remove request</button>
+                    <button onClick={() => removeRequest(r.id)} disabled={busyRequestIds.has(r.id)} className="btn-danger">
+                      {busyRequestIds.has(r.id) ? "Working..." : "Remove request"}
+                    </button>
                   </div>
                 )}
                 {r.status === "pending" && (
                   <div className="mt-2">
-                    <button onClick={() => removeRequest(r.id)} className="btn-secondary">Remove request</button>
+                    <button onClick={() => removeRequest(r.id)} disabled={busyRequestIds.has(r.id)} className="btn-secondary">
+                      {busyRequestIds.has(r.id) ? "Working..." : "Remove request"}
+                    </button>
                   </div>
                 )}
               </div>
@@ -1253,19 +1502,19 @@ export default function TournamentView() {
                 type="button"
                 className="input flex w-full items-center justify-between gap-3 text-left"
                 onClick={() => setIsTeamPickerOpen((open) => !open)}
-                disabled={availableTeamsToAdd.length === 0 || remainingTeamSlots === 0}
+                disabled={freeTeams.length === 0 || slotsLeft === 0}
               >
                 <span className="min-w-0 truncate">
-                  {selectedTeamNamesToAdd.length === 0
-                    ? remainingTeamSlots === 0
+                  {pickedTeamNames.length === 0
+                    ? slotsLeft === 0
                       ? "Team limit reached"
                       : "Select teams to add..."
-                    : selectedTeamNamesToAdd.length <= 2
-                      ? selectedTeamNamesToAdd.join(", ")
-                      : `${selectedTeamNamesToAdd.slice(0, 2).join(", ")} +${selectedTeamNamesToAdd.length - 2}`}
+                    : pickedTeamNames.length <= 2
+                      ? pickedTeamNames.join(", ")
+                      : `${pickedTeamNames.slice(0, 2).join(", ")} +${pickedTeamNames.length - 2}`}
                 </span>
                 <span className="text-xs font-semibold text-slate-500">
-                  {remainingTeamSlots === null ? `${selectedTeamIdsToAdd.length} selected` : `${selectedTeamIdsToAdd.length}/${remainingTeamSlots}`}
+                  {slotsLeft === null ? `${teamIdsToAdd.length} selected` : `${teamIdsToAdd.length}/${slotsLeft}`}
                 </span>
               </button>
 
@@ -1274,16 +1523,16 @@ export default function TournamentView() {
                   <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-2 py-1.5">
                     <button
                       type="button"
-                      onClick={selectAllAvailableTeams}
-                      disabled={availableTeamsToAdd.length === 0 || remainingTeamSlots === 0}
+                      onClick={selectAllTeams}
+                      disabled={freeTeams.length === 0 || slotsLeft === 0}
                       className="text-xs font-semibold text-slate-700 hover:text-slate-950 disabled:text-slate-300"
                     >
                       Select available
                     </button>
                     <button
                       type="button"
-                      onClick={() => setSelectedTeamIdsToAdd([])}
-                      disabled={selectedTeamIdsToAdd.length === 0}
+                      onClick={() => setTeamIdsToAdd([])}
+                      disabled={teamIdsToAdd.length === 0}
                       className="text-xs font-semibold text-slate-700 hover:text-slate-950 disabled:text-slate-300"
                     >
                       Clear
@@ -1291,10 +1540,10 @@ export default function TournamentView() {
                   </div>
 
                   <div className="max-h-72 overflow-y-auto p-1">
-                    {availableTeamsToAdd.length > 0 ? availableTeamsToAdd.map((tm) => {
+                    {freeTeams.length > 0 ? freeTeams.map((tm) => {
                       const teamId = Number(tm.id);
-                      const checked = selectedTeamIdsToAdd.includes(teamId);
-                      const disabled = !checked && !canSelectMoreTeams;
+                      const checked = teamIdsToAdd.includes(teamId);
+                      const disabled = !checked && !canPickMore;
 
                       return (
                         <label
@@ -1305,7 +1554,7 @@ export default function TournamentView() {
                             type="checkbox"
                             checked={checked}
                             disabled={disabled}
-                            onChange={() => toggleTeamToAdd(teamId)}
+                            onChange={() => toggleAddTeam(teamId)}
                           />
                           <span className="min-w-0">
                             <span className="block truncate font-medium text-slate-900">{tm.name}</span>
@@ -1321,14 +1570,14 @@ export default function TournamentView() {
               )}
             </div>
 
-            <button type="button" onClick={addTeam} disabled={selectedTeamIdsToAdd.length === 0} className="btn-secondary">
+            <button type="button" onClick={addTeam} disabled={teamIdsToAdd.length === 0} className="btn-secondary">
               Add selected teams
             </button>
           </div>
         )}
 
         <div className="grid gap-2 md:grid-cols-2">
-          {teams.map((tm) => (
+          {approvedTeamsByAddedDate.map((tm) => (
             <div
               key={tm.id}
               role="button"
@@ -1352,6 +1601,32 @@ export default function TournamentView() {
                 </div>
               </div>
               <div className="flex items-center gap-1.5">
+                {isAdmin && !t.participants_locked ? (
+                  <label
+                    className="flex items-center gap-1 text-xs font-semibold text-slate-500"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    Seed
+                    <select
+                      className="input h-8 min-w-[72px] px-2 py-1 text-xs"
+                      value={tm.seed || ""}
+                      onChange={(e) => updateTeamSeed(tm.team_id, e.target.value)}
+                    >
+                      <option value="">None</option>
+                      {seedOptions
+                        .filter((seed) => !Object.entries(usedSeedsByTeamId).some(
+                          ([teamId, usedSeed]) => Number(teamId) !== Number(tm.team_id) && Number(usedSeed) === seed,
+                        ))
+                        .map((seed) => (
+                          <option key={seed} value={seed}>
+                            {seed}
+                          </option>
+                        ))}
+                    </select>
+                  </label>
+                ) : tm.seed ? (
+                  <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">Seed {tm.seed}</span>
+                ) : null}
                 {isAdmin && !t.participants_locked && (
                   <button
                     onClick={(e) => {
@@ -1379,48 +1654,11 @@ export default function TournamentView() {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h2 className="text-xl font-semibold text-slate-900">Match controls</h2>
-                <p className="text-sm text-slate-500">Create manual matches or clear the current schedule without leaving the admin view.</p>
+                <p className="text-sm text-slate-500">Generate a schedule, clear it, or edit existing match slots without leaving the admin view.</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <button onClick={generate} className="btn-primary">Generate schedule</button>
                 <button onClick={clear} className="btn-danger">Clear all matches</button>
-              </div>
-            </div>
-
-            <div className="grid gap-2 md:grid-cols-6">
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-slate-700">Home team</label>
-                <select className="input" value={newMatch.home_team_id} onChange={(e) => setNewMatch({ ...newMatch, home_team_id: e.target.value })}>
-                  <option value="">Select home team</option>
-                  {teams.map((tm) => (
-                    <option key={`home-${tm.team_id}`} value={tm.team_id}>{tm.team?.name || tm.team_id}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-slate-700">Away team</label>
-                <select className="input" value={newMatch.away_team_id} onChange={(e) => setNewMatch({ ...newMatch, away_team_id: e.target.value })}>
-                  <option value="">Select away team</option>
-                  {teams.map((tm) => (
-                    <option key={`away-${tm.team_id}`} value={tm.team_id}>{tm.team?.name || tm.team_id}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-slate-700">Round</label>
-                <input className="input" type="number" min={1} placeholder="Round number" value={newMatch.round_number} onChange={(e) => setNewMatch({ ...newMatch, round_number: e.target.value })} />
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-slate-700">Time</label>
-                <input className="input" type="datetime-local" value={newMatch.scheduled_at} onChange={(e) => setNewMatch({ ...newMatch, scheduled_at: e.target.value })} />
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-slate-700">Venue override</label>
-                <input className="input" placeholder={defaultVenueName || "Venue TBD"} value={newMatch.venue_name} onChange={(e) => setNewMatch({ ...newMatch, venue_name: e.target.value })} />
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-slate-700">Action</label>
-                <button onClick={createMatch} className="btn-secondary w-full">Add match</button>
               </div>
             </div>
 
@@ -1448,7 +1686,7 @@ export default function TournamentView() {
                             <Link to={`/matches/${matchRow.id}`} className="font-semibold text-slate-900 hover:text-sky-700">
                               {resolveTeamName(matchRow, "home") || "TBD"} vs {resolveTeamName(matchRow, "away") || "TBD"}
                             </Link>
-                            <div className="text-xs text-slate-500">Round {matchRow.round_number || "-"} · {matchRow.stage || "regular"}</div>
+                            <div className="text-xs text-slate-500">Round {matchRow.round_number || "-"} - {matchRow.stage || "regular"}</div>
                           </td>
                           <td className="px-3 py-2">
                             <input
@@ -1506,9 +1744,12 @@ export default function TournamentView() {
                 to={`/teams/${tm.team_id}`}
                 className="flex cursor-pointer items-center justify-between gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 transition hover:border-sky-300 hover:bg-slate-50"
               >
-                <div className="min-w-0 text-sm select-none">
-                  <span className="font-medium text-slate-900">{tm.team?.name || `Team ${tm.team_id}`}</span>
-                  <span className="text-slate-500"> - {tm.team?.city || "No city"}</span>
+                <div className="flex min-w-0 items-center gap-2 text-sm select-none">
+                  <TeamLogo logoUrl={tm.team?.logo_url} name={tm.team?.name} className="team-logo-small" />
+                  <div className="min-w-0">
+                    <span className="font-medium text-slate-900">{tm.team?.name || `Team ${tm.team_id}`}</span>
+                    <span className="text-slate-500"> - {tm.team?.city || "No city"}</span>
+                  </div>
                 </div>
                 <div className="flex items-center gap-1.5">
                   {tm.seed ? <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">Seed {tm.seed}</span> : null}
@@ -1525,7 +1766,7 @@ export default function TournamentView() {
         </OverviewAccordion>
       )}
 
-      {isOverviewTab && t.format === "round_robin" && standingsRows.length > 0 && (
+      {isOverviewTab && t.format === "round_robin" && standings.length > 0 && (
         <OverviewAccordion
           title="Standings Table"
           subtitle={`One league table for the full regular season.${roundRobinQualifiedCount > 0 ? ` Top ${roundRobinQualifiedCount} teams advance to the playoff bracket.` : ""}`}
@@ -1551,13 +1792,15 @@ export default function TournamentView() {
                 </tr>
               </thead>
               <tbody>
-                {standingsRows.map((row) => (
+                {standings.map((row) => (
                   <tr
                     key={row.team_id}
                     className={roundRobinQualifiedCount > 0 && row.rank <= roundRobinQualifiedCount ? "bg-emerald-50 text-slate-900" : "text-slate-700"}
                   >
                     <td className="px-2 py-1 font-semibold">{row.rank}</td>
-                    <td className="px-2 py-1 font-medium">{row.team_name || `Team ${row.team_id}`}</td>
+                    <td className="px-2 py-1 font-medium">
+                      <TeamIdentity name={row.team_name || `Team ${row.team_id}`} logoUrl={standingsTeamLogo(row)} />
+                    </td>
                     <td className="px-2 py-1">{row.played}</td>
                     <td className="px-2 py-1">{row.wins}</td>
                     <td className="px-2 py-1">{row.losses}</td>
@@ -1571,7 +1814,7 @@ export default function TournamentView() {
         </OverviewAccordion>
       )}
 
-      {isOverviewTab && t.format === "groups_playoffs" && groupStandings.length > 0 && (
+      {isOverviewTab && t.format === "groups_playoffs" && groupTables.length > 0 && (
         <OverviewAccordion
           title="Group Tables"
           subtitle="Top teams update the playoff bracket automatically as group results come in."
@@ -1584,7 +1827,7 @@ export default function TournamentView() {
           }
         >
           <div className="grid gap-3 lg:grid-cols-2">
-            {groupStandings.map((group) => (
+            {groupTables.map((group) => (
               <div key={group.group_code} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                 <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-600">Group {group.group_code}</div>
                 <div className="overflow-x-auto">
@@ -1602,9 +1845,11 @@ export default function TournamentView() {
                     </thead>
                     <tbody>
                       {group.rows.map((row) => (
-                        <tr key={row.team_id} className={row.rank <= 2 ? "bg-emerald-50 text-slate-900" : "text-slate-700"}>
+                        <tr key={row.team_id} className={row.rank <= groupAdvanceLimit ? "bg-emerald-50 text-slate-900" : "text-slate-700"}>
                           <td className="px-2 py-1 font-semibold">{row.rank}</td>
-                          <td className="px-2 py-1 font-medium">{row.team_name || `Team ${row.team_id}`}</td>
+                          <td className="px-2 py-1 font-medium">
+                            <TeamIdentity name={row.team_name || `Team ${row.team_id}`} logoUrl={standingsTeamLogo(row)} />
+                          </td>
                           <td className="px-2 py-1">{row.played}</td>
                           <td className="px-2 py-1">{row.wins}</td>
                           <td className="px-2 py-1">{row.losses}</td>
@@ -1639,6 +1884,7 @@ export default function TournamentView() {
             bracketRounds={bracketRounds}
             roundLabel={roundLabel}
             playoffName={playoffName}
+            playoffLogo={resolveTeamLogo}
             formatDateTime={formatDateTime}
             hideHeading
           />
@@ -1711,23 +1957,25 @@ export default function TournamentView() {
                         <Link to={`/matches/${m.id}`} className="block transition hover:text-sky-700">
                           <div className="flex flex-wrap items-center justify-between gap-1 text-xs text-slate-500">
                             <span className="font-semibold text-slate-700">R{m.round_number || "-"} - {m.status}</span>
-                            <span>{formatDateTime(m.scheduled_at)} · {venueLabel(m)}</span>
+                            <span>{formatDateTime(m.scheduled_at)} - {venueLabel(m)}</span>
                           </div>
                           {hasFinishedResult(m) ? (
                             <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 border-t border-slate-100 pt-2">
-                              <div className="truncate text-right text-sm font-medium text-slate-900">
-                                {resolveTeamName(m, "home") || "TBD"}
+                              <div className="flex min-w-0 justify-end text-right text-sm font-medium text-slate-900">
+                                <TeamIdentity className="team-identity--reverse" name={resolveTeamName(m, "home") || "TBD"} logoUrl={resolveTeamLogo(m, "home")} />
                               </div>
                               <div className="min-w-[74px] text-center text-lg font-bold tracking-tight text-slate-900">
                                 {m.home_score}-{m.away_score}
                               </div>
-                              <div className="truncate text-sm font-medium text-slate-900">
-                                {resolveTeamName(m, "away") || "TBD"}
+                              <div className="min-w-0 text-sm font-medium text-slate-900">
+                                <TeamIdentity name={resolveTeamName(m, "away") || "TBD"} logoUrl={resolveTeamLogo(m, "away")} />
                               </div>
                             </div>
                           ) : (
-                            <div className="text-sm font-medium text-slate-900">
-                              {(resolveTeamName(m, "home") || "TBD")} vs {(resolveTeamName(m, "away") || "TBD")}
+                            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium text-slate-900">
+                              <TeamIdentity name={resolveTeamName(m, "home") || "TBD"} logoUrl={resolveTeamLogo(m, "home")} />
+                              <span className="text-xs font-semibold uppercase text-slate-400">vs</span>
+                              <TeamIdentity name={resolveTeamName(m, "away") || "TBD"} logoUrl={resolveTeamLogo(m, "away")} />
                             </div>
                           )}
                           {m.status === "finished" && !hasFinishedResult(m) && (
@@ -1775,7 +2023,9 @@ export default function TournamentView() {
           bracketRounds={bracketRounds}
           roundLabel={roundLabel}
           resolveTeamName={resolveTeamName}
+          resolveTeamLogo={resolveTeamLogo}
           formatDateTime={formatDateTime}
+          playoffQualifierCount={roundRobinQualifiedCount}
         />
 
       <PdfExportModal
@@ -1793,5 +2043,6 @@ export default function TournamentView() {
     </div>
   );
 }
+
 
 

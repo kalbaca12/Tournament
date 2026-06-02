@@ -43,19 +43,19 @@ class TeamController extends Controller
             return response()->json(['message' => 'Unauthenticated. Please login again.'], 401);
         }
 
-        $existingTeam = Team::where('manager_id', $user->id)->first();
-        if ($existingTeam) {
+        $existing = Team::where('manager_id', $user->id)->first();
+        if ($existing) {
             return response()->json(['message' => 'Manager can only own one team.'], 409);
         }
 
-        $validated = $request->validate([
+        $data = $request->validate([
             'name' => ['required','string','max:150'],
             'city' => ['nullable','string','max:100'],
             'logo_url' => ['nullable', 'url', 'max:2048'],
         ]);
 
-        $validated['manager_id'] = $user->id;
-        $team = Team::create($validated);
+        $data['manager_id'] = $user->id;
+        $team = Team::create($data);
 
         return response()->json($team, 201);
     }
@@ -66,13 +66,13 @@ class TeamController extends Controller
             return response()->json(['message' => 'You can edit only your own team.'], 403);
         }
 
-        $validated = $request->validate([
+        $data = $request->validate([
             'name' => ['sometimes','string','max:150'],
             'city' => ['nullable','string','max:100'],
             'logo_url' => ['nullable', 'url', 'max:2048'],
         ]);
 
-        $team->update($validated);
+        $team->update($data);
 
         return $team;
     }

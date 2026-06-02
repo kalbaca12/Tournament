@@ -1,7 +1,8 @@
 ﻿import { api } from "./client";
 
 export const matchesApi = {
-  list: () => api.get("/matches"),
+  list: (params = {}) => api.get("/matches", { params }),
+  days: (params = {}) => api.get("/matches/days", { params }),
   get: (id) => api.get(`/matches/${id}`),
   exportPdf: (id, sections = []) => api.get(`/matches/${id}/export/pdf`, {
     responseType: "blob",

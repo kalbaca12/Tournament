@@ -5,6 +5,7 @@ namespace Tests\Unit;
 use App\Models\Tournament;
 use App\Support\TournamentSchedulePlanner;
 use Carbon\Carbon;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -68,15 +69,10 @@ class TournamentSchedulePlannerTest extends TestCase
     }
 
     #[Test]
-    public function playoff_round_sizes_are_calculated_for_supported_formats(): void
+    #[DataProvider('playoffRoundSizeCases')]
+    public function playoff_round_sizes_are_calculated_for_supported_formats(string $format, int $teamCount, array $expected): void
     {
-        self::assertSame([4, 2, 1], TournamentSchedulePlanner::playoffRoundSizes('single_elimination', 8));
-        self::assertSame([1], TournamentSchedulePlanner::playoffRoundSizes('groups_playoffs', 4));
-        self::assertSame([2, 1], TournamentSchedulePlanner::playoffRoundSizes('groups_playoffs', 8));
-        self::assertSame([], TournamentSchedulePlanner::playoffRoundSizes('groups_playoffs', 10));
-        self::assertSame([4, 2, 1], TournamentSchedulePlanner::playoffRoundSizes('groups_playoffs', 16));
-        self::assertSame([2, 1], TournamentSchedulePlanner::playoffRoundSizes('round_robin', 8));
-        self::assertSame([], TournamentSchedulePlanner::playoffRoundSizes('round_robin', 3));
+        self::assertSame($expected, TournamentSchedulePlanner::playoffRoundSizes($format, $teamCount));
     }
 
     #[Test]
@@ -149,10 +145,44 @@ class TournamentSchedulePlannerTest extends TestCase
     }
 
     #[Test]
-    public function groups_playoffs_stage_round_sizes_are_aggregated_by_groups(): void
+    #[DataProvider('stageRoundSizeCases')]
+    public function stage_round_sizes_are_calculated_for_supported_formats(string $format, int $teamCount, array $expected): void
     {
-        self::assertSame([4, 4, 4], TournamentSchedulePlanner::stageRoundSizes('groups_playoffs', 8));
-        self::assertSame([], TournamentSchedulePlanner::stageRoundSizes('single_elimination', 8));
-        self::assertSame([], TournamentSchedulePlanner::stageRoundSizes('round_robin', 1));
+        self::assertSame($expected, TournamentSchedulePlanner::stageRoundSizes($format, $teamCount));
+    }
+
+    #[Test]
+    public function groups_playoffs_can_use_groups_of_eight(): void
+    {
+        $tournament = new Tournament([
+            'group_size' => 8,
+            'group_advance_count' => 2,
+        ]);
+
+        self::assertSame([8, 8, 8, 8, 8, 8, 8], TournamentSchedulePlanner::stageRoundSizes('groups_playoffs', 16, $tournament));
+        self::assertSame([2, 1], TournamentSchedulePlanner::playoffRoundSizes('groups_playoffs', 16, $tournament));
+    }
+
+    public static function playoffRoundSizeCases(): array
+    {
+        return [
+            'single elimination with 8 teams' => ['single_elimination', 8, [4, 2, 1]],
+            'groups playoffs with 4 teams' => ['groups_playoffs', 4, [1]],
+            'groups playoffs with 8 teams' => ['groups_playoffs', 8, [2, 1]],
+            'groups playoffs rejects unsupported team count' => ['groups_playoffs', 10, []],
+            'groups playoffs with 16 teams' => ['groups_playoffs', 16, [4, 2, 1]],
+            'groups playoffs with 32 teams' => ['groups_playoffs', 32, [8, 4, 2, 1]],
+            'round robin playoff shell with 8 teams' => ['round_robin', 8, [2, 1]],
+            'round robin has no playoffs with 3 teams' => ['round_robin', 3, []],
+        ];
+    }
+
+    public static function stageRoundSizeCases(): array
+    {
+        return [
+            'groups playoffs aggregates group rounds' => ['groups_playoffs', 8, [4, 4, 4]],
+            'single elimination has no stage rounds' => ['single_elimination', 8, []],
+            'round robin with too few teams has no rounds' => ['round_robin', 1, []],
+        ];
     }
 }

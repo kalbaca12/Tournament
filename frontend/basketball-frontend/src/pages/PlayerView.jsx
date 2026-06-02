@@ -107,7 +107,7 @@ export default function PlayerView() {
                   <span className="list-tag">{match.status}</span>
                 </div>
                 <div className="mt-1 text-sm text-slate-500">
-                  {formatDateTime(match.scheduled_at)} · Tournament: {match.tournament?.name || `#${match.tournament_id}`}
+                  {formatDateTime(match.scheduled_at)} - Tournament: {match.tournament?.name || `#${match.tournament_id}`}
                 </div>
               </Link>
             ))}

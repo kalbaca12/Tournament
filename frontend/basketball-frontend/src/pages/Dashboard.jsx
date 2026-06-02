@@ -54,21 +54,16 @@ export default function Dashboard() {
     const load = async () => {
       setLoading(true);
       try {
+        const today = dateKey(new Date());
         const tournamentsRes = await tournamentsApi.list();
-        const matchesRes = await matchesApi.list().catch(() => ({ data: [] }));
+        const matchesRes = await matchesApi.list({ date: today, limit: 6 }).catch(() => ({ data: [] }));
         const loadedTournaments = tournamentsRes.data || [];
         setTournaments(loadedTournaments);
         setAllMatches(matchesRes.data || []);
 
         if (isAdmin) {
-          const requestResults = await Promise.allSettled(
-            loadedTournaments.slice(0, 8).map((tournament) => tournamentsApi.participationRequests(tournament.id)),
-          );
-          setPendingRequests(requestResults.flatMap((result) => (
-            result.status === "fulfilled"
-              ? (result.value.data || []).filter((request) => request.status === "pending")
-              : []
-          )));
+          const requestsRes = await tournamentsApi.allParticipationRequests({ status: "pending" }).catch(() => ({ data: [] }));
+          setPendingRequests(requestsRes.data || []);
         }
 
         if (isManager) {
@@ -79,12 +74,8 @@ export default function Dashboard() {
             setTeamMatches(matchesRes.data || []);
           }
 
-          const requestResults = await Promise.allSettled(
-            loadedTournaments.slice(0, 8).map((tournament) => tournamentsApi.myParticipationRequests(tournament.id)),
-          );
-          setMyRequests(requestResults.flatMap((result) => (
-            result.status === "fulfilled" ? (result.value.data || []) : []
-          )));
+          const requestsRes = await tournamentsApi.myAllParticipationRequests().catch(() => ({ data: [] }));
+          setMyRequests(requestsRes.data || []);
         }
       } catch (error) {
         showToast(error?.response?.data?.message || error.message || "Failed to load dashboard.", "error");
@@ -118,6 +109,7 @@ export default function Dashboard() {
     const today = dateKey(new Date());
     return allMatches
       .filter((match) => dateKey(match.scheduled_at) === today)
+      .sort((a, b) => new Date(a.scheduled_at || "2999-01-01").getTime() - new Date(b.scheduled_at || "2999-01-01").getTime())
       .slice(0, 6);
   }, [allMatches]);
 

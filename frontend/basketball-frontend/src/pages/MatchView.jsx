@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { matchesApi } from "../api/matches";
 import { playersApi } from "../api/players";
@@ -7,9 +7,21 @@ import { useAuth } from "../auth/useAuth";
 import EmptyState from "../components/EmptyState";
 import { useConfirm } from "../components/useConfirm";
 import PdfExportModal from "../components/PdfExportModal";
+import ScoringChart from "../components/ScoringChart";
 import Skeleton from "../components/Skeleton";
 import { useToast } from "../components/useToast";
 import { downloadBlobResponse } from "../utils/downloadFile";
+import { formatLiveEventLabel } from "../utils/liveEventLabels";
+import {
+  formatDateTime,
+  formatPlayedTime,
+  parsePlayedTime,
+  playedSeconds,
+  playerLabel,
+  rosterPlayerLabel,
+  selectedSections,
+  statValue,
+} from "../utils/matchDisplay";
 
 const defaultMatchPdfSections = {
   players: true,
@@ -17,283 +29,11 @@ const defaultMatchPdfSections = {
   team_totals: true,
   box_score: true,
 };
-const QUARTER_SECONDS = 10 * 60;
-const MATCH_SECONDS = QUARTER_SECONDS * 4;
 
-function selectedSections(state) {
-  return Object.entries(state)
-    .filter(([, enabled]) => enabled)
-    .map(([key]) => key);
-}
-
-function formatDateTime(value) {
-  if (!value) return "No time";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return value;
-  return d.toLocaleString();
-}
-
-function statValue(value) {
-  return value ?? 0;
-}
-
-function playedSeconds(row) {
-  const seconds = Number(row?.played_seconds);
-  if (Number.isFinite(seconds) && seconds > 0) {
-    return Math.max(0, seconds);
-  }
-  return Math.max(0, (Number(row?.minutes) || 0) * 60);
-}
-
-function formatPlayedTime(value) {
-  const totalSeconds = Math.max(0, Math.floor(Number(value) || 0));
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = String(totalSeconds % 60).padStart(2, "0");
-  return `${minutes}:${seconds}`;
-}
-
-function parsePlayedTime(value) {
-  const rawValue = String(value || "").trim();
-  if (rawValue === "") return 0;
-
-  const match = rawValue.match(/^(\d{1,3})(?::([0-5]?\d))?$/);
-  if (!match) return null;
-
-  const minutes = Number(match[1]) || 0;
-  const seconds = match[2] === undefined ? 0 : Number(match[2]) || 0;
-  return (minutes * 60) + seconds;
-}
-
-function playerLabel(statRow) {
-  const firstName = statRow?.player?.first_name || "";
-  const lastName = statRow?.player?.last_name || "";
-  const fullName = `${firstName} ${lastName}`.trim();
-  const jersey = statRow?.player?.jersey_number ?? null;
-
-  if (!fullName) {
-    return jersey !== null ? `#${jersey} Player ${statRow.player_id}` : `Player ${statRow.player_id}`;
-  }
-
-  return jersey !== null ? `#${jersey} ${fullName}` : fullName;
-}
-
-function rosterPlayerLabel(player) {
-  const fullName = `${player?.first_name || ""} ${player?.last_name || ""}`.trim();
-  const jersey = player?.jersey_number ?? null;
-  return jersey !== null ? `#${jersey} ${fullName || `Player ${player.id}`}` : fullName || `Player ${player.id}`;
-}
-
-function eventPlayerLabel(playersById, playerId) {
-  return rosterPlayerLabel(playersById.get(Number(playerId)));
-}
-
-function liveEventLabel(event, playersById, matchRow, resolveTeamName) {
-  const player = (playerId) => eventPlayerLabel(playersById, playerId);
-  const team = event.teamSide === "home" ? resolveTeamName(matchRow, "home") : resolveTeamName(matchRow, "away");
-
-  if (event.type === "shot") {
-    const result = event.made ? "made" : "missed";
-    const assist = event.made && event.assistPlayerId ? `, assist ${player(event.assistPlayerId)}` : "";
-    const rebound = !event.made && event.reboundPlayerId ? `, rebound ${player(event.reboundPlayerId)}` : "";
-    return `${team}: ${player(event.playerId)} ${result} ${event.points}PT${assist}${rebound}`;
-  }
-  if (event.type === "free_throw") {
-    const rebound = !event.made && event.reboundPlayerId ? `, rebound ${player(event.reboundPlayerId)}` : "";
-    return `${team}: ${player(event.playerId)} ${event.made ? "made" : "missed"} FT${rebound}`;
-  }
-  if (event.type === "rebound") return `${team}: rebound by ${player(event.playerId)}`;
-  if (event.type === "block") return `${team}: ${player(event.blockerId)} blocked ${player(event.shooterId)} ${event.shotPoints}PT attempt`;
-  if (event.type === "steal") {
-    const turnover = event.turnoverPlayerId ? `, turnover by ${player(event.turnoverPlayerId)}` : "";
-    return `${team}: steal by ${player(event.playerId)}${turnover}`;
-  }
-  if (event.type === "foul") return `${team}: foul by ${player(event.playerId)}`;
-  if (event.type === "turnover") return `${team}: turnover by ${player(event.playerId)}`;
-  if (event.type === "substitution") return `${team}: ${player(event.inPlayerId)} in, ${player(event.outPlayerId)} out`;
-  if (event.type === "quarter_end") return `Quarter ${event.quarter} ended`;
-  return event.type || "Event";
-}
-
-function eventMatchSecond(event) {
-  const quarter = Math.max(1, Math.min(4, Number(event?.quarter) || 1));
-  const elapsed = Math.max(0, Math.min(QUARTER_SECONDS, Number(event?.elapsed) || 0));
-  return ((quarter - 1) * QUARTER_SECONDS) + elapsed;
-}
-
-function eventPoints(event) {
-  if (event?.type === "shot" && event.made) return Number(event.points) || 0;
-  if (event?.type === "free_throw" && event.made) return 1;
-  return 0;
-}
-
-function eventStatName(event) {
-  const labels = {
-    shot: "Shot",
-    free_throw: "Free throw",
-    rebound: "Rebound",
-    block: "Block",
-    steal: "Steal",
-    foul: "Foul",
-    turnover: "Turnover",
-    substitution: "Substitution",
-    quarter_end: "Quarter ended",
-  };
-  return labels[event?.type] || "Play";
-}
-
-function buildScoreChartData(events) {
-  const linePoints = [{ second: 0, home: 0, away: 0 }];
-  const markers = [];
-  let home = 0;
-  let away = 0;
-
-  [...events]
-    .sort((a, b) => eventMatchSecond(a) - eventMatchSecond(b))
-    .forEach((event) => {
-      const points = eventPoints(event);
-      const side = ["home", "away"].includes(event.teamSide) ? event.teamSide : "";
-      const second = eventMatchSecond(event);
-
-      if (points > 0 && side === "home") home += points;
-      if (points > 0 && side === "away") away += points;
-      if (points > 0 && side) linePoints.push({ second, home, away });
-      if (side) {
-        markers.push({
-          event,
-          second,
-          side,
-          points,
-          score: side === "home" ? home : away,
-          home,
-          away,
-        });
-      }
-    });
-
-  const lastPoint = linePoints[linePoints.length - 1];
-  if (lastPoint.second < MATCH_SECONDS) {
-    linePoints.push({ ...lastPoint, second: MATCH_SECONDS });
-  }
-
-  return { linePoints, markers };
-}
-
-function ScoringChart({ events, homeName, awayName, playersById, matchRow, resolveTeamName }) {
-  const { linePoints, markers } = useMemo(() => buildScoreChartData(events), [events]);
-  const chartRef = useRef(null);
-  const [tooltip, setTooltip] = useState(null);
-  const maxScore = Math.max(1, ...linePoints.flatMap((point) => [point.home, point.away]));
-  const width = 720;
-  const height = 264;
-  const padding = { top: 16, right: 16, bottom: 32, left: 30 };
-  const plotWidth = width - padding.left - padding.right;
-  const plotHeight = height - padding.top - padding.bottom;
-  const x = (second) => padding.left + (Math.max(0, Math.min(MATCH_SECONDS, second)) / MATCH_SECONDS) * plotWidth;
-  const y = (score) => padding.top + plotHeight - (Math.max(0, score) / maxScore) * plotHeight;
-  const pathFor = (key) => linePoints.reduce((parts, point, index) => {
-    if (index === 0) return [`M ${x(point.second)} ${y(point[key])}`];
-    const previous = linePoints[index - 1];
-    return [
-      ...parts,
-      `L ${x(point.second)} ${y(previous[key])}`,
-      `L ${x(point.second)} ${y(point[key])}`,
-    ];
-  }, []).join(" ");
-  const scoreTicks = Array.from(new Set([0, Math.ceil(maxScore / 2), maxScore]));
-  const updateTooltipPosition = (event, marker) => {
-    const chartBounds = chartRef.current?.getBoundingClientRect();
-    const svgBounds = event.currentTarget.ownerSVGElement.getBoundingClientRect();
-    const hasPointerPosition = Number.isFinite(event.clientX) && Number.isFinite(event.clientY);
-    const label = liveEventLabel(marker.event, playersById, matchRow, resolveTeamName);
-    setTooltip({
-      x: hasPointerPosition && chartBounds
-        ? event.clientX - chartBounds.left + chartRef.current.scrollLeft
-        : x(marker.second) + (svgBounds.left - (chartBounds?.left ?? svgBounds.left)),
-      y: hasPointerPosition && chartBounds
-        ? event.clientY - chartBounds.top + chartRef.current.scrollTop
-        : y(marker.score) + (svgBounds.top - (chartBounds?.top ?? svgBounds.top)),
-      team: marker.side === "home" ? homeName : awayName,
-      time: `Q${marker.event.quarter} ${marker.event.clock || ""}`.trim(),
-      statName: eventStatName(marker.event),
-      score: `${marker.home}-${marker.away}`,
-      label,
-    });
-  };
-
-  return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3">
-      <div className="mb-2 flex flex-wrap items-center gap-4 text-xs font-semibold">
-        <span className="inline-flex items-center gap-2 text-slate-700">
-          <span className="h-2 w-2 rounded-full bg-sky-500" />
-          {homeName}
-        </span>
-        <span className="inline-flex items-center gap-2 text-slate-700">
-          <span className="h-2 w-2 rounded-full bg-rose-500" />
-          {awayName}
-        </span>
-      </div>
-      <div ref={chartRef} className="relative overflow-x-auto">
-        <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Scoring timeline chart" className="min-w-[560px]">
-          {scoreTicks.map((tick) => (
-            <g key={tick}>
-              <line x1={padding.left} x2={width - padding.right} y1={y(tick)} y2={y(tick)} stroke="#e2e8f0" strokeWidth="0.6" />
-              <text x={padding.left - 9} y={y(tick) + 4} textAnchor="end" className="fill-slate-500 text-[10px]">{tick}</text>
-            </g>
-          ))}
-          {[0, 1, 2, 3, 4].map((quarter) => {
-            const second = quarter * QUARTER_SECONDS;
-            return (
-              <g key={quarter}>
-                <line x1={x(second)} x2={x(second)} y1={padding.top} y2={height - padding.bottom} stroke="#e2e8f0" strokeWidth="0.6" />
-                <text x={x(second)} y={height - 12} textAnchor="middle" className="fill-slate-500 text-[10px]">
-                  {quarter === 0 ? "Start" : `Q${quarter}`}
-                </text>
-              </g>
-            );
-          })}
-          <line x1={padding.left} x2={padding.left} y1={padding.top} y2={height - padding.bottom} stroke="#94a3b8" strokeWidth="0.6" />
-          <line x1={padding.left} x2={width - padding.right} y1={height - padding.bottom} y2={height - padding.bottom} stroke="#94a3b8" strokeWidth="0.6" />
-          <path d={pathFor("home")} fill="none" stroke="#0ea5e9" strokeWidth="1.1" strokeLinecap="square" strokeLinejoin="miter" />
-          <path d={pathFor("away")} fill="none" stroke="#f43f5e" strokeWidth="1.1" strokeLinecap="square" strokeLinejoin="miter" />
-          {markers.map((marker, index) => {
-            const color = marker.side === "home" ? "#0ea5e9" : "#f43f5e";
-            const isScoringPlay = marker.points > 0;
-            return (
-              <circle
-                key={`${marker.event.id || `${marker.second}-${marker.event.type}`}-${index}`}
-                cx={x(marker.second)}
-                cy={y(marker.score)}
-                r={isScoringPlay ? 1.9 : 1.75}
-                fill={isScoringPlay ? color : "#ffffff"}
-                stroke={color}
-                strokeWidth={isScoringPlay ? "0.9" : "1.05"}
-                opacity={isScoringPlay ? "1" : "0.9"}
-                onMouseEnter={(event) => updateTooltipPosition(event, marker)}
-                onMouseMove={(event) => updateTooltipPosition(event, marker)}
-                onMouseLeave={() => setTooltip(null)}
-                onFocus={(event) => updateTooltipPosition(event, marker)}
-                onBlur={() => setTooltip(null)}
-                tabIndex="0"
-              />
-            );
-          })}
-        </svg>
-        {tooltip ? (
-          <div
-            className="pointer-events-none absolute z-10 max-w-xs rounded-md border border-slate-200 bg-white px-3 py-2 text-xs shadow-lg"
-            style={{
-              left: `${Math.max(tooltip.x + 14, 8)}px`,
-              top: `${Math.max(tooltip.y - 24, 8)}px`,
-            }}
-          >
-            <div className="font-semibold text-slate-900">{tooltip.time} · {tooltip.statName}</div>
-            <div className="mt-0.5 text-slate-600">{tooltip.label}</div>
-            <div className="mt-1 font-semibold text-slate-700">Score {tooltip.score}</div>
-          </div>
-        ) : null}
-      </div>
-    </div>
-  );
+function quarterMinutes(match) {
+  const seconds = Number(match?.quarter_length_seconds);
+  if (!Number.isFinite(seconds) || seconds <= 0) return "10";
+  return String(Math.round(seconds / 60));
 }
 
 function blankStat(player, teamId) {
@@ -335,7 +75,7 @@ export default function MatchView() {
   const [err, setErr] = useState("");
 
   const [result, setResult] = useState({ home_score: "", away_score: "" });
-  const [meta, setMeta] = useState({ scheduled_at: "", status: "scheduled", venue_name: "" });
+  const [meta, setMeta] = useState({ scheduled_at: "", status: "scheduled", venue_name: "", quarter_length_minutes: "10" });
   const [isEditingResult, setIsEditingResult] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
@@ -421,6 +161,7 @@ export default function MatchView() {
       scheduled_at: mRes.data?.scheduled_at ? mRes.data.scheduled_at.slice(0, 16) : "",
       status: mRes.data?.status || "scheduled",
       venue_name: mRes.data?.venue_name || "",
+      quarter_length_minutes: quarterMinutes(mRes.data),
     });
   }, [buildStatsDraft, id]);
 
@@ -439,6 +180,7 @@ export default function MatchView() {
         scheduled_at: meta.scheduled_at || null,
         status: meta.status,
         venue_name: meta.venue_name?.trim() || null,
+        quarter_length_seconds: Math.round((Number(meta.quarter_length_minutes) || 10) * 60),
       });
       await load();
       showToast("Match info saved.");
@@ -591,6 +333,7 @@ export default function MatchView() {
       await matchesApi.update(id, {
         scheduled_at: meta.scheduled_at || null,
         venue_name: meta.venue_name?.trim() || null,
+        quarter_length_seconds: Math.round((Number(meta.quarter_length_minutes) || 10) * 60),
         status,
       });
       await load();
@@ -760,7 +503,7 @@ export default function MatchView() {
             <p className="section-heading__eyebrow">Match Center</p>
             <h1 className="section-heading__title">{resolveTeamName(match, "home")} vs {resolveTeamName(match, "away")}</h1>
             <p className="section-heading__copy">
-              Round {match.round_number || "-"} · {match.status}
+              Round {match.round_number || "-"} - {match.status}
             </p>
           </div>
           {match?.tournament_id ? (
@@ -769,9 +512,14 @@ export default function MatchView() {
                 {isExportingPdf ? "Exporting..." : "Export PDF"}
               </button>
               {isAdmin ? (
-                <button onClick={() => nav(`/matches/${id}/live-tracker`)} className="btn-primary">
-                  Live tracker
-                </button>
+                <>
+                  <button onClick={() => nav(`/matches/${id}/live-tracker`)} className="btn-primary">
+                    Live tracker
+                  </button>
+                  <button onClick={() => nav(`/matches/${id}/live-tracker-2`)} className="btn-primary">
+                    Live tracker 2
+                  </button>
+                </>
               ) : null}
               <button onClick={() => nav(`/tournaments/${match.tournament_id}`)} className="btn-secondary">
                 Back to tournament
@@ -789,7 +537,7 @@ export default function MatchView() {
           <div className="hero-stat">
             <div className="hero-stat__label">Scheduled</div>
             <div className="hero-stat__value">{match.scheduled_at ? "Set" : "TBD"}</div>
-            <div className="hero-stat__meta">{match.scheduled_at ? `${formatDateTime(match.scheduled_at)} · ${venueLabel(match)}` : `No kickoff time assigned yet · ${venueLabel(match)}`}</div>
+            <div className="hero-stat__meta">{match.scheduled_at ? `${formatDateTime(match.scheduled_at)} - ${venueLabel(match)}` : `No kickoff time assigned yet - ${venueLabel(match)}`}</div>
           </div>
           <div className="hero-stat">
             <div className="hero-stat__label">Result</div>
@@ -798,35 +546,61 @@ export default function MatchView() {
             </div>
             <div className="hero-stat__meta">Live scoreline stored for the selected match.</div>
           </div>
+          <div className="hero-stat">
+            <div className="hero-stat__label">Quarter</div>
+            <div className="hero-stat__value">{quarterMinutes(match)} min</div>
+            <div className="hero-stat__meta">Used by the live clock and scoring chart.</div>
+          </div>
         </div>
       </section>
 
       {isAdmin && (
         <div className="panel space-y-3 p-5">
           <div className="font-semibold text-slate-800">Match info</div>
-          <div className="grid gap-2 md:grid-cols-3">
-            <input
-              className="input"
-              type="datetime-local"
-              value={meta.scheduled_at}
-              onChange={(e) => setMeta({ ...meta, scheduled_at: e.target.value })}
-            />
-            <input
-              className="input"
-              placeholder={defaultVenueName || "Venue TBD"}
-              value={meta.venue_name}
-              onChange={(e) => setMeta({ ...meta, venue_name: e.target.value })}
-            />
-            <select
-              className="input"
-              value={meta.status}
-              onChange={(e) => setMeta({ ...meta, status: e.target.value })}
-            >
-              <option value="scheduled">scheduled</option>
-              <option value="live">live</option>
-              <option value="finished">finished</option>
-              <option value="cancelled">cancelled</option>
-            </select>
+          <div className="grid gap-2 md:grid-cols-4">
+            <label className="space-y-1">
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Date and time</span>
+              <input
+                className="input"
+                type="datetime-local"
+                value={meta.scheduled_at}
+                onChange={(e) => setMeta({ ...meta, scheduled_at: e.target.value })}
+              />
+            </label>
+            <label className="space-y-1">
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Venue</span>
+              <input
+                className="input"
+                placeholder={defaultVenueName || "Venue TBD"}
+                value={meta.venue_name}
+                onChange={(e) => setMeta({ ...meta, venue_name: e.target.value })}
+              />
+            </label>
+            <label className="space-y-1">
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Quarter length</span>
+              <input
+                className="input"
+                type="number"
+                min="1"
+                max="20"
+                step="1"
+                value={meta.quarter_length_minutes}
+                onChange={(e) => setMeta({ ...meta, quarter_length_minutes: e.target.value })}
+              />
+            </label>
+            <label className="space-y-1">
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Status</span>
+              <select
+                className="input"
+                value={meta.status}
+                onChange={(e) => setMeta({ ...meta, status: e.target.value })}
+              >
+                <option value="scheduled">scheduled</option>
+                <option value="live">live</option>
+                <option value="finished">finished</option>
+                <option value="cancelled">cancelled</option>
+              </select>
+            </label>
           </div>
           <div className="flex flex-wrap gap-2">
             <button onClick={saveMeta} className="btn-secondary">Save info</button>
@@ -1017,6 +791,7 @@ export default function MatchView() {
               playersById={matchPlayersById}
               matchRow={match}
               resolveTeamName={resolveTeamName}
+              quarterLengthSeconds={match.quarter_length_seconds}
             />
           )
         ) : null}
@@ -1042,7 +817,7 @@ export default function MatchView() {
                     <tr key={event.id || `${event.quarter}-${event.clock}-${event.type}`} className="border-t border-slate-100">
                       <td className="px-3 py-2">{event.quarter}</td>
                       <td className="px-3 py-2">{event.clock}</td>
-                      <td className="px-3 py-2">{liveEventLabel(event, matchPlayersById, match, resolveTeamName)}</td>
+                      <td className="px-3 py-2">{formatLiveEventLabel(event, matchPlayersById, match, resolveTeamName)}</td>
                     </tr>
                   ))}
                 </tbody>

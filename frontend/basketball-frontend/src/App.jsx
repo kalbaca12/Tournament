@@ -11,6 +11,7 @@ import PlayerView from "./pages/PlayerView";
 import MatchesList from "./pages/MatchesList";
 import MatchView from "./pages/MatchView";
 import LiveMatchTracker from "./pages/LiveMatchTracker";
+import LiveMatchTracker2 from "./pages/LiveMatchTracker2";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import ManagerProfile from "./pages/ManagerProfile";
@@ -76,6 +77,10 @@ export default function App() {
           <Route
             path="/matches/:id/live-tracker"
             element={isAdmin ? <LiveMatchTracker /> : <AccessDenied requiredRole="admin" />}
+          />
+          <Route
+            path="/matches/:id/live-tracker-2"
+            element={isAdmin ? <LiveMatchTracker2 /> : <AccessDenied requiredRole="admin" />}
           />
         </Routes>
       </main>

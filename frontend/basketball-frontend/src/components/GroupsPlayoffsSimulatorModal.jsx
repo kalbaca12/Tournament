@@ -55,19 +55,36 @@ function winnerSideFromScoreRow(scoreRow) {
   return parsed.home_score > parsed.away_score ? "home" : "away";
 }
 
-function createParticipant(teamId, label) {
+function TeamLogo({ logoUrl, name }) {
+  if (!logoUrl) return null;
+
+  return <img className="team-logo-tiny" src={logoUrl} alt={`${name || "Team"} logo`} loading="lazy" />;
+}
+
+function TeamIdentity({ name, logoUrl }) {
+  return (
+    <span className="team-identity">
+      <TeamLogo logoUrl={logoUrl} name={name} />
+      <span className="team-identity__name">{name}</span>
+    </span>
+  );
+}
+
+function createParticipant(teamId, label, logoUrl = null) {
   return {
     entryKey: teamId ? `team-${teamId}` : `placeholder-${label || "tbd"}`,
     teamId: teamId ?? null,
     label: label || "TBD",
+    logoUrl,
     isPlaceholder: !teamId,
   };
 }
 
-function emptyRow(teamId, teamName) {
+function emptyRow(teamId, teamName, logoUrl = null) {
   return {
     team_id: teamId,
     team_name: teamName || `Team ${teamId}`,
+    logo_url: logoUrl,
     played: 0,
     wins: 0,
     losses: 0,
@@ -84,6 +101,8 @@ function sortRows(rows) {
     if (right.points !== left.points) return right.points - left.points;
     if (right.diff !== left.diff) return right.diff - left.diff;
     if (right.points_for !== left.points_for) return right.points_for - left.points_for;
+    const nameOrder = String(left.team_name || "").localeCompare(String(right.team_name || ""), undefined, { sensitivity: "base" });
+    if (nameOrder !== 0) return nameOrder;
     return left.team_id - right.team_id;
   });
 }
@@ -126,7 +145,17 @@ function playoffQualifiedCount(teamCount) {
   return Math.floor(Number(teamCount) / 2);
 }
 
-function roundRobinPlayoffQualifiedCount(teamCount) {
+function roundRobinPlayoffQualifiedCount(teamCount, configuredCount = null) {
+  const configured = Number(configuredCount);
+  if (
+    Number.isFinite(configured)
+    && configured >= 2
+    && configured <= Number(teamCount)
+    && [2, 4, 8, 16, 32].includes(configured)
+  ) {
+    return configured;
+  }
+
   const qualified = Math.floor(Number(teamCount) / 2);
   let bracketSize = 1;
 
@@ -170,6 +199,8 @@ function seededFallbackPairings(groups, qualifierCount) {
     if (right.points !== left.points) return right.points - left.points;
     if (right.diff !== left.diff) return right.diff - left.diff;
     if (right.points_for !== left.points_for) return right.points_for - left.points_for;
+    const nameOrder = String(left.team_name || "").localeCompare(String(right.team_name || ""), undefined, { sensitivity: "base" });
+    if (nameOrder !== 0) return nameOrder;
     return left.team_id - right.team_id;
   });
 
@@ -206,16 +237,16 @@ function buildWinnerMap(matches, selections, scores) {
   }, {});
 }
 
-function buildGroupStandings(groupMatches, resolveTeamName, winnerMap, groupScores) {
+function buildGroupStandings(groupMatches, resolveTeamName, resolveTeamLogo, winnerMap, groupScores) {
   const tables = {};
   for (const match of groupMatches) {
     const groupCode = String(match.group_code || "?");
     if (!tables[groupCode]) tables[groupCode] = {};
     if (match.home_team_id) {
-      tables[groupCode][match.home_team_id] ||= emptyRow(match.home_team_id, resolveTeamName(match, "home"));
+      tables[groupCode][match.home_team_id] ||= emptyRow(match.home_team_id, resolveTeamName(match, "home"), resolveTeamLogo(match, "home"));
     }
     if (match.away_team_id) {
-      tables[groupCode][match.away_team_id] ||= emptyRow(match.away_team_id, resolveTeamName(match, "away"));
+      tables[groupCode][match.away_team_id] ||= emptyRow(match.away_team_id, resolveTeamName(match, "away"), resolveTeamLogo(match, "away"));
     }
   }
 
@@ -241,8 +272,8 @@ function buildInitialPlayoffSelections(bracketRounds, roundOnePairings) {
       const participants =
         roundIndex === 0
           ? [
-              createParticipant(roundOnePairings[matchIndex]?.home?.team_id ?? null, roundOnePairings[matchIndex]?.home?.team_name || "TBD"),
-              createParticipant(roundOnePairings[matchIndex]?.away?.team_id ?? null, roundOnePairings[matchIndex]?.away?.team_name || "TBD"),
+              createParticipant(roundOnePairings[matchIndex]?.home?.team_id ?? null, roundOnePairings[matchIndex]?.home?.team_name || "TBD", roundOnePairings[matchIndex]?.home?.logo_url || null),
+              createParticipant(roundOnePairings[matchIndex]?.away?.team_id ?? null, roundOnePairings[matchIndex]?.away?.team_name || "TBD", roundOnePairings[matchIndex]?.away?.logo_url || null),
             ]
           : [
               previousRound[matchIndex * 2]?.winner ?? null,
@@ -273,8 +304,8 @@ function buildPlayoffRounds(bracketRounds, roundOnePairings, playoffSelections, 
       const participants =
         roundIndex === 0
           ? [
-              createParticipant(roundOnePairings[matchIndex]?.home?.team_id ?? null, roundOnePairings[matchIndex]?.home?.team_name || "TBD"),
-              createParticipant(roundOnePairings[matchIndex]?.away?.team_id ?? null, roundOnePairings[matchIndex]?.away?.team_name || "TBD"),
+              createParticipant(roundOnePairings[matchIndex]?.home?.team_id ?? null, roundOnePairings[matchIndex]?.home?.team_name || "TBD", roundOnePairings[matchIndex]?.home?.logo_url || null),
+              createParticipant(roundOnePairings[matchIndex]?.away?.team_id ?? null, roundOnePairings[matchIndex]?.away?.team_name || "TBD", roundOnePairings[matchIndex]?.away?.logo_url || null),
             ]
           : [
               previousRoundMatches[matchIndex * 2]?.winner ?? null,
@@ -302,7 +333,9 @@ export default function GroupsPlayoffsSimulatorModal({
   bracketRounds,
   roundLabel,
   resolveTeamName,
+  resolveTeamLogo = () => null,
   formatDateTime,
+  playoffQualifierCount = null,
 }) {
   const groupMatches = useMemo(
     () =>
@@ -363,7 +396,7 @@ export default function GroupsPlayoffsSimulatorModal({
   const groupScores = groupState.scores;
 
   const groupWinnerMap = useMemo(() => buildWinnerMap(groupMatches, groupSelections, groupScores), [groupMatches, groupScores, groupSelections]);
-  const simulatedGroups = useMemo(() => buildGroupStandings(groupMatches, resolveTeamName, groupWinnerMap, groupScores), [groupMatches, groupScores, groupWinnerMap, resolveTeamName]);
+  const simulatedGroups = useMemo(() => buildGroupStandings(groupMatches, resolveTeamName, resolveTeamLogo, groupWinnerMap, groupScores), [groupMatches, groupScores, groupWinnerMap, resolveTeamLogo, resolveTeamName]);
   const matchesByGroup = useMemo(
     () =>
       groupMatches.reduce((acc, match) => {
@@ -379,7 +412,7 @@ export default function GroupsPlayoffsSimulatorModal({
   const totalTeamCount = simulatedGroups.reduce((sum, group) => sum + group.rows.length, 0);
   const roundOneMatchCount = bracketRounds[0]?.matches.length || 0;
   const expectedQualifierCount = isRoundRobin
-    ? roundRobinPlayoffQualifiedCount(totalTeamCount)
+    ? roundRobinPlayoffQualifiedCount(totalTeamCount, playoffQualifierCount)
     : playoffQualifiedCount(totalTeamCount);
   const qualifierCount = Math.min(expectedQualifierCount, roundOneMatchCount * 2);
   const qualifiedRankLimit = isRoundRobin
@@ -569,7 +602,9 @@ export default function GroupsPlayoffsSimulatorModal({
                       {group.rows.map((row) => (
                         <tr key={row.team_id} className={row.rank <= qualifiedRankLimit ? "is-qualified" : ""}>
                           <td>{row.rank}</td>
-                          <td>{row.team_name || `Team ${row.team_id}`}</td>
+                          <td>
+                            <TeamIdentity name={row.team_name || `Team ${row.team_id}`} logoUrl={row.logo_url} />
+                          </td>
                           <td>{row.played}</td>
                           <td>{row.wins}</td>
                           <td>{row.losses}</td>
@@ -593,11 +628,11 @@ export default function GroupsPlayoffsSimulatorModal({
 
                         <div className="gp-sim-match-actions">
                           <button type="button" onClick={() => pickGroupWinner(match.id, "home")} className={`gp-sim-pick ${selectedWinner === "home" ? "is-picked" : ""}`}>
-                            <span>{resolveTeamName(match, "home") || "TBD"}</span>
+                            <TeamIdentity name={resolveTeamName(match, "home") || "TBD"} logoUrl={resolveTeamLogo(match, "home")} />
                             {selectedWinner === "home" && <span className="gp-sim-pick-tag">winner</span>}
                           </button>
                           <button type="button" onClick={() => pickGroupWinner(match.id, "away")} className={`gp-sim-pick ${selectedWinner === "away" ? "is-picked" : ""}`}>
-                            <span>{resolveTeamName(match, "away") || "TBD"}</span>
+                            <TeamIdentity name={resolveTeamName(match, "away") || "TBD"} logoUrl={resolveTeamLogo(match, "away")} />
                             {selectedWinner === "away" && <span className="gp-sim-pick-tag">winner</span>}
                           </button>
                         </div>
@@ -679,7 +714,9 @@ export default function GroupsPlayoffsSimulatorModal({
                                   handleDrop(roundIndex, match.matchIndex, sideIndex);
                                 }}
                               >
-                                <span className="sim-team-label">{participant?.label || "Drop winner here"}</span>
+                                <span className="sim-team-label">
+                                  {participant ? <TeamIdentity name={participant.label} logoUrl={participant.logoUrl} /> : "Drop winner here"}
+                                </span>
                                 {participant && !participant.isPlaceholder && <span className="sim-team-hint">{canDrag ? "drag/pick" : "pick"}</span>}
                                 {!participant && <span className="sim-team-hint">drop</span>}
                               </div>

@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 
 class TournamentRosterController extends Controller
 {
-    private function ensureTeamRegistered(Tournament $tournament, Team $team): void
+    private function requireRegistered(Tournament $tournament, Team $team): void
     {
         $ok = TournamentTeam::where('tournament_id', $tournament->id)
             ->where('team_id', $team->id)
@@ -23,7 +23,7 @@ class TournamentRosterController extends Controller
 
     public function index(Tournament $tournament, Team $team)
     {
-        $this->ensureTeamRegistered($tournament, $team);
+        $this->requireRegistered($tournament, $team);
 
         return TournamentTeamPlayer::where('tournament_id', $tournament->id)
             ->where('team_id', $team->id)
@@ -34,13 +34,13 @@ class TournamentRosterController extends Controller
 
     public function store(Request $request, Tournament $tournament, Team $team)
     {
-        $this->ensureTeamRegistered($tournament, $team);
+        $this->requireRegistered($tournament, $team);
 
-        $validated = $request->validate([
+        $data = $request->validate([
             'player_id' => ['required','integer','exists:players,id'],
         ]);
 
-        $player = Player::findOrFail($validated['player_id']);
+        $player = Player::findOrFail($data['player_id']);
         
         if ((int)$player->team_id !== (int)$team->id) {
             return response()->json(['message' => 'Player does not belong to this team.'], 409);
@@ -66,7 +66,7 @@ class TournamentRosterController extends Controller
 
     public function destroy(Tournament $tournament, Team $team, Player $player)
     {
-        $this->ensureTeamRegistered($tournament, $team);
+        $this->requireRegistered($tournament, $team);
 
         TournamentTeamPlayer::where('tournament_id', $tournament->id)
             ->where('team_id', $team->id)

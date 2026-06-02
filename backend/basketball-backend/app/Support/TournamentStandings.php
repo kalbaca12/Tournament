@@ -30,7 +30,7 @@ class TournamentStandings
             ->whereNotNull('away_score')
             ->get(['home_team_id', 'away_team_id', 'home_score', 'away_score']);
 
-        $teams = Team::whereIn('id', $teamIds)->get(['id', 'name', 'city'])->keyBy('id');
+        $teams = Team::whereIn('id', $teamIds)->get(['id', 'name', 'city', 'logo_url'])->keyBy('id');
 
         return self::calculateOverallRows($teamIds, $matches->all(), $teams->all());
     }
@@ -51,17 +51,17 @@ class TournamentStandings
 
         $teamIds = [];
         foreach ($groupMatches as $match) {
-            $homeTeamId = (int) self::field($match, 'home_team_id');
-            $awayTeamId = (int) self::field($match, 'away_team_id');
-            if ($homeTeamId > 0) {
-                $teamIds[] = $homeTeamId;
+            $homeId = (int) self::getv($match, 'home_team_id');
+            $awayId = (int) self::getv($match, 'away_team_id');
+            if ($homeId > 0) {
+                $teamIds[] = $homeId;
             }
-            if ($awayTeamId > 0) {
-                $teamIds[] = $awayTeamId;
+            if ($awayId > 0) {
+                $teamIds[] = $awayId;
             }
         }
         $teamIds = array_values(array_unique($teamIds));
-        $teams = Team::whereIn('id', $teamIds)->get(['id', 'name', 'city'])->keyBy('id');
+        $teams = Team::whereIn('id', $teamIds)->get(['id', 'name', 'city', 'logo_url'])->keyBy('id');
 
         return self::calculateGroupedRows($groupMatches->all(), $teams->all());
     }
@@ -73,17 +73,17 @@ class TournamentStandings
             return [];
         }
 
-        $table = self::emptyTable($teamIds);
-        self::applyMatchesToTable($table, $matches);
+        $table = self::initTable($teamIds);
+        self::applyMatches($table, $matches);
 
         $rows = array_values(array_map(
-            fn (array $row) => self::withTeamInfo($row, $teamsById),
+            fn (array $row) => self::teamInfo($row, $teamsById),
             $table,
         ));
 
-        self::sortRows($rows);
+        self::sortTable($rows);
 
-        return self::withRanks($rows);
+        return self::ranked($rows);
     }
 
     public static function calculateGroupedRows(array $matches, array $teamsById = []): array
@@ -94,64 +94,64 @@ class TournamentStandings
 
         $tables = [];
         foreach ($matches as $match) {
-            $groupCode = (string) self::field($match, 'group_code');
-            if ($groupCode === '') {
+            $group = (string) self::getv($match, 'group_code');
+            if ($group === '') {
                 continue;
             }
 
-            if (!isset($tables[$groupCode])) {
-                $tables[$groupCode] = [];
+            if (!isset($tables[$group])) {
+                $tables[$group] = [];
             }
 
-            foreach ([(int) self::field($match, 'home_team_id'), (int) self::field($match, 'away_team_id')] as $teamId) {
-                if ($teamId > 0 && !isset($tables[$groupCode][$teamId])) {
-                    $tables[$groupCode][$teamId] = self::emptyRow($teamId);
+            foreach ([(int) self::getv($match, 'home_team_id'), (int) self::getv($match, 'away_team_id')] as $teamId) {
+                if ($teamId > 0 && !isset($tables[$group][$teamId])) {
+                    $tables[$group][$teamId] = self::row0($teamId);
                 }
             }
         }
 
         foreach ($matches as $match) {
-            $groupCode = (string) self::field($match, 'group_code');
-            if ($groupCode === '' || !isset($tables[$groupCode])) {
+            $group = (string) self::getv($match, 'group_code');
+            if ($group === '' || !isset($tables[$group])) {
                 continue;
             }
 
-            if (self::field($match, 'status') !== 'finished' || self::field($match, 'home_score') === null || self::field($match, 'away_score') === null) {
+            if (self::getv($match, 'status') !== 'finished' || self::getv($match, 'home_score') === null || self::getv($match, 'away_score') === null) {
                 continue;
             }
 
-            self::applyMatchToTable($tables[$groupCode], $match);
+            self::addMatch($tables[$group], $match);
         }
 
         $groups = [];
         ksort($tables);
-        foreach ($tables as $groupCode => $groupTable) {
+        foreach ($tables as $group => $groupRows) {
             $rows = array_values(array_map(
-                fn (array $row) => self::withTeamInfo($row, $teamsById),
-                $groupTable,
+                fn (array $row) => self::teamInfo($row, $teamsById),
+                $groupRows,
             ));
 
-            self::sortRows($rows);
+            self::sortTable($rows);
             $groups[] = [
-                'group_code' => $groupCode,
-                'rows' => self::withRanks($rows),
+                'group_code' => $group,
+                'rows' => self::ranked($rows),
             ];
         }
 
         return $groups;
     }
 
-    private static function emptyTable(array $teamIds): array
+    private static function initTable(array $teamIds): array
     {
         $table = [];
         foreach ($teamIds as $teamId) {
-            $table[$teamId] = self::emptyRow((int) $teamId);
+            $table[$teamId] = self::row0((int) $teamId);
         }
 
         return $table;
     }
 
-    private static function emptyRow(int $teamId): array
+    private static function row0(int $teamId): array
     {
         return [
             'team_id' => $teamId,
@@ -165,64 +165,58 @@ class TournamentStandings
         ];
     }
 
-    private static function applyMatchesToTable(array &$table, array $matches): void
+    private static function applyMatches(array &$table, array $matches): void
     {
         foreach ($matches as $match) {
-            self::applyMatchToTable($table, $match);
+            self::addMatch($table, $match);
         }
     }
 
-    private static function applyMatchToTable(array &$table, object|array $match): void
+    private static function addMatch(array &$table, object|array $match): void
     {
-        $homeTeamId = (int) self::field($match, 'home_team_id');
-        $awayTeamId = (int) self::field($match, 'away_team_id');
-        $homeScore = (int) self::field($match, 'home_score');
-        $awayScore = (int) self::field($match, 'away_score');
+        $homeId = (int) self::getv($match, 'home_team_id');
+        $awayId = (int) self::getv($match, 'away_team_id');
+        $home = (int) self::getv($match, 'home_score');
+        $away = (int) self::getv($match, 'away_score');
 
-        if (!isset($table[$homeTeamId]) || !isset($table[$awayTeamId])) {
+        if (!isset($table[$homeId]) || !isset($table[$awayId])) {
             return;
         }
 
-        $table[$homeTeamId]['played']++;
-        $table[$awayTeamId]['played']++;
+        $table[$homeId]['played']++;
+        $table[$awayId]['played']++;
 
-        $table[$homeTeamId]['points_for'] += $homeScore;
-        $table[$homeTeamId]['points_against'] += $awayScore;
-        $table[$awayTeamId]['points_for'] += $awayScore;
-        $table[$awayTeamId]['points_against'] += $homeScore;
+        $table[$homeId]['points_for'] += $home;
+        $table[$homeId]['points_against'] += $away;
+        $table[$awayId]['points_for'] += $away;
+        $table[$awayId]['points_against'] += $home;
 
-        if ($homeScore > $awayScore) {
-            $table[$homeTeamId]['wins']++;
-            $table[$awayTeamId]['losses']++;
-        } elseif ($awayScore > $homeScore) {
-            $table[$awayTeamId]['wins']++;
-            $table[$homeTeamId]['losses']++;
+        if ($home > $away) {
+            $table[$homeId]['wins']++;
+            $table[$awayId]['losses']++;
+        } elseif ($away > $home) {
+            $table[$awayId]['wins']++;
+            $table[$homeId]['losses']++;
         }
 
-        $table[$homeTeamId]['diff'] = $table[$homeTeamId]['points_for'] - $table[$homeTeamId]['points_against'];
-        $table[$awayTeamId]['diff'] = $table[$awayTeamId]['points_for'] - $table[$awayTeamId]['points_against'];
-        $table[$homeTeamId]['points'] = $table[$homeTeamId]['wins'] * 2 + $table[$homeTeamId]['losses'];
-        $table[$awayTeamId]['points'] = $table[$awayTeamId]['wins'] * 2 + $table[$awayTeamId]['losses'];
+        $table[$homeId]['diff'] = $table[$homeId]['points_for'] - $table[$homeId]['points_against'];
+        $table[$awayId]['diff'] = $table[$awayId]['points_for'] - $table[$awayId]['points_against'];
+        $table[$homeId]['points'] = $table[$homeId]['wins'] * 2 + $table[$homeId]['losses'];
+        $table[$awayId]['points'] = $table[$awayId]['wins'] * 2 + $table[$awayId]['losses'];
     }
 
-    private static function sortRows(array &$rows): void
+    private static function sortTable(array &$rows): void
     {
         usort($rows, function (array $left, array $right) {
-            return [
-                $right['points'],
-                $right['diff'],
-                $right['points_for'],
-                -$right['team_id'],
-            ] <=> [
-                $left['points'],
-                $left['diff'],
-                $left['points_for'],
-                -$left['team_id'],
-            ];
+            return ((int) $right['points'] <=> (int) $left['points'])
+                ?: ((int) $right['diff'] <=> (int) $left['diff'])
+                ?: ((int) $right['points_for'] <=> (int) $left['points_for'])
+                ?: strcasecmp((string) ($left['team_name'] ?? ''), (string) ($right['team_name'] ?? ''))
+                ?: ((int) $left['team_id'] <=> (int) $right['team_id']);
         });
     }
 
-    private static function withRanks(array $rows): array
+    private static function ranked(array $rows): array
     {
         $rank = 1;
         foreach ($rows as &$row) {
@@ -233,16 +227,17 @@ class TournamentStandings
         return $rows;
     }
 
-    private static function withTeamInfo(array $row, array $teamsById): array
+    private static function teamInfo(array $row, array $teamsById): array
     {
         $team = $teamsById[$row['team_id']] ?? null;
-        $row['team_name'] = self::field($team, 'name');
-        $row['city'] = self::field($team, 'city');
+        $row['team_name'] = self::getv($team, 'name');
+        $row['city'] = self::getv($team, 'city');
+        $row['logo_url'] = self::getv($team, 'logo_url');
 
         return $row;
     }
 
-    private static function field(object|array|null $value, string $key): mixed
+    private static function getv(object|array|null $value, string $key): mixed
     {
         if (is_array($value)) {
             return $value[$key] ?? null;
@@ -251,3 +246,4 @@ class TournamentStandings
         return $value?->{$key} ?? null;
     }
 }
+

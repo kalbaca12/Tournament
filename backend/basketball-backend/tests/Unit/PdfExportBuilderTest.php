@@ -8,6 +8,7 @@ use App\Models\Player;
 use App\Models\Team;
 use App\Models\Tournament;
 use App\Support\PdfExportBuilder;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -159,6 +160,71 @@ class PdfExportBuilderTest extends TestCase
     }
 
     #[Test]
+    public function match_export_renders_team_totals_and_box_score_sections(): void
+    {
+        $game = $this->makeMatchWithStats();
+
+        $pdf = PdfExportBuilder::match($game, ['team_totals', 'box_score']);
+
+        self::assertStringContainsString('Team Totals', $pdf);
+        self::assertStringContainsString('Team Box Scores', $pdf);
+        self::assertStringContainsString('Team total', $pdf);
+        self::assertStringContainsString('#12 Jonas Stone', $pdf);
+    }
+
+    #[Test]
+    public function tournament_export_renders_teams_schedule_and_feasibility_sections(): void
+    {
+        $tournament = $this->makeTournamentWithTeamsAndMatches();
+
+        $pdf = PdfExportBuilder::tournament($tournament, ['teams', 'schedule', 'feasibility']);
+
+        self::assertStringStartsWith('%PDF-1.4', $pdf);
+        self::assertStringContainsString('Tournament Export', $pdf);
+        self::assertStringContainsString('Scheduling Feasibility', $pdf);
+        self::assertStringContainsString('Approved Teams', $pdf);
+        self::assertStringContainsString('Matches By Day', $pdf);
+        self::assertStringContainsString('Required matches', $pdf);
+        self::assertStringContainsString('Wolves', $pdf);
+        self::assertStringContainsString('Falcons', $pdf);
+    }
+
+    #[Test]
+    public function tournament_export_renders_playoff_rounds(): void
+    {
+        $tournament = $this->makeTournamentWithTeamsAndMatches();
+
+        $pdf = PdfExportBuilder::tournament($tournament, ['playoffs']);
+
+        self::assertStringContainsString('Playoff Rounds', $pdf);
+        self::assertStringContainsString('Final', $pdf);
+        self::assertStringContainsString('Wolves', $pdf);
+        self::assertStringContainsString('Falcons', $pdf);
+    }
+
+    #[Test]
+    public function tournament_export_renders_empty_section_notes(): void
+    {
+        $tournament = new Tournament([
+            'id' => 21,
+            'name' => 'Empty Cup',
+            'format' => 'round_robin',
+            'status' => 'draft',
+            'start_date' => '2026-05-01',
+            'end_date' => '2026-05-02',
+            'participants_locked' => false,
+        ]);
+        $tournament->setRelation('teams', collect());
+        $tournament->setRelation('matches', collect());
+
+        $pdf = PdfExportBuilder::tournament($tournament, ['teams', 'schedule', 'playoffs']);
+
+        self::assertStringContainsString('No approved teams are registered for this tournament yet.', $pdf);
+        self::assertStringContainsString('No day-based matches are available yet.', $pdf);
+        self::assertStringContainsString('No playoff matches are available for this tournament.', $pdf);
+    }
+
+    #[Test]
     public function team_stat_tables_group_players_by_team_and_calculate_totals(): void
     {
         $game = new Game([
@@ -235,15 +301,30 @@ class PdfExportBuilderTest extends TestCase
     }
 
     #[Test]
-    public function helper_formatters_return_safe_display_values(): void
+    #[DataProvider('labelizeCases')]
+    public function labelize_returns_safe_display_values(?string $value, string $expected): void
     {
-        self::assertSame('Single Elimination', $this->invokePdfMethod('labelize', ['single_elimination']));
-        self::assertSame('N/A', $this->invokePdfMethod('labelize', [null]));
+        self::assertSame($expected, $this->invokePdfMethod('labelize', [$value]));
+    }
+
+    #[Test]
+    public function safe_value_replaces_empty_text_with_default_label(): void
+    {
         self::assertSame('N/A', $this->invokePdfMethod('safeValue', ['']));
-        self::assertSame('2026-04-18 18:30', $this->invokePdfMethod('formatDateTime', ['2026-04-18 18:30:00']));
-        self::assertSame('18:30', $this->invokePdfMethod('timeOnly', ['2026-04-18 18:30:00']));
-        self::assertSame('Final', $this->invokePdfMethod('roundLabel', [1]));
-        self::assertSame('Quarterfinals', $this->invokePdfMethod('roundLabel', [4]));
+    }
+
+    #[Test]
+    #[DataProvider('dateTimeCases')]
+    public function date_time_helpers_return_safe_display_values(?string $value, string $method, string $expected): void
+    {
+        self::assertSame($expected, $this->invokePdfMethod($method, [$value]));
+    }
+
+    #[Test]
+    #[DataProvider('roundLabelCases')]
+    public function round_label_formats_known_round_sizes(int $matchCount, string $expected): void
+    {
+        self::assertSame($expected, $this->invokePdfMethod('roundLabel', [$matchCount]));
     }
 
     #[Test]
@@ -324,7 +405,7 @@ class PdfExportBuilderTest extends TestCase
     }
 
     #[Test]
-    public function playoff_helpers_format_participants_winners_scores_and_sections(): void
+    public function playoff_participant_uses_previous_round_placeholder_for_missing_home_team(): void
     {
         $game = new Game([
             'home_team_id' => null,
@@ -342,6 +423,20 @@ class PdfExportBuilderTest extends TestCase
             2,
             0,
         ]));
+    }
+
+    #[Test]
+    public function playoff_participant_uses_team_id_when_relation_is_missing(): void
+    {
+        $game = new Game([
+            'home_team_id' => null,
+            'away_team_id' => 5,
+            'home_score' => 88,
+            'away_score' => 91,
+        ]);
+        $game->setRelation('homeTeam', null);
+        $game->setRelation('awayTeam', null);
+
         self::assertSame('Team 5', $this->invokePdfMethod('playoffParticipantName', [
             $game,
             'away',
@@ -349,10 +444,37 @@ class PdfExportBuilderTest extends TestCase
             2,
             0,
         ]));
+    }
+
+    #[Test]
+    public function playoff_winner_helper_detects_winning_side(): void
+    {
+        $game = new Game([
+            'home_team_id' => null,
+            'away_team_id' => 5,
+            'home_score' => 88,
+            'away_score' => 91,
+        ]);
+
         self::assertFalse($this->invokePdfMethod('isWinner', [$game, 'home']));
         self::assertTrue($this->invokePdfMethod('isWinner', [$game, 'away']));
+    }
+
+    #[Test]
+    public function score_helpers_format_recorded_and_missing_scores(): void
+    {
+        $game = new Game([
+            'home_score' => 88,
+            'away_score' => 91,
+        ]);
+
         self::assertSame('88-91', $this->invokePdfMethod('resultLabel', [$game]));
         self::assertSame('-', $this->invokePdfMethod('scoreDisplay', [null]));
+    }
+
+    #[Test]
+    public function section_normalizer_keeps_only_requested_allowed_sections(): void
+    {
         self::assertSame(['leaders'], $this->invokePdfMethod('normalizeSections', [
             ['leaders', 'unknown', 'LEADERS'],
             ['players', 'leaders'],
@@ -360,7 +482,7 @@ class PdfExportBuilderTest extends TestCase
     }
 
     #[Test]
-    public function tournament_and_match_display_helpers_use_fallback_values(): void
+    public function tournament_subtitle_uses_fallback_values(): void
     {
         $tournament = new Tournament([
             'format' => 'round_robin',
@@ -369,6 +491,12 @@ class PdfExportBuilderTest extends TestCase
             'end_date' => '2026-04-19',
         ]);
 
+        self::assertSame('Round Robin | Draft | N/A | 2026-04-19', $this->invokePdfMethod('tournamentSubtitle', [$tournament]));
+    }
+
+    #[Test]
+    public function team_name_uses_fallback_values_when_relation_is_missing(): void
+    {
         $game = new Game([
             'home_team_id' => null,
             'away_team_id' => 7,
@@ -378,13 +506,204 @@ class PdfExportBuilderTest extends TestCase
         $game->setRelation('homeTeam', null);
         $game->setRelation('awayTeam', null);
 
-        self::assertSame('Round Robin | Draft | N/A | 2026-04-19', $this->invokePdfMethod('tournamentSubtitle', [$tournament]));
         self::assertSame('Team N/A', $this->invokePdfMethod('teamName', [$game, 'home']));
         self::assertSame('Team 7', $this->invokePdfMethod('teamName', [$game, 'away']));
+    }
+
+    #[Test]
+    public function result_label_returns_not_recorded_without_scores(): void
+    {
+        $game = new Game([
+            'home_score' => null,
+            'away_score' => null,
+        ]);
+
         self::assertSame('Not recorded', $this->invokePdfMethod('resultLabel', [$game]));
+    }
+
+    #[Test]
+    public function date_helpers_leave_invalid_values_readable(): void
+    {
         self::assertSame('not-a-date', $this->invokePdfMethod('formatDateTime', ['not-a-date']));
         self::assertSame('TBD', $this->invokePdfMethod('timeOnly', [null]));
+    }
+
+    #[Test]
+    public function unknown_round_size_uses_generic_round_label(): void
+    {
         self::assertSame('Round (3 matches)', $this->invokePdfMethod('roundLabel', [3]));
+    }
+
+    public static function labelizeCases(): array
+    {
+        return [
+            'snake case value' => ['single_elimination', 'Single Elimination'],
+            'null value' => [null, 'N/A'],
+        ];
+    }
+
+    public static function dateTimeCases(): array
+    {
+        return [
+            'format full date time' => ['2026-04-18 18:30:00', 'formatDateTime', '2026-04-18 18:30'],
+            'format time only' => ['2026-04-18 18:30:00', 'timeOnly', '18:30'],
+        ];
+    }
+
+    public static function roundLabelCases(): array
+    {
+        return [
+            'final' => [1, 'Final'],
+            'quarterfinals' => [4, 'Quarterfinals'],
+        ];
+    }
+
+    private function makeMatchWithStats(): Game
+    {
+        $tournament = new Tournament([
+            'id' => 9,
+            'name' => 'Spring Cup',
+            'venue_name' => 'Main Arena',
+        ]);
+
+        $homeTeam = new Team([
+            'id' => 1,
+            'name' => 'Wolves',
+        ]);
+
+        $awayTeam = new Team([
+            'id' => 2,
+            'name' => 'Falcons',
+        ]);
+
+        $game = new Game([
+            'id' => 15,
+            'tournament_id' => 9,
+            'home_team_id' => 1,
+            'away_team_id' => 2,
+            'round_number' => 3,
+            'stage' => 'regular',
+            'scheduled_at' => '2026-04-18 18:30:00',
+            'status' => 'finished',
+            'home_score' => 81,
+            'away_score' => 77,
+        ]);
+        $game->setRelation('tournament', $tournament);
+        $game->setRelation('homeTeam', $homeTeam);
+        $game->setRelation('awayTeam', $awayTeam);
+
+        $homePlayer = new Player([
+            'id' => 10,
+            'first_name' => 'Jonas',
+            'last_name' => 'Stone',
+            'jersey_number' => 12,
+        ]);
+
+        $awayPlayer = new Player([
+            'id' => 11,
+            'first_name' => 'Mantas',
+            'last_name' => 'Lake',
+            'jersey_number' => 8,
+        ]);
+
+        $homeStat = new MatchPlayerStat([
+            'player_id' => 10,
+            'team_id' => 1,
+            'points' => 24,
+            'rebounds' => 8,
+            'assists' => 5,
+            'steals' => 2,
+            'blocks' => 1,
+            'fouls' => 3,
+            'turnovers' => 2,
+            'fgm' => 9,
+            'fga' => 15,
+            'tpm' => 2,
+            'tpa' => 5,
+            'ftm' => 4,
+            'fta' => 6,
+        ]);
+        $homeStat->setRelation('player', $homePlayer);
+
+        $awayStat = new MatchPlayerStat([
+            'player_id' => 11,
+            'team_id' => 2,
+            'points' => 18,
+            'rebounds' => 6,
+            'assists' => 7,
+            'steals' => 1,
+            'blocks' => 0,
+            'fouls' => 2,
+            'turnovers' => 3,
+            'fgm' => 7,
+            'fga' => 13,
+            'tpm' => 1,
+            'tpa' => 4,
+            'ftm' => 3,
+            'fta' => 4,
+        ]);
+        $awayStat->setRelation('player', $awayPlayer);
+
+        $game->setRelation('stats', collect([$homeStat, $awayStat]));
+
+        return $game;
+    }
+
+    private function makeTournamentWithTeamsAndMatches(): Tournament
+    {
+        $tournament = new Tournament([
+            'id' => 21,
+            'name' => 'Spring Cup',
+            'format' => 'round_robin',
+            'status' => 'active',
+            'start_date' => '2026-04-18',
+            'end_date' => '2026-04-20',
+            'registration_deadline' => '2026-04-10',
+            'venue_name' => 'Main Arena',
+            'participants_locked' => true,
+            'allowed_days' => ['saturday', 'sunday'],
+            'time_slots' => ['18:00', '20:00'],
+        ]);
+
+        $homeTeam = new Team(['id' => 1, 'name' => 'Wolves', 'city' => 'Kaunas']);
+        $awayTeam = new Team(['id' => 2, 'name' => 'Falcons', 'city' => 'Vilnius']);
+
+        $dayMatch = new Game([
+            'id' => 31,
+            'tournament_id' => 21,
+            'home_team_id' => 1,
+            'away_team_id' => 2,
+            'stage' => 'regular',
+            'round_number' => 1,
+            'scheduled_at' => '2026-04-18 18:00:00',
+            'status' => 'finished',
+            'home_score' => 81,
+            'away_score' => 77,
+        ]);
+        $dayMatch->setRelation('homeTeam', $homeTeam);
+        $dayMatch->setRelation('awayTeam', $awayTeam);
+        $dayMatch->setRelation('tournament', $tournament);
+
+        $playoffMatch = new Game([
+            'id' => 32,
+            'tournament_id' => 21,
+            'home_team_id' => 1,
+            'away_team_id' => 2,
+            'stage' => 'playoffs',
+            'round_number' => 1,
+            'scheduled_at' => '2026-04-20 20:00:00',
+            'status' => 'finished',
+            'home_score' => 88,
+            'away_score' => 84,
+        ]);
+        $playoffMatch->setRelation('homeTeam', $homeTeam);
+        $playoffMatch->setRelation('awayTeam', $awayTeam);
+        $playoffMatch->setRelation('tournament', $tournament);
+
+        $tournament->setRelation('teams', collect([$homeTeam, $awayTeam]));
+        $tournament->setRelation('matches', collect([$dayMatch, $playoffMatch]));
+
+        return $tournament;
     }
 
     private function invokePdfMethod(string $method, array $args): mixed

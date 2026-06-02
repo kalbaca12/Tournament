@@ -36,24 +36,13 @@ export default function Nav() {
       }
 
       try {
-        const tournamentsRes = await tournamentsApi.list();
-        const tournaments = (tournamentsRes.data || []).slice(0, 8);
-        const results = await Promise.allSettled(
-          tournaments.map((tournament) => tournamentsApi.participationRequests(tournament.id)),
-        );
-        const items = results.flatMap((result, index) => {
-          if (result.status !== "fulfilled") return [];
-
-          const tournament = tournaments[index];
-          return (result.value.data || [])
-            .filter((request) => request.status === "pending")
-            .map((request) => ({
-              id: `${tournament.id}:${request.id}:${request.status}`,
-              tournamentId: tournament.id,
-              label: `${request.team?.name || "Team"} requested ${tournament.name}`,
-              meta: "Pending participation request",
-            }));
-        });
+        const requestsRes = await tournamentsApi.allParticipationRequests({ status: "pending" });
+        const items = (requestsRes.data || []).map((request) => ({
+          id: `${request.tournament_id}:${request.id}:${request.status}`,
+          tournamentId: request.tournament_id,
+          label: `${request.team?.name || "Team"} requested ${request.tournament?.name || `Tournament #${request.tournament_id}`}`,
+          meta: "Pending participation request",
+        }));
         setNotificationItems(items);
         setNotificationCount(items.length);
       } catch {

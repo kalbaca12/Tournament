@@ -7,6 +7,7 @@ use App\Models\Tournament;
 use App\Support\PdfExportBuilder;
 use App\Models\TournamentTeam;
 use App\Support\SchedulingFeasibility;
+use App\Support\TournamentProgression;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -28,24 +29,24 @@ class TournamentController extends Controller
 
     public function feasibility(Tournament $tournament)
     {
-        $teamCount = TournamentTeam::where('tournament_id', $tournament->id)->count();
-        return SchedulingFeasibility::evaluate($tournament, $teamCount);
+        $teams = TournamentTeam::where('tournament_id', $tournament->id)->count();
+        return SchedulingFeasibility::evaluate($tournament, $teams);
     }
 
     public function exportPdf(Request $request, Tournament $tournament)
     {
-        $validated = $request->validate([
+        $data = $request->validate([
             'sections' => ['nullable', 'array'],
             'sections.*' => ['string', 'in:teams,standings,schedule,playoffs,feasibility'],
         ]);
 
-        $pdf = PdfExportBuilder::tournament($tournament, $validated['sections'] ?? []);
+        $pdf = PdfExportBuilder::tournament($tournament, $data['sections'] ?? []);
         $name = Str::slug($tournament->name ?: ('tournament-' . $tournament->id));
-        $filename = ($name !== '' ? $name : 'tournament-' . $tournament->id) . '-report.pdf';
+        $file = ($name !== '' ? $name : 'tournament-' . $tournament->id) . '-report.pdf';
 
         return response($pdf, 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="' . $file . '"',
             'Content-Length' => (string) strlen($pdf),
         ]);
     }
@@ -57,17 +58,19 @@ class TournamentController extends Controller
             return response()->json(['message' => 'Unauthenticated. Please login again.'], 401);
         }
 
-        $validated = $request->validate([
+        $data = $request->validate([
             'name' => ['required','string','max:150'],
             'banner_url' => ['nullable', 'url', 'max:2048'],
             'start_date' => ['nullable','date'],
             'end_date' => ['required','date'],
             'format' => ['required','in:round_robin,groups_playoffs,single_elimination'],
             'max_teams' => ['nullable', 'integer', 'min:2', 'max:512'],
+            'group_size' => ['nullable', 'integer', 'in:4,8'],
+            'group_advance_count' => ['nullable', 'integer', 'min:1', 'max:512'],
             'duration_weeks' => ['nullable', 'integer', 'min:1', 'max:52'],
             'allowed_days' => ['nullable', 'array'],
             'allowed_days.*' => ['integer', 'between:1,7'],
-            'time_slots' => ['nullable', 'array', $this->timeSlotCountRule()],
+            'time_slots' => ['nullable', 'array', $this->slotCountRule()],
             'time_slots.*' => ['string', 'regex:/^([01]\d|2[0-3]):[0-5]\d$/'],
             'venue_name' => ['nullable', 'string', 'max:150'],
             'playoff_round_gap_days' => ['nullable', 'integer', 'min:0', 'max:30'],
@@ -77,31 +80,35 @@ class TournamentController extends Controller
             'registration_deadline' => ['nullable', 'date'],
         ]);
 
-        if (($validated['format'] ?? null) === 'groups_playoffs' && !$this->isValidGroupsPlayoffsTeamCount($validated['max_teams'] ?? null)) {
-            return response()->json(['message' => 'Groups + playoffs tournaments support 4, 8, or 16 teams.'], 422);
+        $data = $this->normalizeGroupRules($data, $data['format'] ?? null);
+        if (($data['format'] ?? null) === 'groups_playoffs' && !$this->validGroupSetup($data['max_teams'] ?? null, $data['group_size'] ?? null, $data['group_advance_count'] ?? null)) {
+            return response()->json(['message' => 'Choose group rules that create a 2, 4, 8, or 16 team playoff bracket.'], 422);
         }
-        if (($validated['format'] ?? null) === 'single_elimination' && !$this->isValidSingleEliminationTeamCount($validated['max_teams'] ?? null)) {
+        if (($data['format'] ?? null) === 'round_robin' && !$this->validRoundRobinAdvanceCount($data['max_teams'] ?? null, $data['group_advance_count'] ?? null)) {
+            return response()->json(['message' => 'Round robin playoff teams must be 2, 4, 8, 16, or 32 and cannot exceed max teams.'], 422);
+        }
+        if (($data['format'] ?? null) === 'single_elimination' && !$this->validKoSize($data['max_teams'] ?? null)) {
             return response()->json(['message' => 'Single elimination tournaments support 4, 8, 16, or 32 teams.'], 422);
         }
 
-        $validated['created_by'] = $user->id;
-        $validated['status'] = 'draft';
-        $validated['participants_locked'] = false;
-        $validated['duration_weeks'] = $validated['duration_weeks'] ?? 1;
-        $validated['start_date'] = $validated['start_date'] ?? $validated['end_date'];
-        $validated['playoff_round_gap_days'] = $validated['playoff_round_gap_days'] ?? 1;
-        $validated['groups_to_playoffs_gap_days'] = $validated['groups_to_playoffs_gap_days'] ?? 1;
-        $validated['stage_day_gap_days'] = $validated['stage_day_gap_days'] ?? 0;
-        $validated['venue_name'] = $this->normalizeVenueName($validated['venue_name'] ?? null);
+        $data['created_by'] = $user->id;
+        $data['status'] = 'draft';
+        $data['participants_locked'] = false;
+        $data['duration_weeks'] = $data['duration_weeks'] ?? 1;
+        $data['start_date'] = $data['start_date'] ?? $data['end_date'];
+        $data['playoff_round_gap_days'] = $data['playoff_round_gap_days'] ?? 1;
+        $data['groups_to_playoffs_gap_days'] = $data['groups_to_playoffs_gap_days'] ?? 1;
+        $data['stage_day_gap_days'] = $data['stage_day_gap_days'] ?? 0;
+        $data['venue_name'] = $this->venueName($data['venue_name'] ?? null);
 
-        $tournament = Tournament::create($validated);
+        $tournament = Tournament::create($data);
 
         return response()->json($tournament, 201);
     }
 
     public function update(Request $request, Tournament $tournament)
     {
-        $validated = $request->validate([
+        $data = $request->validate([
             'name' => ['sometimes','string','max:150'],
             'banner_url' => ['nullable', 'url', 'max:2048'],
             'start_date' => ['nullable','date'],
@@ -109,10 +116,12 @@ class TournamentController extends Controller
             'format' => ['sometimes','in:round_robin,groups_playoffs,single_elimination'],
             'status' => ['sometimes','in:draft,published,finished,cancelled'],
             'max_teams' => ['nullable', 'integer', 'min:2', 'max:512'],
+            'group_size' => ['nullable', 'integer', 'in:4,8'],
+            'group_advance_count' => ['nullable', 'integer', 'min:1', 'max:512'],
             'duration_weeks' => ['nullable', 'integer', 'min:1', 'max:52'],
             'allowed_days' => ['nullable', 'array'],
             'allowed_days.*' => ['integer', 'between:1,7'],
-            'time_slots' => ['nullable', 'array', $this->timeSlotCountRule()],
+            'time_slots' => ['nullable', 'array', $this->slotCountRule()],
             'time_slots.*' => ['string', 'regex:/^([01]\d|2[0-3]):[0-5]\d$/'],
             'venue_name' => ['nullable', 'string', 'max:150'],
             'playoff_round_gap_days' => ['nullable', 'integer', 'min:0', 'max:30'],
@@ -123,23 +132,31 @@ class TournamentController extends Controller
             'participants_locked' => ['sometimes', 'boolean'],
         ]);
 
-        $nextFormat = $validated['format'] ?? $tournament->format;
-        $nextMaxTeams = array_key_exists('max_teams', $validated) ? $validated['max_teams'] : $tournament->max_teams;
-        if ($nextFormat === 'groups_playoffs' && !$this->isValidGroupsPlayoffsTeamCount($nextMaxTeams)) {
-            return response()->json(['message' => 'Groups + playoffs tournaments support 4, 8, or 16 teams.'], 422);
+        $fmt = $data['format'] ?? $tournament->format;
+        $maxTeams = array_key_exists('max_teams', $data) ? $data['max_teams'] : $tournament->max_teams;
+        $groupSize = array_key_exists('group_size', $data) ? $data['group_size'] : $tournament->group_size;
+        $advanceCount = array_key_exists('group_advance_count', $data) ? $data['group_advance_count'] : $tournament->group_advance_count;
+        $data = $this->normalizeGroupRules($data, $fmt, $maxTeams, $groupSize, $advanceCount);
+        $groupSize = $data['group_size'] ?? $groupSize;
+        $advanceCount = $data['group_advance_count'] ?? $advanceCount;
+        if ($fmt === 'groups_playoffs' && !$this->validGroupSetup($maxTeams, $groupSize, $advanceCount)) {
+            return response()->json(['message' => 'Choose group rules that create a 2, 4, 8, or 16 team playoff bracket.'], 422);
         }
-        if ($nextFormat === 'single_elimination' && !$this->isValidSingleEliminationTeamCount($nextMaxTeams)) {
+        if ($fmt === 'round_robin' && !$this->validRoundRobinAdvanceCount($maxTeams, $advanceCount)) {
+            return response()->json(['message' => 'Round robin playoff teams must be 2, 4, 8, 16, or 32 and cannot exceed max teams.'], 422);
+        }
+        if ($fmt === 'single_elimination' && !$this->validKoSize($maxTeams)) {
             return response()->json(['message' => 'Single elimination tournaments support 4, 8, 16, or 32 teams.'], 422);
         }
 
-        $validated['playoff_round_gap_days'] = $validated['playoff_round_gap_days'] ?? ($tournament->playoff_round_gap_days ?? 1);
-        $validated['groups_to_playoffs_gap_days'] = $validated['groups_to_playoffs_gap_days'] ?? ($tournament->groups_to_playoffs_gap_days ?? 1);
-        $validated['stage_day_gap_days'] = $validated['stage_day_gap_days'] ?? ($tournament->stage_day_gap_days ?? 0);
-        if (array_key_exists('venue_name', $validated)) {
-            $validated['venue_name'] = $this->normalizeVenueName($validated['venue_name'] ?? null);
+        $data['playoff_round_gap_days'] = $data['playoff_round_gap_days'] ?? ($tournament->playoff_round_gap_days ?? 1);
+        $data['groups_to_playoffs_gap_days'] = $data['groups_to_playoffs_gap_days'] ?? ($tournament->groups_to_playoffs_gap_days ?? 1);
+        $data['stage_day_gap_days'] = $data['stage_day_gap_days'] ?? ($tournament->stage_day_gap_days ?? 0);
+        if (array_key_exists('venue_name', $data)) {
+            $data['venue_name'] = $this->venueName($data['venue_name'] ?? null);
         }
 
-        $tournament->update($validated);
+        $tournament->update($data);
 
         return $tournament;
     }
@@ -154,6 +171,12 @@ class TournamentController extends Controller
 
     public function unlockParticipants(Tournament $tournament)
     {
+        if ($tournament->matches()->exists()) {
+            return response()->json([
+                'message' => 'Clear the schedule before unlocking participants.',
+            ], 409);
+        }
+
         $tournament->participants_locked = false;
         $tournament->save();
 
@@ -166,13 +189,13 @@ class TournamentController extends Controller
         return response()->json(['message' => 'Deleted'], 200);
     }
 
-    private function normalizeVenueName(?string $venueName): ?string
+    private function venueName(?string $venueName): ?string
     {
         $name = trim((string) ($venueName ?? ''));
         return $name !== '' ? $name : null;
     }
 
-    private function timeSlotCountRule(): \Closure
+    private function slotCountRule(): \Closure
     {
         return function (string $attribute, mixed $value, \Closure $fail): void {
             if (is_array($value) && !in_array(count($value), [2, 4, 6, 8], true)) {
@@ -181,13 +204,79 @@ class TournamentController extends Controller
         };
     }
 
-    private function isValidGroupsPlayoffsTeamCount(mixed $teamCount): bool
-    {
-        return in_array((int) $teamCount, [4, 8, 16], true);
-    }
-
-    private function isValidSingleEliminationTeamCount(mixed $teamCount): bool
+    private function validGroupSize(mixed $teamCount): bool
     {
         return in_array((int) $teamCount, [4, 8, 16, 32], true);
+    }
+
+    private function validKoSize(mixed $teamCount): bool
+    {
+        return in_array((int) $teamCount, [4, 8, 16, 32], true);
+    }
+
+    private function normalizeGroupRules(array $data, mixed $format = null, mixed $teamCount = null, mixed $groupSize = null, mixed $advanceCount = null): array
+    {
+        $resolvedFormat = $data['format'] ?? $format;
+
+        if ($resolvedFormat === 'round_robin') {
+            $data['group_size'] = (int) ($groupSize ?? 4) ?: 4;
+            $data['group_advance_count'] = $this->normalizeRoundRobinAdvanceCount(
+                $data['max_teams'] ?? $teamCount ?? 8,
+                $data['group_advance_count'] ?? $advanceCount ?? null,
+            );
+            return $data;
+        }
+
+        if ($resolvedFormat !== 'groups_playoffs') {
+            $data['group_size'] = (int) ($groupSize ?? 4) ?: 4;
+            $data['group_advance_count'] = 2;
+            return $data;
+        }
+
+        $teamCount = (int) ($data['max_teams'] ?? $teamCount ?? 8);
+        $groupSize = (int) ($data['group_size'] ?? $groupSize ?? 4);
+        $advanceCount = (int) ($data['group_advance_count'] ?? $advanceCount ?? 2);
+
+        if (!TournamentProgression::validGroupPlayoffSetup($teamCount, $groupSize, $advanceCount)) {
+            $first = TournamentProgression::groupPlayoffOptions($teamCount)[0] ?? null;
+            if ($first) {
+                $groupSize = $first['group_size'];
+                $advanceCount = $first['group_advance_count'];
+            }
+        }
+
+        $data['group_size'] = $groupSize;
+        $data['group_advance_count'] = $advanceCount;
+
+        return $data;
+    }
+
+    private function validGroupSetup(mixed $teamCount, mixed $groupSize, mixed $advanceCount): bool
+    {
+        return $this->validGroupSize($teamCount)
+            && TournamentProgression::validGroupPlayoffSetup((int) $teamCount, (int) $groupSize, (int) $advanceCount);
+    }
+
+    private function validRoundRobinAdvanceCount(mixed $teamCount, mixed $advanceCount): bool
+    {
+        return TournamentProgression::validRoundRobinPlayoffCount((int) $teamCount, (int) $advanceCount);
+    }
+
+    private function normalizeRoundRobinAdvanceCount(mixed $teamCount, mixed $advanceCount): int
+    {
+        $teamCount = max(2, (int) $teamCount);
+        $advanceCount = (int) $advanceCount;
+
+        if ($advanceCount > 0 && $this->validRoundRobinAdvanceCount($teamCount, $advanceCount)) {
+            return $advanceCount;
+        }
+
+        if ($advanceCount > 0) {
+            return $advanceCount;
+        }
+
+        $options = array_values(array_filter([2, 4, 8, 16, 32], fn (int $count) => $count <= $teamCount));
+
+        return $options[0] ?? 2;
     }
 }

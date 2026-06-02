@@ -14,7 +14,7 @@ class ScheduleControllerTest extends TestCase
     public function four_team_groups_playoffs_creates_only_a_final_after_group_stage(): void
     {
         $controller = new ScheduleController();
-        $plannedMatches = $this->invokeControllerMethod($controller, 'buildGroupsPlayoffsMatches', range(1, 4));
+        $plannedMatches = $this->invokeControllerMethod($controller, 'groupsMatches', range(1, 4));
 
         $groupMatches = array_values(array_filter($plannedMatches, fn (array $row) => ($row['stage'] ?? null) === 'group'));
         $playoffMatches = array_values(array_filter($plannedMatches, fn (array $row) => ($row['stage'] ?? null) === 'playoffs'));
@@ -22,6 +22,24 @@ class ScheduleControllerTest extends TestCase
         self::assertCount(6, $groupMatches);
         self::assertCount(1, $playoffMatches);
         self::assertSame(1, $playoffMatches[0]['round_number']);
+    }
+
+    #[Test]
+    public function groups_playoffs_match_builder_respects_configured_group_size(): void
+    {
+        $controller = new ScheduleController();
+        $tournament = new Tournament([
+            'group_size' => 8,
+            'group_advance_count' => 2,
+        ]);
+
+        $plannedMatches = $this->invokeControllerMethod($controller, 'groupsMatches', range(1, 16), $tournament);
+
+        $groupMatches = array_values(array_filter($plannedMatches, fn (array $row) => ($row['stage'] ?? null) === 'group'));
+        $playoffMatches = array_values(array_filter($plannedMatches, fn (array $row) => ($row['stage'] ?? null) === 'playoffs'));
+
+        self::assertCount(56, $groupMatches);
+        self::assertCount(3, $playoffMatches);
     }
 
     #[Test]
@@ -40,9 +58,9 @@ class ScheduleControllerTest extends TestCase
             'group_games_per_day' => 4,
         ]);
 
-        $plannedMatches = $this->invokeControllerMethod($controller, 'buildGroupsPlayoffsMatches', range(1, 8));
+        $plannedMatches = $this->invokeControllerMethod($controller, 'groupsMatches', range(1, 8));
         $feasibility = SchedulingFeasibility::evaluate($tournament, 8);
-        $scheduledMatches = $this->invokeControllerMethod($controller, 'assignMatchesToSlots', $tournament, $plannedMatches, $feasibility, []);
+        $scheduledMatches = $this->invokeControllerMethod($controller, 'assignSlots', $tournament, $plannedMatches, $feasibility);
 
         $teamOneGroupGames = array_values(array_filter(
             $scheduledMatches,
@@ -90,9 +108,9 @@ class ScheduleControllerTest extends TestCase
             'group_games_per_day' => 2,
         ]);
 
-        $plannedMatches = $this->invokeControllerMethod($controller, 'buildGroupsPlayoffsMatches', range(1, 8));
+        $plannedMatches = $this->invokeControllerMethod($controller, 'groupsMatches', range(1, 8));
         $feasibility = SchedulingFeasibility::evaluate($tournament, 8);
-        $scheduledMatches = $this->invokeControllerMethod($controller, 'assignMatchesToSlots', $tournament, $plannedMatches, $feasibility, []);
+        $scheduledMatches = $this->invokeControllerMethod($controller, 'assignSlots', $tournament, $plannedMatches, $feasibility);
 
         $matchesByDate = [];
         foreach ($scheduledMatches as $scheduledMatch) {
@@ -127,9 +145,9 @@ class ScheduleControllerTest extends TestCase
             'group_games_per_day' => 8,
         ]);
 
-        $plannedMatches = $this->invokeControllerMethod($controller, 'buildGroupsPlayoffsMatches', range(1, 8));
+        $plannedMatches = $this->invokeControllerMethod($controller, 'groupsMatches', range(1, 8));
         $feasibility = SchedulingFeasibility::evaluate($tournament, 8);
-        $scheduledMatches = $this->invokeControllerMethod($controller, 'assignMatchesToSlots', $tournament, $plannedMatches, $feasibility, []);
+        $scheduledMatches = $this->invokeControllerMethod($controller, 'assignSlots', $tournament, $plannedMatches, $feasibility);
 
         $matchesByDate = [];
         foreach ($scheduledMatches as $scheduledMatch) {
@@ -157,9 +175,9 @@ class ScheduleControllerTest extends TestCase
             'playoff_round_gap_days' => 2,
         ]);
 
-        $plannedMatches = $this->invokeControllerMethod($controller, 'buildSingleEliminationMatches', range(1, 4));
+        $plannedMatches = $this->invokeControllerMethod($controller, 'koMatches', range(1, 4));
         $feasibility = SchedulingFeasibility::evaluate($tournament, 4);
-        $scheduledMatches = $this->invokeControllerMethod($controller, 'assignMatchesToSlots', $tournament, $plannedMatches, $feasibility, []);
+        $scheduledMatches = $this->invokeControllerMethod($controller, 'assignSlots', $tournament, $plannedMatches, $feasibility);
 
         $roundDates = [];
         foreach ($scheduledMatches as $scheduledMatch) {

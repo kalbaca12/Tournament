@@ -97,6 +97,46 @@ class ApiIntegrationTest extends TestCase
     }
 
     #[Test]
+    #[TestDox('POST /api/tournaments stores valid group playoff rules and rejects unsupported team counts')]
+    public function post_api_tournaments_stores_valid_group_playoff_rules_and_rejects_unsupported_team_counts(): void
+    {
+        $admin = $this->createUser('admin');
+        Sanctum::actingAs($admin);
+
+        $created = $this->postJson('/api/tournaments', $this->validTournamentPayload([
+            'name' => 'Groups Cup',
+            'format' => 'groups_playoffs',
+            'max_teams' => 16,
+            'group_size' => 8,
+            'group_advance_count' => 2,
+            'group_games_per_day' => 8,
+        ]));
+
+        $created
+            ->assertCreated()
+            ->assertJsonPath('format', 'groups_playoffs')
+            ->assertJsonPath('group_size', 8)
+            ->assertJsonPath('group_advance_count', 2);
+
+        $this->assertDatabaseHas('tournaments', [
+            'name' => 'Groups Cup',
+            'format' => 'groups_playoffs',
+            'max_teams' => 16,
+            'group_size' => 8,
+            'group_advance_count' => 2,
+        ]);
+
+        $this->postJson('/api/tournaments', $this->validTournamentPayload([
+            'format' => 'groups_playoffs',
+            'max_teams' => 12,
+            'group_size' => 4,
+            'group_advance_count' => 2,
+        ]))
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'Choose group rules that create a 2, 4, 8, or 16 team playoff bracket.');
+    }
+
+    #[Test]
     #[TestDox('POST /api/teams returns 201, duplicate POST /api/teams returns 409')]
     public function post_api_teams_returns_201_then_409_for_duplicate_manager_team(): void
     {
@@ -212,6 +252,47 @@ class ApiIntegrationTest extends TestCase
             'away_team_id' => $teams[1]->id,
             'status' => 'scheduled',
         ]);
+    }
+
+    #[Test]
+    #[TestDox('POST /api/tournaments/{id}/generate-schedule respects configured group size and advance count')]
+    public function post_api_tournaments_generate_schedule_respects_configured_group_size_and_advance_count(): void
+    {
+        $admin = $this->createUser('admin');
+        $tournament = $this->createTournament($admin, [
+            'format' => 'groups_playoffs',
+            'max_teams' => 16,
+            'group_size' => 8,
+            'group_advance_count' => 2,
+            'participants_locked' => true,
+            'end_date' => '2026-06-30',
+            'time_slots' => ['10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '21:00', '22:00'],
+            'group_games_per_day' => 8,
+        ]);
+
+        for ($i = 1; $i <= 16; $i++) {
+            $team = $this->createTeam($this->createUser('manager'), [
+                'name' => 'Seed ' . $i,
+            ]);
+
+            TournamentTeam::create([
+                'tournament_id' => $tournament->id,
+                'team_id' => $team->id,
+                'seed' => $i,
+            ]);
+        }
+
+        Sanctum::actingAs($admin);
+        $response = $this->postJson("/api/tournaments/{$tournament->id}/generate-schedule");
+
+        $response
+            ->assertCreated()
+            ->assertJsonPath('message', 'Schedule generated')
+            ->assertJsonPath('matches_created', 59);
+
+        $this->assertSame(28, Game::where('tournament_id', $tournament->id)->where('group_code', 'A')->count());
+        $this->assertSame(28, Game::where('tournament_id', $tournament->id)->where('group_code', 'B')->count());
+        $this->assertSame(3, Game::where('tournament_id', $tournament->id)->where('stage', 'playoffs')->count());
     }
 
     #[Test]
@@ -562,6 +643,70 @@ class ApiIntegrationTest extends TestCase
     }
 
     #[Test]
+    #[TestDox('POST /api/matches/{id}/live-events stores live match timeline events')]
+    public function post_api_matches_live_events_stores_live_match_timeline_events(): void
+    {
+        $admin = $this->createUser('admin');
+        $homeTeam = $this->createTeam($this->createUser('manager'), ['name' => 'Wolves']);
+        $awayTeam = $this->createTeam($this->createUser('manager'), ['name' => 'Falcons']);
+        $homePlayer = $this->createPlayer($homeTeam, ['first_name' => 'Jonas']);
+        $awayPlayer = $this->createPlayer($awayTeam, ['first_name' => 'Petras']);
+        $tournament = $this->createTournament($admin);
+
+        foreach ([$homeTeam, $awayTeam] as $team) {
+            TournamentTeam::create([
+                'tournament_id' => $tournament->id,
+                'team_id' => $team->id,
+            ]);
+        }
+
+        $game = Game::create([
+            'tournament_id' => $tournament->id,
+            'home_team_id' => $homeTeam->id,
+            'away_team_id' => $awayTeam->id,
+            'stage' => 'group',
+            'round_number' => 1,
+            'scheduled_at' => '2026-06-01 18:00:00',
+            'status' => 'live',
+        ]);
+
+        Sanctum::actingAs($admin);
+        $response = $this->postJson("/api/matches/{$game->id}/live-events", [
+            'events' => [
+                [
+                    'id' => 'evt-001',
+                    'type' => 'shot',
+                    'quarter' => 1,
+                    'clock' => '09:41',
+                    'elapsed' => 19,
+                    'teamSide' => 'home',
+                    'playerId' => $homePlayer->id,
+                    'assistPlayerId' => $awayPlayer->id,
+                    'points' => 2,
+                    'made' => true,
+                ],
+                [
+                    'id' => 'evt-002',
+                    'type' => 'rebound',
+                    'quarter' => 1,
+                    'clock' => '09:20',
+                    'elapsed' => 40,
+                    'teamSide' => 'away',
+                    'reboundPlayerId' => $awayPlayer->id,
+                ],
+            ],
+        ]);
+
+        $response
+            ->assertCreated()
+            ->assertJsonPath('message', 'Live events saved')
+            ->assertJsonPath('events.0.id', 'evt-001')
+            ->assertJsonPath('events.1.type', 'rebound');
+
+        $this->assertSame('evt-001', $game->fresh()->live_events[0]['id']);
+    }
+
+    #[Test]
     #[TestDox('GET/POST/DELETE participation request list, reject, and delete endpoints return expected statuses')]
     public function get_post_delete_api_participation_requests_list_reject_delete_return_expected_statuses(): void
     {
@@ -655,6 +800,8 @@ class ApiIntegrationTest extends TestCase
             $table->string('status', 20)->default('draft');
             $table->unsignedBigInteger('created_by')->nullable();
             $table->unsignedInteger('max_teams')->nullable();
+            $table->unsignedInteger('group_size')->default(4);
+            $table->unsignedInteger('group_advance_count')->default(2);
             $table->unsignedInteger('duration_weeks')->default(1);
             $table->json('allowed_days')->nullable();
             $table->json('time_slots')->nullable();
@@ -694,6 +841,8 @@ class ApiIntegrationTest extends TestCase
             $table->unsignedInteger('home_score')->nullable();
             $table->unsignedInteger('away_score')->nullable();
             $table->string('status', 20)->default('scheduled');
+            $table->json('live_events')->nullable();
+            $table->unsignedInteger('quarter_length_seconds')->default(600);
             $table->timestamps();
         });
 

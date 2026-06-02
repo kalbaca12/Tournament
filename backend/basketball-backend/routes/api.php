@@ -63,6 +63,7 @@ Route::delete('/tournaments/{tournament}/teams/{team}/players/{player}', [Tourna
 
 Route::get('/tournaments/{tournament}/matches', [MatchController::class, 'index']);
 Route::get('/matches', [MatchController::class, 'all']);
+Route::get('/matches/days', [MatchController::class, 'days']);
 Route::get('/matches/{game}', [MatchController::class, 'show']);
 Route::get('/matches/{game}/export/pdf', [MatchController::class, 'exportPdf']);
 
@@ -73,12 +74,14 @@ Route::get('/matches/{game}/stats', [MatchStatController::class, 'index']);
 Route::get('/tournaments/{tournament}/standings', [StandingsController::class, 'index']);
 
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::get('/participation-requests', [ParticipationRequestController::class, 'adminAll']);
     Route::get('/tournaments/{tournament}/participation-requests', [ParticipationRequestController::class, 'adminIndex']);
     Route::post('/participation-requests/{requestRow}/approve', [ParticipationRequestController::class, 'approve']);
     Route::post('/participation-requests/{requestRow}/reject', [ParticipationRequestController::class, 'reject']);
     Route::delete('/participation-requests/{requestRow}', [ParticipationRequestController::class, 'destroy']);
 
     Route::post('/tournaments/{tournament}/teams', [TournamentTeamController::class, 'store']);
+    Route::put('/tournaments/{tournament}/teams/{team}', [TournamentTeamController::class, 'update']);
     Route::delete('/tournaments/{tournament}/teams/{team}', [TournamentTeamController::class, 'destroy']);
 
     Route::post('/tournaments/{tournament}/generate-schedule', [ScheduleController::class, 'generateRoundRobin']);

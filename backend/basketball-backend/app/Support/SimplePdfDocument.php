@@ -10,9 +10,6 @@ class SimplePdfDocument
 
     private const MARGIN = 42.0;
 
-    /**
-     * @var array<int, array<int, string>>
-     */
     private array $pages = [];
 
     private int $pageIndex = -1;
@@ -632,9 +629,6 @@ class SimplePdfDocument
         return rtrim($text) . '...';
     }
 
-    /**
-     * @return array<int, string>
-     */
     private function wrapTextToWidth(string $text, float $maxWidth, float $fontSize, bool $bold, int $maxLines = 2): array
     {
         $text = $this->normalizeText($text);

@@ -28,8 +28,9 @@ function stageCopy(format) {
 }
 
 const TIME_SLOT_COUNTS = [2, 4, 6, 8];
-const GROUPS_PLAYOFFS_TEAM_COUNTS = [4, 8, 16];
+const GROUPS_PLAYOFFS_TEAM_COUNTS = [4, 8, 16, 32];
 const SINGLE_ELIMINATION_TEAM_COUNTS = [4, 8, 16, 32];
+const ROUND_ROBIN_ADVANCE_COUNTS = [2, 4, 8, 16, 32];
 const RULE_LABEL_CLASS = "flex min-h-[2.75rem] items-end text-sm font-medium text-slate-700";
 const DEFAULT_TIME_SLOTS = ["12:00", "14:00", "16:00", "18:00", "20:00", "22:00", "09:00", "11:00"];
 
@@ -53,6 +54,41 @@ function normalizeSingleEliminationTeamCount(value) {
   return SINGLE_ELIMINATION_TEAM_COUNTS.includes(count) ? count : 8;
 }
 
+function isPowerOfTwo(value) {
+  return value >= 2 && (value & (value - 1)) === 0;
+}
+
+function groupRuleOptions(teamCount) {
+  const total = Number(teamCount) || 8;
+  const options = [];
+  [4, 8].forEach((groupSize) => {
+    if (groupSize > total || total % groupSize !== 0) return;
+    for (let advance = 1; advance < groupSize; advance += 1) {
+      const playoffTeams = (total / groupSize) * advance;
+      if (isPowerOfTwo(playoffTeams)) {
+        options.push({ groupSize, advance, playoffTeams });
+      }
+    }
+  });
+  return options;
+}
+
+function normalizeGroupRules(teamCount, groupSize, advance) {
+  const options = groupRuleOptions(teamCount);
+  return options.find((opt) => opt.groupSize === Number(groupSize) && opt.advance === Number(advance)) || options[0];
+}
+
+function roundRobinAdvanceOptions(teamCount) {
+  const total = Math.max(2, Number(teamCount) || 8);
+  return ROUND_ROBIN_ADVANCE_COUNTS.filter((count) => count <= total);
+}
+
+function normalizeRoundRobinAdvance(teamCount, advance) {
+  const options = roundRobinAdvanceOptions(teamCount);
+  const selected = Number(advance);
+  return options.includes(selected) ? selected : options[0];
+}
+
 export default function TournamentCreate() {
   const nav = useNavigate();
   const { showToast } = useToast();
@@ -66,6 +102,8 @@ export default function TournamentCreate() {
     time_slots: ["12:00", "14:00", "16:00", "18:00"],
     playoff_round_gap_days: 1,
     groups_to_playoffs_gap_days: 1,
+    group_size: 4,
+    group_advance_count: 2,
     stage_day_gap_days: 0,
     group_games_per_day: 4,
   });
@@ -75,6 +113,16 @@ export default function TournamentCreate() {
 
   const stageDetails = useMemo(() => stageCopy(form.format), [form.format]);
   const usesStagePlanning = form.format !== "single_elimination";
+  const groupOptions = useMemo(() => groupRuleOptions(form.max_teams), [form.max_teams]);
+  const selectedGroupRule = useMemo(
+    () => normalizeGroupRules(form.max_teams, form.group_size, form.group_advance_count),
+    [form.group_advance_count, form.group_size, form.max_teams],
+  );
+  const roundRobinOptions = useMemo(() => roundRobinAdvanceOptions(form.max_teams), [form.max_teams]);
+  const selectedRoundRobinAdvance = useMemo(
+    () => normalizeRoundRobinAdvance(form.max_teams, form.group_advance_count),
+    [form.group_advance_count, form.max_teams],
+  );
 
   const submit = async (e) => {
     e.preventDefault();
@@ -92,6 +140,8 @@ export default function TournamentCreate() {
       time_slots: form.time_slots,
       playoff_round_gap_days: String(formData.get("playoff_round_gap_days") || form.playoff_round_gap_days),
       groups_to_playoffs_gap_days: String(formData.get("groups_to_playoffs_gap_days") || form.groups_to_playoffs_gap_days),
+      group_size: String(formData.get("group_size") || form.group_size),
+      group_advance_count: String(formData.get("group_advance_count") || form.group_advance_count),
       stage_day_gap_days: String(formData.get("stage_day_gap_days") || form.stage_day_gap_days),
       group_games_per_day: String(formData.get("group_games_per_day") || form.group_games_per_day),
     };
@@ -101,8 +151,13 @@ export default function TournamentCreate() {
     if (!liveForm.name.trim()) nextErrors.name = "Tournament name is required.";
     if (!liveForm.end_date) nextErrors.end_date = "Please select the final day.";
     if (!liveForm.max_teams || Number(liveForm.max_teams) < 2) nextErrors.max_teams = "At least 2 teams are required.";
-    if (liveForm.format === "groups_playoffs" && !GROUPS_PLAYOFFS_TEAM_COUNTS.includes(Number(liveForm.max_teams))) {
-      nextErrors.max_teams = "Groups + playoffs supports 4, 8, or 16 teams.";
+    const liveGroupRule = normalizeGroupRules(liveForm.max_teams, liveForm.group_size, liveForm.group_advance_count);
+    const liveRoundRobinAdvance = normalizeRoundRobinAdvance(liveForm.max_teams, liveForm.group_advance_count);
+    if (liveForm.format === "groups_playoffs" && (!GROUPS_PLAYOFFS_TEAM_COUNTS.includes(Number(liveForm.max_teams)) || !liveGroupRule)) {
+      nextErrors.max_teams = "Choose a team count and group setup that creates a clean playoff bracket.";
+    }
+    if (liveForm.format === "round_robin" && !roundRobinAdvanceOptions(liveForm.max_teams).includes(liveRoundRobinAdvance)) {
+      nextErrors.group_advance_count = "Choose how many teams advance to the playoff bracket.";
     }
     if (liveForm.format === "single_elimination" && !SINGLE_ELIMINATION_TEAM_COUNTS.includes(Number(liveForm.max_teams))) {
       nextErrors.max_teams = "Single elimination supports 4, 8, 16, or 32 teams.";
@@ -124,6 +179,8 @@ export default function TournamentCreate() {
         time_slots: resizeTimeSlots(liveForm.time_slots, Number(liveForm.group_games_per_day) || 4),
         playoff_round_gap_days: Math.max(0, Number(liveForm.playoff_round_gap_days) || 0),
         groups_to_playoffs_gap_days: liveUsesStagePlanning ? Math.max(0, Number(liveForm.groups_to_playoffs_gap_days) || 0) : 0,
+        group_size: liveForm.format === "groups_playoffs" ? liveGroupRule.groupSize : 4,
+        group_advance_count: liveForm.format === "groups_playoffs" ? liveGroupRule.advance : liveForm.format === "round_robin" ? liveRoundRobinAdvance : 2,
         stage_day_gap_days: liveUsesStagePlanning ? Math.max(0, Number(liveForm.stage_day_gap_days) || 0) : 0,
         group_games_per_day: liveUsesStagePlanning ? Math.max(1, Number(liveForm.group_games_per_day) || 1) : null,
       };
@@ -194,6 +251,17 @@ export default function TournamentCreate() {
                     : nextFormat === "single_elimination"
                       ? normalizeSingleEliminationTeamCount(form.max_teams)
                       : form.max_teams,
+                  ...(nextFormat === "groups_playoffs"
+                    ? {
+                        group_size: normalizeGroupRules(normalizeGroupPlayoffTeamCount(form.max_teams), form.group_size, form.group_advance_count)?.groupSize || 4,
+                        group_advance_count: normalizeGroupRules(normalizeGroupPlayoffTeamCount(form.max_teams), form.group_size, form.group_advance_count)?.advance || 2,
+                      }
+                    : nextFormat === "round_robin"
+                      ? {
+                          group_size: 4,
+                          group_advance_count: normalizeRoundRobinAdvance(form.max_teams, form.group_advance_count),
+                        }
+                      : { group_size: 4, group_advance_count: 2 }),
                 });
               }}
             >
@@ -216,7 +284,7 @@ export default function TournamentCreate() {
           <div className="space-y-1">
             <label className="text-sm font-medium text-slate-700">Max teams</label>
             {form.format === "groups_playoffs" || form.format === "single_elimination" ? (
-              <div key={`${form.format}-max-teams`} className={`grid gap-2 ${form.format === "groups_playoffs" ? "grid-cols-3" : "grid-cols-4"}`}>
+              <div key={`${form.format}-max-teams`} className="grid gap-2 grid-cols-4">
                 <input
                   type="hidden"
                   name="max_teams"
@@ -229,7 +297,14 @@ export default function TournamentCreate() {
                     key={count}
                     type="button"
                     className={Number(form.max_teams) === count ? "btn-primary" : "btn-secondary"}
-                    onClick={() => setForm({ ...form, max_teams: count })}
+                    onClick={() => {
+                      const rule = normalizeGroupRules(count, form.group_size, form.group_advance_count);
+                      setForm({
+                        ...form,
+                        max_teams: count,
+                        ...(form.format === "groups_playoffs" && rule ? { group_size: rule.groupSize, group_advance_count: rule.advance } : {}),
+                      });
+                    }}
                   >
                     {count}
                   </button>
@@ -245,12 +320,58 @@ export default function TournamentCreate() {
                 max={512}
                 placeholder="Max teams"
                 value={form.max_teams}
-                onChange={(e) => setForm({ ...form, max_teams: e.target.value })}
+                onChange={(e) => {
+                  const maxTeams = e.target.value;
+                  setForm({
+                    ...form,
+                    max_teams: maxTeams,
+                    group_advance_count: normalizeRoundRobinAdvance(maxTeams, form.group_advance_count),
+                  });
+                }}
               />
             )}
             {fieldErrors.max_teams ? <div className="text-sm text-red-600">{fieldErrors.max_teams}</div> : null}
           </div>
         </div>
+
+        {form.format === "round_robin" ? (
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-slate-700">Teams advancing to playoffs</label>
+            <select
+              className="input"
+              name="group_advance_count"
+              value={selectedRoundRobinAdvance}
+              onChange={(e) => setForm({ ...form, group_advance_count: Number(e.target.value) })}
+            >
+              {roundRobinOptions.map((count) => (
+                <option key={count} value={count}>Top {count} teams</option>
+              ))}
+            </select>
+            {fieldErrors.group_advance_count ? <div className="text-sm text-red-600">{fieldErrors.group_advance_count}</div> : null}
+          </div>
+        ) : null}
+
+        {form.format === "groups_playoffs" && selectedGroupRule ? (
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="mb-3">
+              <h2 className="text-base font-semibold text-slate-900">Group setup</h2>
+            </div>
+            <div className="grid gap-2 md:grid-cols-2">
+              {groupOptions.map((option) => (
+                <button
+                  key={`${option.groupSize}-${option.advance}`}
+                  type="button"
+                  className={selectedGroupRule.groupSize === option.groupSize && selectedGroupRule.advance === option.advance ? "btn-primary" : "btn-secondary"}
+                  onClick={() => setForm({ ...form, group_size: option.groupSize, group_advance_count: option.advance })}
+                >
+                  Groups of {option.groupSize}, top {option.advance} advance ({option.playoffTeams} playoff teams)
+                </button>
+              ))}
+            </div>
+            <input type="hidden" name="group_size" value={selectedGroupRule.groupSize} />
+            <input type="hidden" name="group_advance_count" value={selectedGroupRule.advance} />
+          </div>
+        ) : null}
 
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
           <div className="mb-3">

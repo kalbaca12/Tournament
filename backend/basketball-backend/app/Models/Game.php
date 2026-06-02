@@ -22,11 +22,13 @@ class Game extends Model
         'home_score',
         'away_score',
         'status',
-        'live_events'
+        'live_events',
+        'quarter_length_seconds',
     ];
 
     protected $casts = [
         'live_events' => 'array',
+        'quarter_length_seconds' => 'integer',
     ];
 
     public function tournament()

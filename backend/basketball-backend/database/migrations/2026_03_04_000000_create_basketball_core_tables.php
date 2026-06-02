@@ -41,6 +41,8 @@ return new class extends Migration
                 $table->string('status', 20)->default('draft');
                 $table->unsignedBigInteger('created_by')->nullable();
                 $table->unsignedInteger('max_teams')->nullable();
+                $table->unsignedInteger('group_size')->default(4);
+                $table->unsignedInteger('group_advance_count')->default(2);
                 $table->unsignedInteger('duration_weeks')->default(1);
                 $table->json('allowed_days')->nullable();
                 $table->json('time_slots')->nullable();

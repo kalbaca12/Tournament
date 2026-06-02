@@ -27,7 +27,7 @@ class PlayerController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $data = $request->validate([
             'team_id' => ['required','integer','exists:teams,id'],
             'first_name' => ['required','string','max:100'],
             'last_name' => ['required','string','max:100'],
@@ -35,25 +35,25 @@ class PlayerController extends Controller
             'jersey_number' => ['nullable','integer','min:0','max:99'],
         ]);
 
-        $team = Team::findOrFail((int)$validated['team_id']);
+        $team = Team::findOrFail((int)$data['team_id']);
         if ((int)$team->manager_id !== (int)$request->user()->id) {
             return response()->json(['message' => 'You can add players only to your own team.'], 403);
         }
 
-        $player = Player::create($validated);
+        $player = Player::create($data);
 
         return response()->json($player, 201);
     }
 
     public function update(Request $request, Player $player)
     {
-        $targetTeamId = (int)($request->input('team_id') ?? $player->team_id);
-        $team = Team::findOrFail($targetTeamId);
+        $teamId = (int)($request->input('team_id') ?? $player->team_id);
+        $team = Team::findOrFail($teamId);
         if ((int)$team->manager_id !== (int)$request->user()->id) {
             return response()->json(['message' => 'You can edit players only in your own team.'], 403);
         }
 
-        $validated = $request->validate([
+        $data = $request->validate([
             'team_id' => ['sometimes','integer','exists:teams,id'],
             'first_name' => ['sometimes','string','max:100'],
             'last_name' => ['sometimes','string','max:100'],
@@ -61,7 +61,7 @@ class PlayerController extends Controller
             'jersey_number' => ['nullable','integer','min:0','max:99'],
         ]);
 
-        $player->update($validated);
+        $player->update($data);
 
         return $player;
     }

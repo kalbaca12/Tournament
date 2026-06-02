@@ -33,7 +33,7 @@ export function AuthProvider({ children }) {
     try {
       await authApi.logout();
     } catch {
-      // Still clear the local session if the token is already expired server-side.
+      localStorage.removeItem("auth_token");
     } finally {
       localStorage.removeItem("auth_token");
       setUser(null);

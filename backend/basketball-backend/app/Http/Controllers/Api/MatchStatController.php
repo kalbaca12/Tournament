@@ -21,7 +21,7 @@ class MatchStatController extends Controller
 
     public function storeBulk(Request $request, Game $game)
     {
-        $validated = $request->validate([
+        $data = $request->validate([
             'stats' => ['required','array','min:1'],
             'stats.*.player_id' => ['required','integer','exists:players,id'],
             'stats.*.team_id' => ['required','integer','exists:teams,id'],
@@ -47,8 +47,8 @@ class MatchStatController extends Controller
         $homeId = (int)$game->home_team_id;
         $awayId = (int)$game->away_team_id;
 
-        DB::transaction(function () use ($validated, $game, $homeId, $awayId) {
-            foreach ($validated['stats'] as $row) {
+        DB::transaction(function () use ($data, $game, $homeId, $awayId) {
+            foreach ($data['stats'] as $row) {
                 $teamId = (int)$row['team_id'];
 
                 if ($teamId !== $homeId && $teamId !== $awayId) {
@@ -60,9 +60,9 @@ class MatchStatController extends Controller
                     abort(409, 'player_id does not belong to given team_id.');
                 }
 
-                foreach ([['fgm', 'fga'], ['tpm', 'tpa'], ['ftm', 'fta']] as [$madeKey, $attemptKey]) {
-                    if ((int)($row[$madeKey] ?? 0) > (int)($row[$attemptKey] ?? 0)) {
-                        abort(422, strtoupper($madeKey) . ' cannot be greater than ' . strtoupper($attemptKey) . '.');
+                foreach ([['fgm', 'fga'], ['tpm', 'tpa'], ['ftm', 'fta']] as [$made, $att]) {
+                    if ((int)($row[$made] ?? 0) > (int)($row[$att] ?? 0)) {
+                        abort(422, strtoupper($made) . ' cannot be greater than ' . strtoupper($att) . '.');
                     }
                 }
 

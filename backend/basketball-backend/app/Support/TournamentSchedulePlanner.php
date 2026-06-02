@@ -10,7 +10,7 @@ class TournamentSchedulePlanner
     public static function plan(Tournament $tournament, int $teamCount): array
     {
         $finalDate = $tournament->end_date ? Carbon::parse($tournament->end_date)->startOfDay() : null;
-        $allowedDays = self::allowedDays($tournament);
+        $days = self::days($tournament);
         $slotCapacity = self::slotCapacity($tournament);
         $stageMatchesPerDay = self::stageMatchesPerDay($tournament);
         $issues = [];
@@ -18,15 +18,15 @@ class TournamentSchedulePlanner
         if (!$finalDate) {
             $issues[] = 'Final date is required.';
         }
-        if ($allowedDays === []) {
+        if ($days === []) {
             $issues[] = 'Select at least one allowed playing day.';
         }
         if ($slotCapacity < 1) {
             $issues[] = 'At least one time slot is required.';
         }
 
-        $stageRoundSizes = self::stageRoundSizes((string) $tournament->format, $teamCount);
-        $playoffRoundSizes = self::playoffRoundSizes((string) $tournament->format, $teamCount);
+        $stageRoundSizes = self::stageRoundSizes((string) $tournament->format, $teamCount, $tournament);
+        $playoffRoundSizes = self::playoffRoundSizes((string) $tournament->format, $teamCount, $tournament);
         $requiredMatches = array_sum($stageRoundSizes) + array_sum($playoffRoundSizes);
 
         if ($issues !== []) {
@@ -52,7 +52,7 @@ class TournamentSchedulePlanner
             ];
         }
 
-        $playoffRoundDates = self::planPlayoffRoundDates($tournament, $playoffRoundSizes, $finalDate);
+        $playoffRoundDates = self::playoffDates($tournament, $playoffRoundSizes, $finalDate);
         $playoffIssues = $playoffRoundDates['issues'];
         $firstPlayoffDate = $playoffRoundDates['first_playoff_date'];
         $latestStageDate = $firstPlayoffDate
@@ -60,7 +60,7 @@ class TournamentSchedulePlanner
             : $finalDate->copy();
 
         $stageDayCount = (int) ceil(array_sum($stageRoundSizes) / max(1, $stageMatchesPerDay));
-        $stageDates = self::selectBalancedStageDatesBackward($tournament, $latestStageDate, $stageDayCount);
+        $stageDates = self::stageDatesBack($tournament, $latestStageDate, $stageDayCount);
 
         if ($stageDayCount > 0 && count($stageDates) < $stageDayCount) {
             $playoffIssues[] = 'Could not find enough calendar days for the stage schedule.';
@@ -113,7 +113,7 @@ class TournamentSchedulePlanner
     public static function daySlots(Tournament $tournament, Carbon $date, string $timeDirection = 'asc', ?int $limit = null): array
     {
         $slots = [];
-        $times = self::timeSlots($tournament);
+        $times = self::slots($tournament);
         if ($timeDirection === 'desc') {
             $times = array_reverse($times);
         }
@@ -139,37 +139,41 @@ class TournamentSchedulePlanner
 
     public static function slotCapacity(Tournament $tournament): int
     {
-        return max(1, count(self::timeSlots($tournament)));
+        return max(1, count(self::slots($tournament)));
     }
 
-    public static function stageRoundSizes(string $format, int $teamCount): array
+    public static function stageRoundSizes(string $format, int $teamCount, ?Tournament $tournament = null): array
     {
         if ($teamCount < 2) {
             return [];
         }
 
         return match ($format) {
-            'groups_playoffs' => self::groupsStageRoundSizes($teamCount),
-            'round_robin' => self::roundRobinRoundSizes(range(1, $teamCount)),
+            'groups_playoffs' => self::groupStageSizes($teamCount, (int) ($tournament?->group_size ?? 4)),
+            'round_robin' => self::rrSizes(range(1, $teamCount)),
             default => [],
         };
     }
 
-    public static function playoffRoundSizes(string $format, int $teamCount): array
+    public static function playoffRoundSizes(string $format, int $teamCount, ?Tournament $tournament = null): array
     {
         if ($teamCount < 2) {
             return [];
         }
 
         return match ($format) {
-            'single_elimination' => self::singleEliminationRoundSizes($teamCount),
-            'groups_playoffs' => self::shellRoundSizes(TournamentProgression::playoffQualifiedCountForTeamCount($teamCount)),
-            'round_robin' => self::shellRoundSizes(self::roundRobinPlayoffQualifiedCount($teamCount)),
+            'single_elimination' => self::koSizes($teamCount),
+            'groups_playoffs' => self::bracketSizes(TournamentProgression::playoffQualifiedCountForTeamCount(
+                $teamCount,
+                (int) ($tournament?->group_size ?? 4),
+                (int) ($tournament?->group_advance_count ?? 2),
+            )),
+            'round_robin' => self::bracketSizes(self::rrPlayoffCount($teamCount, $tournament)),
             default => [],
         };
     }
 
-    private static function planPlayoffRoundDates(Tournament $tournament, array $roundSizes, Carbon $finalDate): array
+    private static function playoffDates(Tournament $tournament, array $roundSizes, Carbon $finalDate): array
     {
         if ($roundSizes === []) {
             return [
@@ -186,18 +190,18 @@ class TournamentSchedulePlanner
         $boundary = $finalDate->copy();
         $firstPlayoffDate = null;
 
-        for ($roundIndex = count($roundSizes); $roundIndex >= 1; $roundIndex--) {
-            $matchCount = $roundSizes[$roundIndex - 1];
-            $requiredDays = (int) ceil($matchCount / max(1, $slotCapacity));
-            $dates = self::selectLatestPlayableDatesBackward($tournament, $boundary, $requiredDays, true);
+        for ($r = count($roundSizes); $r >= 1; $r--) {
+            $matches = $roundSizes[$r - 1];
+            $daysNeeded = (int) ceil($matches / max(1, $slotCapacity));
+            $dates = self::latestDatesBack($tournament, $boundary, $daysNeeded, true);
 
-            if (count($dates) < $requiredDays) {
+            if (count($dates) < $daysNeeded) {
                 $issues[] = 'Could not find enough calendar days for playoff rounds.';
                 break;
             }
 
             $dates = array_reverse($dates);
-            $roundDates[$roundIndex] = $dates;
+            $roundDates[$r] = $dates;
             $firstPlayoffDate = $dates[0];
             $boundary = $dates[0]->copy()->subDays(max(0, (int) ($tournament->playoff_round_gap_days ?? 1)) + 1);
         }
@@ -212,15 +216,15 @@ class TournamentSchedulePlanner
         ];
     }
 
-    private static function selectBalancedStageDatesBackward(Tournament $tournament, Carbon $latestDate, int $count): array
+    private static function stageDatesBack(Tournament $tournament, Carbon $latestDate, int $count): array
     {
         if ($count <= 0) {
             return [];
         }
 
-        $candidateCount = max($count * 3, $count + 10);
-        $candidates = self::collectAllowedDatesBackward($tournament, $latestDate, $candidateCount);
-        if (!self::dateInList($latestDate, $candidates)) {
+        $poolSize = max($count * 3, $count + 10);
+        $candidates = self::allowedDatesBack($tournament, $latestDate, $poolSize);
+        if (!self::hasDate($latestDate, $candidates)) {
             array_unshift($candidates, $latestDate->copy());
         }
         if ($candidates === []) {
@@ -229,33 +233,33 @@ class TournamentSchedulePlanner
 
         $selected = [];
         $gapDays = max(0, (int) ($tournament->stage_day_gap_days ?? 0));
-        $index = 0;
-        while (count($selected) < $count && $index < count($candidates)) {
-            $candidate = $candidates[$index];
-            $previous = $selected[count($selected) - 1] ?? null;
-            if (!$previous || abs($previous->diffInDays($candidate)) > $gapDays) {
-                $selected[] = $candidate;
+        $i = 0;
+        while (count($selected) < $count && $i < count($candidates)) {
+            $date = $candidates[$i];
+            $prev = $selected[count($selected) - 1] ?? null;
+            if (!$prev || abs($prev->diffInDays($date)) > $gapDays) {
+                $selected[] = $date;
             }
-            $index++;
+            $i++;
         }
 
         if (count($selected) < $count) {
-            foreach ($candidates as $candidate) {
+            foreach ($candidates as $date) {
                 if (count($selected) >= $count) {
                     break;
                 }
 
-                $alreadySelected = array_filter(
+                $exists = array_filter(
                     $selected,
-                    fn (Carbon $selectedDate) => $selectedDate->equalTo($candidate),
+                    fn (Carbon $picked) => $picked->equalTo($date),
                 );
-                if ($alreadySelected !== []) {
+                if ($exists !== []) {
                     continue;
                 }
 
-                $previous = $selected[count($selected) - 1] ?? null;
-                if (!$previous || abs($previous->diffInDays($candidate)) > $gapDays) {
-                    $selected[] = $candidate;
+                $prev = $selected[count($selected) - 1] ?? null;
+                if (!$prev || abs($prev->diffInDays($date)) > $gapDays) {
+                    $selected[] = $date;
                 }
             }
         }
@@ -265,7 +269,7 @@ class TournamentSchedulePlanner
         return array_slice($selected, 0, $count);
     }
 
-    private static function selectLatestPlayableDatesBackward(
+    private static function latestDatesBack(
         Tournament $tournament,
         Carbon $boundaryDate,
         int $count,
@@ -281,7 +285,7 @@ class TournamentSchedulePlanner
 
         while (count($selected) < $count && $guard < 3660) {
             $isBoundary = $cursor->equalTo($boundaryDate);
-            if (($forceBoundaryDate && $isBoundary) || self::isAllowedDate($tournament, $cursor)) {
+            if (($forceBoundaryDate && $isBoundary) || self::allowedDate($tournament, $cursor)) {
                 $selected[] = $cursor->copy();
             }
             $cursor->subDay();
@@ -291,14 +295,14 @@ class TournamentSchedulePlanner
         return $selected;
     }
 
-    private static function collectAllowedDatesBackward(Tournament $tournament, Carbon $boundaryDate, int $count): array
+    private static function allowedDatesBack(Tournament $tournament, Carbon $boundaryDate, int $count): array
     {
         $selected = [];
         $cursor = $boundaryDate->copy();
         $guard = 0;
 
         while (count($selected) < $count && $guard < 3660) {
-            if (self::isAllowedDate($tournament, $cursor)) {
+            if (self::allowedDate($tournament, $cursor)) {
                 $selected[] = $cursor->copy();
             }
             $cursor->subDay();
@@ -308,7 +312,7 @@ class TournamentSchedulePlanner
         return $selected;
     }
 
-    private static function dateInList(Carbon $date, array $dates): bool
+    private static function hasDate(Carbon $date, array $dates): bool
     {
         foreach ($dates as $candidate) {
             if ($candidate instanceof Carbon && $candidate->equalTo($date)) {
@@ -319,13 +323,13 @@ class TournamentSchedulePlanner
         return false;
     }
 
-    private static function groupsStageRoundSizes(int $teamCount): array
+    private static function groupStageSizes(int $teamCount, int $groupSize): array
     {
         $aggregate = [];
         $teams = range(1, $teamCount);
 
-        foreach (array_chunk($teams, 4) as $groupTeams) {
-            $roundSizes = self::roundRobinRoundSizes($groupTeams);
+        foreach (array_chunk($teams, max(2, $groupSize)) as $groupTeams) {
+            $roundSizes = self::rrSizes($groupTeams);
             foreach ($roundSizes as $index => $size) {
                 $aggregate[$index] = ($aggregate[$index] ?? 0) + $size;
             }
@@ -336,7 +340,7 @@ class TournamentSchedulePlanner
         return array_values($aggregate);
     }
 
-    private static function roundRobinRoundSizes(array $teamIds): array
+    private static function rrSizes(array $teamIds): array
     {
         $teams = array_values($teamIds);
         if (count($teams) % 2 === 1) {
@@ -370,17 +374,17 @@ class TournamentSchedulePlanner
         return $sizes;
     }
 
-    private static function singleEliminationRoundSizes(int $teamCount): array
+    private static function koSizes(int $teamCount): array
     {
         $bracketSize = 1;
         while ($bracketSize < $teamCount) {
             $bracketSize *= 2;
         }
 
-        return self::shellRoundSizes($bracketSize);
+        return self::bracketSizes($bracketSize);
     }
 
-    private static function shellRoundSizes(int $qualifiedCount): array
+    private static function bracketSizes(int $qualifiedCount): array
     {
         if ($qualifiedCount < 2) {
             return [];
@@ -396,19 +400,15 @@ class TournamentSchedulePlanner
         return $sizes;
     }
 
-    private static function roundRobinPlayoffQualifiedCount(int $teamCount): int
+    private static function rrPlayoffCount(int $teamCount, ?Tournament $tournament = null): int
     {
-        $qualified = intdiv($teamCount, 2);
-        $bracketSize = 1;
-
-        while (($bracketSize * 2) <= $qualified) {
-            $bracketSize *= 2;
-        }
-
-        return $bracketSize >= 2 ? $bracketSize : 0;
+        return TournamentProgression::roundRobinPlayoffQualifiedCountForTeamCount(
+            $teamCount,
+            (int) ($tournament?->group_advance_count ?? 0),
+        );
     }
 
-    private static function allowedDays(Tournament $tournament): array
+    private static function days(Tournament $tournament): array
     {
         $days = $tournament->allowed_days ?: [1, 2, 3, 4, 5, 6, 7];
         $days = array_values(array_unique(array_filter(
@@ -420,7 +420,7 @@ class TournamentSchedulePlanner
         return $days;
     }
 
-    private static function timeSlots(Tournament $tournament): array
+    private static function slots(Tournament $tournament): array
     {
         $slots = $tournament->time_slots ?: ['12:00', '14:00', '16:00', '18:00'];
         $slots = array_values(array_filter($slots, fn (mixed $slot) => is_string($slot) && trim($slot) !== ''));
@@ -428,8 +428,9 @@ class TournamentSchedulePlanner
         return $slots === [] ? ['12:00', '14:00', '16:00', '18:00'] : $slots;
     }
 
-    private static function isAllowedDate(Tournament $tournament, Carbon $date): bool
+    private static function allowedDate(Tournament $tournament, Carbon $date): bool
     {
-        return in_array((int) $date->dayOfWeekIso, self::allowedDays($tournament), true);
+        return in_array((int) $date->dayOfWeekIso, self::days($tournament), true);
     }
 }
+

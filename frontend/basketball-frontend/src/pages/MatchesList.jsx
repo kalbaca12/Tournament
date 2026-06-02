@@ -5,17 +5,6 @@ import EmptyState from "../components/EmptyState";
 import Skeleton from "../components/Skeleton";
 import { useToast } from "../components/useToast";
 
-function dateKey(value) {
-  if (!value) return "";
-  if (typeof value === "string") {
-    const directDate = value.match(/^(\d{4}-\d{2}-\d{2})/);
-    if (directDate) return directDate[1];
-  }
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  return localDateKey(date);
-}
-
 function localDateKey(date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -59,37 +48,35 @@ function monthDays(baseDate) {
 export default function MatchesList() {
   const { showToast } = useToast();
   const [matches, setMatches] = useState([]);
+  const [matchDays, setMatchDays] = useState(new Map());
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(() => localDateKey(new Date()));
-  const [calendarMonth, setCalendarMonth] = useState(() => new Date());
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date(`${localDateKey(new Date())}T12:00:00`));
 
   useEffect(() => {
+    const month = `${calendarMonth.getFullYear()}-${String(calendarMonth.getMonth() + 1).padStart(2, "0")}`;
     matchesApi
-      .list()
+      .days({ month })
       .then((res) => {
-        const loaded = res.data || [];
-        setMatches(loaded);
-        const today = localDateKey(new Date());
-        setSelectedDate(today);
-        setCalendarMonth(new Date(`${today}T12:00:00`));
+        setMatchDays(new Map((res.data || []).map((row) => [row.date, Number(row.count) || 0])));
+      })
+      .catch((e) => showToast(e?.response?.data?.message || e.message || "Failed to load match days.", "error"));
+  }, [calendarMonth, showToast]);
+
+  useEffect(() => {
+    setLoading(true);
+    matchesApi
+      .list({ date: selectedDate })
+      .then((res) => {
+        setMatches(res.data || []);
       })
       .catch((e) => showToast(e?.response?.data?.message || e.message || "Failed to load matches.", "error"))
       .finally(() => setLoading(false));
-  }, [showToast]);
-
-  const matchDays = useMemo(() => {
-    const days = new Map();
-    for (const match of matches) {
-      const key = dateKey(match.scheduled_at);
-      if (!key) continue;
-      days.set(key, (days.get(key) || 0) + 1);
-    }
-    return days;
-  }, [matches]);
+  }, [selectedDate, showToast]);
 
   const visibleMatches = useMemo(
-    () => matches.filter((match) => dateKey(match.scheduled_at) === selectedDate),
-    [matches, selectedDate],
+    () => matches,
+    [matches],
   );
 
   const groupedMatches = useMemo(() => {

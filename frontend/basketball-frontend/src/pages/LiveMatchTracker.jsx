@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { matchesApi } from "../api/matches";
 import { playersApi } from "../api/players";
@@ -7,7 +7,9 @@ import Skeleton from "../components/Skeleton";
 import { useConfirm } from "../components/useConfirm";
 import { useToast } from "../components/useToast";
 
-const QUARTER_SECONDS = 10 * 60;
+const DEFAULT_QUARTER_SECONDS = 10 * 60;
+const MIN_QUARTER_SECONDS = 60;
+const MAX_QUARTER_SECONDS = 20 * 60;
 const EVENT_TYPES = [
   { type: "shot", label: "Shot" },
   { type: "free_throw", label: "Free throw" },
@@ -58,20 +60,33 @@ function teamName(match, side) {
   return match?.[camel]?.name || match?.[snake]?.name || `Team ${match?.[idKey] || ""}`;
 }
 
-function formatClock(seconds) {
-  const safe = Math.max(0, Math.min(QUARTER_SECONDS, Math.floor(seconds || 0)));
-  const remaining = QUARTER_SECONDS - safe;
+function clampQuarterSeconds(value) {
+  const seconds = Number(value);
+  if (!Number.isFinite(seconds)) return DEFAULT_QUARTER_SECONDS;
+  return Math.max(MIN_QUARTER_SECONDS, Math.min(MAX_QUARTER_SECONDS, Math.round(seconds)));
+}
+
+function formatClock(seconds, quarterSeconds = DEFAULT_QUARTER_SECONDS) {
+  const length = clampQuarterSeconds(quarterSeconds);
+  const safe = Math.max(0, Math.min(length, Math.floor(seconds || 0)));
+  const remaining = length - safe;
   const minutes = Math.floor(remaining / 60);
   const rest = String(remaining % 60).padStart(2, "0");
   return `${minutes}:${rest}`;
 }
 
-function elapsedFromClock(value) {
+function elapsedFromClock(value, quarterSeconds = DEFAULT_QUARTER_SECONDS) {
   const match = String(value || "").trim().match(/^(\d{1,2}):([0-5]\d)$/);
   if (!match) return null;
+  const length = clampQuarterSeconds(quarterSeconds);
   const remaining = Number(match[1]) * 60 + Number(match[2]);
-  if (remaining < 0 || remaining > QUARTER_SECONDS) return null;
-  return QUARTER_SECONDS - remaining;
+  if (remaining < 0 || remaining > length) return null;
+  return length - remaining;
+}
+
+function quarterMinutesFromSeconds(seconds) {
+  const safe = clampQuarterSeconds(seconds);
+  return String(Math.round(safe / 60));
 }
 
 function hasLockedElapsed(value) {
@@ -87,7 +102,7 @@ function emptyTracker(matchId) {
     timerStartedAt: null,
     lastElapsed: 0,
     startersConfirmed: false,
-    startingLineups: { home: [], away: [] },
+    starters: { home: [], away: [] },
     lineups: { home: [], away: [] },
     playerSeconds: {},
     events: [],
@@ -103,9 +118,9 @@ function normalizeTracker(value, matchId) {
     startersConfirmed: Boolean(value.startersConfirmed || (value.events?.length > 0)),
     timerRunning: Boolean(value.timerRunning),
     timerStartedAt: value.timerStartedAt || null,
-    startingLineups: {
-      home: Array.isArray(value.startingLineups?.home) ? value.startingLineups.home.map(Number) : [],
-      away: Array.isArray(value.startingLineups?.away) ? value.startingLineups.away.map(Number) : [],
+    starters: {
+      home: Array.isArray(value.starters?.home) ? value.starters.home.map(Number) : [],
+      away: Array.isArray(value.starters?.away) ? value.starters.away.map(Number) : [],
     },
     lineups: {
       home: Array.isArray(value.lineups?.home) ? value.lineups.home.map(Number) : [],
@@ -152,8 +167,8 @@ function increment(row, key, amount = 1) {
   row[key] = (Number(row[key]) || 0) + amount;
 }
 
-function eventLabel(event, playersById, match) {
-  const player = (id) => playerName(playersById.get(Number(id)));
+function eventLabel(event, playerMap, match) {
+  const player = (id) => playerName(playerMap.get(Number(id)));
   const team = event.teamSide === "home" ? teamName(match, "home") : teamName(match, "away");
 
   if (event.type === "shot") {
@@ -305,50 +320,56 @@ export default function LiveMatchTracker() {
   const [awayPlayers, setAwayPlayers] = useState([]);
   const [tracker, setTracker] = useState(() => loadTracker(id));
   const [flow, setFlow] = useState(initialFlow);
-  const [editingEventId, setEditingEventId] = useState("");
+  const [editEventId, setEditingEventId] = useState("");
+  const [quarterLengthDraft, setQuarterLengthDraft] = useState("10");
+  const [clockDraft, setClockDraft] = useState({ quarter: 1, clock: "" });
   const [err, setErr] = useState("");
   const [saving, setSaving] = useState(false);
 
   const allPlayers = useMemo(() => [...homePlayers, ...awayPlayers], [homePlayers, awayPlayers]);
-  const playersById = useMemo(() => new Map(allPlayers.map((player) => [Number(player.id), player])), [allPlayers]);
+  const playerMap = useMemo(() => new Map(allPlayers.map((player) => [Number(player.id), player])), [allPlayers]);
   const activeIds = useMemo(() => ({
     home: new Set((tracker.lineups.home || []).map(Number)),
     away: new Set((tracker.lineups.away || []).map(Number)),
   }), [tracker.lineups.away, tracker.lineups.home]);
+  const quarterSeconds = useMemo(
+    () => clampQuarterSeconds(match?.quarter_length_seconds),
+    [match?.quarter_length_seconds],
+  );
 
-  const currentElapsed = useCallback((state = tracker) => {
+  const elapsedNow = useCallback((state = tracker) => {
     const elapsed = Number(state.lastElapsed || 0) + (
       state.timerRunning && state.timerStartedAt
         ? Math.floor((Date.now() - Number(state.timerStartedAt)) / 1000)
         : 0
     );
-    return Math.max(0, Math.min(QUARTER_SECONDS, elapsed));
-  }, [tracker]);
+    return Math.max(0, Math.min(quarterSeconds, elapsed));
+  }, [quarterSeconds, tracker]);
 
-  const activePlayers = useCallback((side) => {
+  const onCourt = useCallback((side) => {
     const ids = tracker.lineups?.[side] || [];
-    return ids.map((playerId) => playersById.get(Number(playerId))).filter(Boolean);
-  }, [playersById, tracker.lineups]);
+    return ids.map((playerId) => playerMap.get(Number(playerId))).filter(Boolean);
+  }, [playerMap, tracker.lineups]);
 
-  const benchPlayers = useCallback((side) => {
+  const bench = useCallback((side) => {
     const roster = side === "home" ? homePlayers : awayPlayers;
     return roster.filter((player) => !activeIds[side].has(Number(player.id)));
   }, [activeIds, awayPlayers, homePlayers]);
 
-  const allActivePlayers = useMemo(
-    () => [...activePlayers("home"), ...activePlayers("away")],
-    [activePlayers],
+  const allOnCourt = useMemo(
+    () => [...onCourt("home"), ...onCourt("away")],
+    [onCourt],
   );
-  const calculatedStats = useMemo(
+  const stats = useMemo(
     () => (match ? calculateStats(tracker, match, homePlayers, awayPlayers) : []),
     [awayPlayers, homePlayers, match, tracker],
   );
-  const statsByPlayerId = useMemo(
-    () => new Map(calculatedStats.map((row) => [Number(row.player_id), row])),
-    [calculatedStats],
+  const statMap = useMemo(
+    () => new Map(stats.map((row) => [Number(row.player_id), row])),
+    [stats],
   );
-  const homeScore = match ? scoreFor(calculatedStats, match.home_team_id) : 0;
-  const awayScore = match ? scoreFor(calculatedStats, match.away_team_id) : 0;
+  const homeScore = match ? scoreFor(stats, match.home_team_id) : 0;
+  const awayScore = match ? scoreFor(stats, match.away_team_id) : 0;
 
   useEffect(() => {
     localStorage.setItem(`live-match-tracker:${id}`, JSON.stringify(tracker));
@@ -358,6 +379,7 @@ export default function LiveMatchTracker() {
     const load = async () => {
       const matchRes = await matchesApi.get(id);
       setMatch(matchRes.data);
+      setQuarterLengthDraft(quarterMinutesFromSeconds(matchRes.data?.quarter_length_seconds));
       const [homeRes, awayRes] = await Promise.all([
         matchRes.data?.home_team_id ? playersApi.list(matchRes.data.home_team_id) : Promise.resolve({ data: [] }),
         matchRes.data?.away_team_id ? playersApi.list(matchRes.data.away_team_id) : Promise.resolve({ data: [] }),
@@ -387,9 +409,9 @@ export default function LiveMatchTracker() {
     }
   }, [flow]);
 
-  const accrueActiveSeconds = (state, elapsed, targetElapsed = elapsed) => {
-    const safeElapsed = Math.max(0, Math.min(QUARTER_SECONDS, Number(elapsed || 0)));
-    const safeTargetElapsed = Math.max(safeElapsed, Math.min(QUARTER_SECONDS, Number(targetElapsed || safeElapsed)));
+  const addSecs = (state, elapsed, targetElapsed = elapsed) => {
+    const safeElapsed = Math.max(0, Math.min(quarterSeconds, Number(elapsed || 0)));
+    const safeTargetElapsed = Math.max(safeElapsed, Math.min(quarterSeconds, Number(targetElapsed || safeElapsed)));
     const nextTimerStartedAt = state.timerRunning
       ? Date.now() - ((safeTargetElapsed - safeElapsed) * 1000)
       : state.timerStartedAt;
@@ -430,7 +452,7 @@ export default function LiveMatchTracker() {
     });
   };
 
-  const validateLineups = () => {
+  const checkLineups = () => {
     if ((tracker.lineups.home || []).length !== 5 || (tracker.lineups.away || []).length !== 5) {
       return "Select exactly 5 active players for each team before logging events.";
     }
@@ -440,34 +462,34 @@ export default function LiveMatchTracker() {
     return "";
   };
 
-  const playerTeamSide = useCallback((playerId) => {
+  const playerSide = useCallback((playerId) => {
     const idValue = Number(playerId);
     if (activeIds.home.has(idValue)) return "home";
     if (activeIds.away.has(idValue)) return "away";
-    const player = playersById.get(idValue);
+    const player = playerMap.get(idValue);
     if (player && match) {
       if (Number(player.team_id) === Number(match.home_team_id)) return "home";
       if (Number(player.team_id) === Number(match.away_team_id)) return "away";
     }
     return "";
-  }, [activeIds.away, activeIds.home, match, playersById]);
+  }, [activeIds.away, activeIds.home, match, playerMap]);
 
-  const activeOpponentsForPlayer = useCallback((playerId) => {
-    const side = playerTeamSide(playerId);
+  const opponentsFor = useCallback((playerId) => {
+    const side = playerSide(playerId);
     if (!side) return [];
-    return activePlayers(side === "home" ? "away" : "home");
-  }, [activePlayers, playerTeamSide]);
+    return onCourt(side === "home" ? "away" : "home");
+  }, [onCourt, playerSide]);
 
-  const benchForPlayer = useCallback((playerId) => {
-    const side = playerTeamSide(playerId);
+  const benchFor = useCallback((playerId) => {
+    const side = playerSide(playerId);
     if (!side) return [];
-    return benchPlayers(side);
-  }, [benchPlayers, playerTeamSide]);
+    return bench(side);
+  }, [bench, playerSide]);
 
   const replayEvents = useCallback((events, sourceTracker = tracker) => {
     const initialLineups = {
-      home: (sourceTracker.startingLineups?.home?.length ? sourceTracker.startingLineups.home : sourceTracker.lineups.home || []).map(Number),
-      away: (sourceTracker.startingLineups?.away?.length ? sourceTracker.startingLineups.away : sourceTracker.lineups.away || []).map(Number),
+      home: (sourceTracker.starters?.home?.length ? sourceTracker.starters.home : sourceTracker.lineups.home || []).map(Number),
+      away: (sourceTracker.starters?.away?.length ? sourceTracker.starters.away : sourceTracker.lineups.away || []).map(Number),
     };
     let next = {
       ...sourceTracker,
@@ -487,7 +509,7 @@ export default function LiveMatchTracker() {
       if (Number(event.quarter || 1) !== Number(next.quarter || 1)) {
         next = { ...next, quarter: Number(event.quarter || 1), lastElapsed: 0 };
       }
-      next = accrueActiveSeconds(next, Number(event.elapsed || 0));
+      next = addSecs(next, Number(event.elapsed || 0));
       if (event.type === "substitution") {
         const lineup = [...(next.lineups[event.teamSide] || [])];
         const idx = lineup.findIndex((playerId) => Number(playerId) === Number(event.outPlayerId));
@@ -504,7 +526,7 @@ export default function LiveMatchTracker() {
   }, [tracker]);
 
   const confirmStarters = () => {
-    const lineupError = validateLineups();
+    const lineupError = checkLineups();
     if (lineupError) {
       setErr(lineupError);
       showToast(lineupError, "error");
@@ -514,7 +536,7 @@ export default function LiveMatchTracker() {
     setTracker((current) => ({
       ...current,
       startersConfirmed: true,
-      startingLineups: {
+      starters: {
         home: [...(current.lineups.home || [])],
         away: [...(current.lineups.away || [])],
       },
@@ -526,7 +548,7 @@ export default function LiveMatchTracker() {
   };
 
   const startTimer = () => {
-    const lineupError = validateLineups();
+    const lineupError = checkLineups();
     if (lineupError) {
       setErr(lineupError);
       showToast(lineupError, "error");
@@ -547,9 +569,9 @@ export default function LiveMatchTracker() {
 
   const pauseTimer = () => {
     setTracker((current) => {
-      const elapsed = currentElapsed(current);
+      const elapsed = elapsedNow(current);
       return {
-        ...accrueActiveSeconds(current, elapsed),
+        ...addSecs(current, elapsed),
         timerRunning: false,
         timerStartedAt: null,
       };
@@ -579,24 +601,24 @@ export default function LiveMatchTracker() {
       return;
     }
     setErr("");
-    const elapsed = currentElapsed();
+    const elapsed = elapsedNow();
     setFlow({
       ...initialFlow,
       open: true,
       eventElapsed: elapsed,
-      eventClock: formatClock(elapsed),
+      eventClock: formatClock(elapsed, quarterSeconds),
       eventQuarter: tracker.quarter,
     });
   };
 
   const buildEventFromFlow = () => {
-    const editedElapsed = elapsedFromClock(flow.eventClock);
-    if (editingEventId && editedElapsed === null) return { error: "Enter event time as MM:SS." };
-    const elapsed = editingEventId
+    const editedElapsed = elapsedFromClock(flow.eventClock, quarterSeconds);
+    if (editEventId && editedElapsed === null) return { error: "Enter event time as MM:SS." };
+    const elapsed = editEventId
       ? editedElapsed
       : hasLockedElapsed(flow.eventElapsed)
         ? Number(flow.eventElapsed)
-        : currentElapsed();
+        : elapsedNow();
     const eventQuarter = Number(flow.eventQuarter || tracker.quarter);
     const baseEvent = {
       id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
@@ -604,13 +626,13 @@ export default function LiveMatchTracker() {
       teamSide: flow.teamSide,
       quarter: eventQuarter,
       elapsed,
-      clock: formatClock(elapsed),
+      clock: formatClock(elapsed, quarterSeconds),
       createdAt: new Date().toISOString(),
     };
 
     if (flow.type === "quarter_end") return { event: { ...baseEvent, teamSide: null }, elapsed };
     if (flow.type === "shot") {
-      const side = playerTeamSide(flow.playerId);
+      const side = playerSide(flow.playerId);
       if (!side || !flow.playerId || !flow.points || flow.made === null) return { error: "Complete shot details." };
       if (!flow.made && flow.reboundChoice === "yes" && !flow.reboundPlayerId) return { error: "Choose who got the rebound." };
       return {
@@ -627,7 +649,7 @@ export default function LiveMatchTracker() {
       };
     }
     if (flow.type === "free_throw") {
-      const side = playerTeamSide(flow.playerId);
+      const side = playerSide(flow.playerId);
       if (!side || !flow.playerId || flow.made === null) return { error: "Complete free throw details." };
       if (!flow.made && flow.reboundChoice === "yes" && !flow.reboundPlayerId) return { error: "Choose who got the rebound." };
       return {
@@ -642,12 +664,12 @@ export default function LiveMatchTracker() {
       };
     }
     if (flow.type === "rebound") {
-      const side = playerTeamSide(flow.playerId);
+      const side = playerSide(flow.playerId);
       if (!side || !flow.playerId) return { error: "Choose who got the rebound." };
       return { elapsed, event: { ...baseEvent, teamSide: side, playerId: Number(flow.playerId) } };
     }
     if (flow.type === "block") {
-      const side = playerTeamSide(flow.blockerId);
+      const side = playerSide(flow.blockerId);
       if (!side || !flow.blockerId || !flow.shooterId || !flow.shotPoints) return { error: "Complete block details." };
       return {
         elapsed,
@@ -661,12 +683,12 @@ export default function LiveMatchTracker() {
       };
     }
     if (flow.type === "foul") {
-      const side = playerTeamSide(flow.playerId);
+      const side = playerSide(flow.playerId);
       if (!side || !flow.playerId) return { error: "Choose who committed the foul." };
       return { elapsed, event: { ...baseEvent, teamSide: side, playerId: Number(flow.playerId) } };
     }
     if (flow.type === "steal") {
-      const side = playerTeamSide(flow.stealPlayerId);
+      const side = playerSide(flow.stealPlayerId);
       if (!side || !flow.stealPlayerId) return { error: "Choose who made the steal." };
       if (flow.turnoverChoice === "yes" && !flow.turnoverPlayerId) return { error: "Choose who made the turnover." };
       return {
@@ -680,12 +702,12 @@ export default function LiveMatchTracker() {
       };
     }
     if (flow.type === "turnover") {
-      const side = playerTeamSide(flow.turnoverPlayerId);
+      const side = playerSide(flow.turnoverPlayerId);
       if (!side || !flow.turnoverPlayerId) return { error: "Choose who made the turnover." };
       return { elapsed, event: { ...baseEvent, teamSide: side, playerId: Number(flow.turnoverPlayerId) } };
     }
     if (flow.type === "substitution") {
-      const side = playerTeamSide(flow.outPlayerId);
+      const side = playerSide(flow.outPlayerId);
       if (!side || !flow.outPlayerId || !flow.inPlayerId) return { error: "Choose both players for the substitution." };
       return {
         elapsed,
@@ -721,7 +743,7 @@ export default function LiveMatchTracker() {
     outPlayerId: event.outPlayerId || "",
     inPlayerId: event.inPlayerId || "",
     eventElapsed: Number(event.elapsed || 0),
-    eventClock: event.clock || formatClock(event.elapsed || 0),
+    eventClock: event.clock || formatClock(event.elapsed || 0, quarterSeconds),
     eventQuarter: Number(event.quarter || 1),
   });
 
@@ -732,7 +754,7 @@ export default function LiveMatchTracker() {
   };
 
   const addCurrentEvent = async () => {
-    const lineupError = validateLineups();
+    const lineupError = checkLineups();
     if (lineupError) {
       setErr(lineupError);
       showToast(lineupError, "error");
@@ -748,17 +770,17 @@ export default function LiveMatchTracker() {
 
     setErr("");
     if (result.event.type === "quarter_end") {
-      const quarterEndElapsed = editingEventId ? result.elapsed : QUARTER_SECONDS;
-      const nextTracker = accrueActiveSeconds(tracker, quarterEndElapsed);
+      const quarterEndElapsed = editEventId ? result.elapsed : quarterSeconds;
+      const nextTracker = addSecs(tracker, quarterEndElapsed);
       const event = {
         ...result.event,
-        id: editingEventId || result.event.id,
+        id: editEventId || result.event.id,
         quarter: nextTracker.quarter,
         elapsed: quarterEndElapsed,
-        clock: formatClock(quarterEndElapsed),
+        clock: formatClock(quarterEndElapsed, quarterSeconds),
       };
-      const nextEvents = editingEventId
-        ? replaceEventById(tracker.events, editingEventId, event)
+      const nextEvents = editEventId
+        ? replaceEventById(tracker.events, editEventId, event)
         : [...tracker.events, event];
       if (Number(nextTracker.quarter) >= 4) {
         const ok = await confirm({
@@ -783,17 +805,17 @@ export default function LiveMatchTracker() {
     }
 
     setTracker((current) => {
-      const event = { ...result.event, id: editingEventId || result.event.id };
-      const nextEvents = editingEventId
-        ? replaceEventById(current.events, editingEventId, event)
+      const event = { ...result.event, id: editEventId || result.event.id };
+      const nextEvents = editEventId
+        ? replaceEventById(current.events, editEventId, event)
         : [...current.events, event];
-      if (editingEventId) {
+      if (editEventId) {
         return replayEvents(nextEvents, current);
       }
-      const liveElapsed = currentElapsed(current);
+      const liveElapsed = elapsedNow(current);
       let next = event.type === "substitution"
-        ? accrueActiveSeconds(current, result.elapsed, liveElapsed)
-        : accrueActiveSeconds(current, liveElapsed);
+        ? addSecs(current, result.elapsed, liveElapsed)
+        : addSecs(current, liveElapsed);
       if (event.type === "substitution") {
         const lineup = [...(next.lineups[event.teamSide] || [])];
         const idx = lineup.findIndex((playerId) => Number(playerId) === Number(event.outPlayerId));
@@ -840,8 +862,91 @@ export default function LiveMatchTracker() {
     resetFlow();
   };
 
+  const saveQuarterLength = async () => {
+    const minutes = Number(quarterLengthDraft);
+    if (!Number.isFinite(minutes) || minutes < 1 || minutes > 20) {
+      const message = "Quarter length must be between 1 and 20 minutes.";
+      setErr(message);
+      showToast(message, "error");
+      return;
+    }
+
+    setSaving(true);
+    setErr("");
+    try {
+      const seconds = Math.round(minutes * 60);
+      await matchesApi.update(id, {
+        scheduled_at: match?.scheduled_at || null,
+        venue_name: match?.venue_name || null,
+        status: match?.status || "scheduled",
+        quarter_length_seconds: seconds,
+      });
+      const response = await matchesApi.get(id);
+      setMatch(response.data);
+      setQuarterLengthDraft(quarterMinutesFromSeconds(response.data?.quarter_length_seconds));
+      setTracker((current) => {
+        const currentElapsed = elapsedNow(current);
+        return {
+          ...current,
+          lastElapsed: Math.min(currentElapsed, seconds),
+          timerStartedAt: current.timerRunning ? Date.now() : current.timerStartedAt,
+        };
+      });
+      showToast("Quarter length saved.");
+    } catch (error) {
+      const message = error?.response?.data?.message || JSON.stringify(error?.response?.data) || error.message;
+      setErr(message);
+      showToast(message, "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const setClock = (nextElapsed, nextQuarter = tracker.quarter) => {
+    const safeQuarter = Math.max(1, Math.min(4, Number(nextQuarter) || 1));
+    const safeElapsed = Math.max(0, Math.min(quarterSeconds, Number(nextElapsed || 0)));
+    setTracker((current) => {
+      const currentElapsed = elapsedNow(current);
+      const rollback = Number(current.quarter) === safeQuarter
+        ? Math.max(0, currentElapsed - safeElapsed)
+        : 0;
+      const playerSeconds = { ...(current.playerSeconds || {}) };
+
+      if (rollback > 0) {
+        [...(current.lineups.home || []), ...(current.lineups.away || [])].forEach((playerId) => {
+          playerSeconds[playerId] = Math.max(0, Number(playerSeconds[playerId] || 0) - rollback);
+        });
+      }
+
+      return {
+        ...current,
+        quarter: safeQuarter,
+        playerSeconds,
+        lastElapsed: safeElapsed,
+        timerStartedAt: current.timerRunning ? Date.now() : null,
+      };
+    });
+  };
+
+  const adjustClock = (seconds) => {
+    setClock(elapsedNow() + seconds, tracker.quarter);
+  };
+
+  const applyClockFromInput = () => {
+    const editedElapsed = elapsedFromClock(clockDraft.clock, quarterSeconds);
+    if (editedElapsed === null) {
+      const message = "Enter clock as MM:SS inside this quarter length.";
+      setErr(message);
+      showToast(message, "error");
+      return;
+    }
+    setClock(editedElapsed, clockDraft.quarter || tracker.quarter);
+    setClockDraft((current) => ({ ...current, clock: formatClock(editedElapsed, quarterSeconds) }));
+    showToast("Live clock updated.");
+  };
+
   const playerPickerScore = (player) => {
-    const stats = statsByPlayerId.get(Number(player.id));
+    const stats = statMap.get(Number(player.id));
     if (!stats) return 0;
     return Number(stats.points || 0)
       + Number(stats.rebounds || 0)
@@ -864,12 +969,12 @@ export default function LiveMatchTracker() {
       {
         side: "home",
         title: teamName(match, "home"),
-        players: sortPickerPlayers(players.filter((player) => playerTeamSide(player.id) === "home")),
+        players: sortPickerPlayers(players.filter((player) => playerSide(player.id) === "home")),
       },
       {
         side: "away",
         title: teamName(match, "away"),
-        players: sortPickerPlayers(players.filter((player) => playerTeamSide(player.id) === "away")),
+        players: sortPickerPlayers(players.filter((player) => playerSide(player.id) === "away")),
       },
     ].filter((group) => group.players.length > 0);
 
@@ -916,6 +1021,69 @@ export default function LiveMatchTracker() {
             <button onClick={() => nav(`/matches/${id}`)} className="btn-secondary">Back to match</button>
             <button onClick={resetTracker} className="btn-danger">Reset local log</button>
           </div>
+        </div>
+      </section>
+
+      <section className="panel space-y-4 p-5">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <div className="font-semibold text-slate-900">Clock setup</div>
+            <div className="text-sm text-slate-500">
+              Quarter length is saved on this match. Clock edits affect the local live tracker timer.
+            </div>
+          </div>
+          <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900">
+            Q{tracker.quarter} {formatClock(elapsedNow(), quarterSeconds)}
+          </div>
+        </div>
+        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto]">
+          <label className="text-sm font-semibold text-slate-700">
+            Quarter length
+            <div className="mt-1 flex gap-2">
+              <input
+                className="input"
+                type="number"
+                min="1"
+                max="20"
+                step="1"
+                value={quarterLengthDraft}
+                onChange={(event) => setQuarterLengthDraft(event.target.value)}
+              />
+              <button type="button" onClick={saveQuarterLength} disabled={saving} className="btn-secondary">
+                Save
+              </button>
+            </div>
+          </label>
+          <div className="flex flex-wrap items-end gap-2">
+            <button type="button" onClick={() => adjustClock(-60)} disabled={!tracker.startersConfirmed || saving} className="btn-secondary">-1:00</button>
+            <button type="button" onClick={() => adjustClock(-10)} disabled={!tracker.startersConfirmed || saving} className="btn-secondary">-0:10</button>
+            <button type="button" onClick={() => adjustClock(-1)} disabled={!tracker.startersConfirmed || saving} className="btn-secondary">-0:01</button>
+            <button type="button" onClick={() => adjustClock(1)} disabled={!tracker.startersConfirmed || saving} className="btn-secondary">+0:01</button>
+            <button type="button" onClick={() => adjustClock(10)} disabled={!tracker.startersConfirmed || saving} className="btn-secondary">+0:10</button>
+            <button type="button" onClick={() => adjustClock(60)} disabled={!tracker.startersConfirmed || saving} className="btn-secondary">+1:00</button>
+          </div>
+        </div>
+        <div className="grid gap-2 md:grid-cols-[8rem_1fr_auto]">
+          <select
+            className="input"
+            value={clockDraft.quarter || tracker.quarter}
+            onChange={(event) => setClockDraft((current) => ({ ...current, quarter: Number(event.target.value) }))}
+            disabled={!tracker.startersConfirmed || saving}
+          >
+            {[1, 2, 3, 4].map((quarter) => (
+              <option key={quarter} value={quarter}>Q{quarter}</option>
+            ))}
+          </select>
+          <input
+            className="input"
+            placeholder={formatClock(elapsedNow(), quarterSeconds)}
+            value={clockDraft.clock}
+            onChange={(event) => setClockDraft((current) => ({ ...current, clock: event.target.value }))}
+            disabled={!tracker.startersConfirmed || saving}
+          />
+          <button type="button" onClick={applyClockFromInput} disabled={!tracker.startersConfirmed || saving} className="btn-secondary">
+            Set clock
+          </button>
         </div>
       </section>
 
@@ -997,7 +1165,7 @@ export default function LiveMatchTracker() {
                   <tr key={event.id} className="border-t border-slate-100">
                     <td className="px-3 py-2">{event.quarter}</td>
                     <td className="px-3 py-2">{event.clock}</td>
-                    <td className="px-3 py-2">{eventLabel(event, playersById, match)}</td>
+                    <td className="px-3 py-2">{eventLabel(event, playerMap, match)}</td>
                     <td className="px-3 py-2 text-right">
                       <button type="button" onClick={() => editEvent(event)} className="btn-secondary">
                         Edit
@@ -1019,7 +1187,7 @@ export default function LiveMatchTracker() {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900">
-              Q{tracker.quarter} {formatClock(currentElapsed())}
+              Q{tracker.quarter} {formatClock(elapsedNow(), quarterSeconds)}
             </div>
             <button
               type="button"
@@ -1050,7 +1218,7 @@ export default function LiveMatchTracker() {
         {flow.open ? (
           <div className="space-y-4">
             {flow.eventClock ? (
-              editingEventId ? (
+              editEventId ? (
                 <div className="mx-auto grid max-w-sm gap-2 sm:grid-cols-2">
                   <label className="text-sm font-semibold text-slate-700">
                     Quarter
@@ -1092,8 +1260,8 @@ export default function LiveMatchTracker() {
                       ...initialFlow,
                       open: true,
                       type: item.type,
-                      eventElapsed: hasLockedElapsed(current.eventElapsed) ? current.eventElapsed : currentElapsed(),
-                      eventClock: current.eventClock || formatClock(currentElapsed()),
+                      eventElapsed: hasLockedElapsed(current.eventElapsed) ? current.eventElapsed : elapsedNow(),
+                      eventClock: current.eventClock || formatClock(elapsedNow(), quarterSeconds),
                       eventQuarter: current.eventQuarter || tracker.quarter,
                     }))}
                   >
@@ -1107,7 +1275,7 @@ export default function LiveMatchTracker() {
               <>
                 <div className="space-y-2">
                   <div className="text-sm font-semibold text-slate-700">Who shot?</div>
-                  {playerButtonRow(allActivePlayers, flow.playerId, "playerId")}
+                  {playerButtonRow(allOnCourt, flow.playerId, "playerId")}
                 </div>
                 {flow.playerId ? (
                   <div className="space-y-2">
@@ -1140,7 +1308,7 @@ export default function LiveMatchTracker() {
                   <div className="space-y-2">
                     <div className="text-sm font-semibold text-slate-700">Who assisted?</div>
                     {playerButtonRow(
-                      activePlayers(playerTeamSide(flow.playerId)).filter((player) => Number(player.id) !== Number(flow.playerId)),
+                      onCourt(playerSide(flow.playerId)).filter((player) => Number(player.id) !== Number(flow.playerId)),
                       flow.assistPlayerId,
                       "assistPlayerId",
                     )}
@@ -1158,7 +1326,7 @@ export default function LiveMatchTracker() {
                 {flow.made === false && flow.reboundChoice === "yes" ? (
                   <div className="space-y-2">
                     <div className="text-sm font-semibold text-slate-700">Who got the rebound?</div>
-                    {playerButtonRow(allActivePlayers, flow.reboundPlayerId, "reboundPlayerId")}
+                    {playerButtonRow(allOnCourt, flow.reboundPlayerId, "reboundPlayerId")}
                   </div>
                 ) : null}
               </>
@@ -1168,7 +1336,7 @@ export default function LiveMatchTracker() {
               <>
                 <div className="space-y-2">
                   <div className="text-sm font-semibold text-slate-700">Who shot the free throw?</div>
-                  {playerButtonRow(allActivePlayers, flow.playerId, "playerId")}
+                  {playerButtonRow(allOnCourt, flow.playerId, "playerId")}
                 </div>
                 {flow.playerId ? (
                   <div className="space-y-2">
@@ -1191,7 +1359,7 @@ export default function LiveMatchTracker() {
                 {flow.made === false && flow.reboundChoice === "yes" ? (
                   <div className="space-y-2">
                     <div className="text-sm font-semibold text-slate-700">Who got the rebound?</div>
-                    {playerButtonRow(allActivePlayers, flow.reboundPlayerId, "reboundPlayerId")}
+                    {playerButtonRow(allOnCourt, flow.reboundPlayerId, "reboundPlayerId")}
                   </div>
                 ) : null}
               </>
@@ -1200,7 +1368,7 @@ export default function LiveMatchTracker() {
             {flow.type === "rebound" ? (
               <div className="space-y-2">
                 <div className="text-sm font-semibold text-slate-700">Who got the rebound?</div>
-                {playerButtonRow(allActivePlayers, flow.playerId, "playerId")}
+                {playerButtonRow(allOnCourt, flow.playerId, "playerId")}
               </div>
             ) : null}
 
@@ -1208,12 +1376,12 @@ export default function LiveMatchTracker() {
               <>
                 <div className="space-y-2">
                   <div className="text-sm font-semibold text-slate-700">Who blocked?</div>
-                  {playerButtonRow(allActivePlayers, flow.blockerId, "blockerId")}
+                  {playerButtonRow(allOnCourt, flow.blockerId, "blockerId")}
                 </div>
                 {flow.blockerId ? (
                   <div className="space-y-2">
                     <div className="text-sm font-semibold text-slate-700">Who was blocked?</div>
-                    {playerButtonRow(activeOpponentsForPlayer(flow.blockerId), flow.shooterId, "shooterId")}
+                    {playerButtonRow(opponentsFor(flow.blockerId), flow.shooterId, "shooterId")}
                   </div>
                 ) : null}
                 {flow.shooterId ? (
@@ -1231,7 +1399,7 @@ export default function LiveMatchTracker() {
             {flow.type === "foul" ? (
               <div className="space-y-2">
                 <div className="text-sm font-semibold text-slate-700">Who committed the foul?</div>
-                {playerButtonRow(allActivePlayers, flow.playerId, "playerId")}
+                {playerButtonRow(allOnCourt, flow.playerId, "playerId")}
               </div>
             ) : null}
 
@@ -1239,7 +1407,7 @@ export default function LiveMatchTracker() {
               <>
                 <div className="space-y-2">
                   <div className="text-sm font-semibold text-slate-700">Who made the steal?</div>
-                  {playerButtonRow(allActivePlayers, flow.stealPlayerId, "stealPlayerId")}
+                  {playerButtonRow(allOnCourt, flow.stealPlayerId, "stealPlayerId")}
                 </div>
                 {flow.stealPlayerId ? (
                   <div className="space-y-2">
@@ -1253,7 +1421,7 @@ export default function LiveMatchTracker() {
                 {flow.stealPlayerId && flow.turnoverChoice === "yes" ? (
                   <div className="space-y-2">
                     <div className="text-sm font-semibold text-slate-700">Who made the turnover?</div>
-                    {playerButtonRow(activeOpponentsForPlayer(flow.stealPlayerId), flow.turnoverPlayerId, "turnoverPlayerId")}
+                    {playerButtonRow(opponentsFor(flow.stealPlayerId), flow.turnoverPlayerId, "turnoverPlayerId")}
                   </div>
                 ) : null}
               </>
@@ -1262,7 +1430,7 @@ export default function LiveMatchTracker() {
             {flow.type === "turnover" ? (
               <div className="space-y-2">
                 <div className="text-sm font-semibold text-slate-700">Who made the turnover?</div>
-                {playerButtonRow(allActivePlayers, flow.turnoverPlayerId, "turnoverPlayerId")}
+                {playerButtonRow(allOnCourt, flow.turnoverPlayerId, "turnoverPlayerId")}
               </div>
             ) : null}
 
@@ -1270,13 +1438,13 @@ export default function LiveMatchTracker() {
               <>
                 <div className="space-y-2">
                   <div className="text-sm font-semibold text-slate-700">Who goes out?</div>
-                  {playerButtonRow(allActivePlayers, flow.outPlayerId, "outPlayerId")}
+                  {playerButtonRow(allOnCourt, flow.outPlayerId, "outPlayerId")}
                 </div>
                 {flow.outPlayerId ? (
                   <div className="space-y-2">
                     <div className="text-sm font-semibold text-slate-700">Who comes in?</div>
-                    {benchForPlayer(flow.outPlayerId).length > 0 ? (
-                      playerButtonRow(benchForPlayer(flow.outPlayerId), flow.inPlayerId, "inPlayerId")
+                    {benchFor(flow.outPlayerId).length > 0 ? (
+                      playerButtonRow(benchFor(flow.outPlayerId), flow.inPlayerId, "inPlayerId")
                     ) : (
                       <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
                         No bench players available for this team.
@@ -1289,7 +1457,7 @@ export default function LiveMatchTracker() {
 
             {flow.type ? (
               <button onClick={addCurrentEvent} disabled={saving} className="btn-primary">
-                {editingEventId ? "Update event" : flow.type === "quarter_end" ? `End quarter ${tracker.quarter}` : "Save event"}
+                {editEventId ? "Update event" : flow.type === "quarter_end" ? `End quarter ${tracker.quarter}` : "Save event"}
               </button>
             ) : null}
           </div>
@@ -1298,3 +1466,4 @@ export default function LiveMatchTracker() {
     </div>
   );
 }
+

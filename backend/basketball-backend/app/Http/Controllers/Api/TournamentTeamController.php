@@ -17,6 +17,7 @@ class TournamentTeamController extends Controller
         return TournamentTeam::where('tournament_id', $tournament->id)
             ->with('team')
             ->orderByRaw('seed IS NULL, seed ASC')
+            ->orderBy('id')
             ->get();
     }
 
@@ -26,10 +27,10 @@ class TournamentTeamController extends Controller
             return response()->json(['message' => 'Participants are locked for this tournament.'], 409);
         }
 
-        $validated = $request->validate([
+        $data = $request->validate([
             'team_id' => ['required','integer','exists:teams,id'],
             'group_code' => ['nullable','string','max:5'],
-            'seed' => ['nullable','integer','min:1'],
+            'seed' => ['nullable','integer','min:1', 'max:' . max(1, (int) ($tournament->max_teams ?? 512))],
         ]);
 
         $approvedCount = TournamentTeam::where('tournament_id', $tournament->id)->count();
@@ -38,21 +39,57 @@ class TournamentTeamController extends Controller
         }
 
         $exists = TournamentTeam::where('tournament_id', $tournament->id)
-            ->where('team_id', $validated['team_id'])
+            ->where('team_id', $data['team_id'])
             ->exists();
 
         if ($exists) {
             return response()->json(['message' => 'Team already registered in this tournament.'], 409);
         }
 
+        if (!empty($data['seed']) && TournamentTeam::where('tournament_id', $tournament->id)->where('seed', $data['seed'])->exists()) {
+            return response()->json(['message' => 'This seed is already assigned to another team.'], 409);
+        }
+
         $row = TournamentTeam::create([
             'tournament_id' => $tournament->id,
-            'team_id' => $validated['team_id'],
-            'group_code' => $validated['group_code'] ?? null,
-            'seed' => $validated['seed'] ?? null,
+            'team_id' => $data['team_id'],
+            'group_code' => $data['group_code'] ?? null,
+            'seed' => $data['seed'] ?? null,
         ]);
 
         return response()->json($row->load('team'), 201);
+    }
+
+    public function update(Request $request, Tournament $tournament, Team $team)
+    {
+        if ($tournament->participants_locked) {
+            return response()->json(['message' => 'Participants are locked for this tournament.'], 409);
+        }
+
+        $data = $request->validate([
+            'seed' => ['nullable', 'integer', 'min:1', 'max:' . max(1, (int) ($tournament->max_teams ?? 512))],
+        ]);
+
+        $row = TournamentTeam::where('tournament_id', $tournament->id)
+            ->where('team_id', $team->id)
+            ->firstOrFail();
+
+        $seed = $data['seed'] ?? null;
+        if ($seed !== null) {
+            $taken = TournamentTeam::where('tournament_id', $tournament->id)
+                ->where('team_id', '!=', $team->id)
+                ->where('seed', $seed)
+                ->exists();
+
+            if ($taken) {
+                return response()->json(['message' => 'This seed is already assigned to another team.'], 409);
+            }
+        }
+
+        $row->seed = $seed;
+        $row->save();
+
+        return response()->json($row->load('team'), 200);
     }
 
     public function destroy(Tournament $tournament, Team $team)
